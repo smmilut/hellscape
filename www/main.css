@@ -1,0 +1,9 @@
+canvas {
+    border: 1px solid black;
+    background: grey;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
