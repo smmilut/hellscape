@@ -222,6 +222,9 @@ export const newSprite = function newSprite(initOptions) {
     return obj_Sprite;
 };
 
+/*
+* A level map background
+*/
 export const BackgroundResource = (function newBackground() {
     // the object we are building
     const obj_Background = {
@@ -244,15 +247,21 @@ export const BackgroundResource = (function newBackground() {
                 return ImageLoader.get(initOptions.sheetSrc)
                     .then(function sheetImageLoaded(image) {
                         Background_sheet = image;
+                        // finally we have map data and a sprite sheet
                         generateMap();
                     });
             });
 
     };
 
+    /*
+    * Generate the background image from the level map data
+    */
     function generateMap() {
+        // create a new canvas for compositing the image
         let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
 
+        // iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < Background_data.length; rowIndex++, destinationY += obj_Background.sheetCellHeight) {
             const row = Background_data[rowIndex];
             const upRow = Background_data[rowIndex - 1];
@@ -261,27 +270,41 @@ export const BackgroundResource = (function newBackground() {
             let downBit = 1;
             for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_Background.sheetCellWidth) {
                 const mapValue = row[columnIndex];
+                // The index of the sprite in the sheet is based on which adjacent tiles have blocks or sky
                 let tileCode10;
                 let leftBit = row[columnIndex - 1];
                 let rightBit = row[columnIndex + 1];
                 if (leftBit == undefined) {
+                    // left edge of the map
+                    // consider it has a block
                     leftBit = 1;
                 }
                 if (rightBit == undefined) {
+                    // right edge of the map
+                    // consider it has a block
                     rightBit = 1;
                 }
                 if (upRow != undefined) {
+                    // top edge of the map
+                    // consider it has a block
                     upBit = upRow[columnIndex];
                 }
                 if (downRow != undefined) {
+                    // bottom edge of the map
+                    // consider it has a block
                     downBit = downRow[columnIndex];
                 }
                 if (mapValue == 1) {
+                    // The center is a block,
+                    // We can find the sprite in the sheet based on neighboors
                     tileCode10 = 1 * leftBit + 2 * downBit + 4 * rightBit + 8 * upBit;
                 } else if (mapValue == 0) {
+                    // The center is a sky
+                    // The sprite is at a fixed location in the sheet
                     tileCode10 = 16;
                 }
                 let sourceX = tileCode10 * obj_Background.sheetCellWidth;
+                // Draw to the hidden temporary canvas
                 context.drawImage(Background_sheet,
                     sourceX, 0,
                     obj_Background.sheetCellWidth, obj_Background.sheetCellHeight,
@@ -289,6 +312,8 @@ export const BackgroundResource = (function newBackground() {
                     obj_Background.sheetCellWidth, obj_Background.sheetCellHeight);
             }
         }
+        // Background drawing is finished
+        // Export to image
         let imageUri = canvas.toDataURL();
         Background_image = new Image();
         Background_image.src = imageUri;
@@ -304,7 +329,7 @@ export const BackgroundResource = (function newBackground() {
 
     obj_Background.draw = function Background_draw(context, position) {
         if (obj_Background.isInitialized()) {
-            context.drawImage(Background_image, 0, 0);
+            context.drawImage(Background_image, position.x, position.y);
         } else {
             // map not generated yet
         }
@@ -312,6 +337,7 @@ export const BackgroundResource = (function newBackground() {
 
     obj_Background.update = function Background_update() {
         // do nothing
+        // function necessary as a Resource
     };
 
     return obj_Background;
@@ -333,6 +359,7 @@ export function init(ecs) {
         }
     );
 
+    // clear background
     ecs.Controller.addSystem({
         queryResources: ["background"],
         run: function clearBackground(background) {
@@ -340,7 +367,7 @@ export function init(ecs) {
         },
     },
         ecs.SYSTEM_STAGE.END);
-
+    // update animation
     ecs.Controller.addSystem({
         queryResources: ["time"],
         queryComponents: ["sprite"],
@@ -349,7 +376,7 @@ export function init(ecs) {
         },
     },
         ecs.SYSTEM_STAGE.END);
-
+    // render sprites
     ecs.Controller.addSystem({
         queryComponents: ["sprite", "position"],
         run: function drawSprite(sprite, position) {
