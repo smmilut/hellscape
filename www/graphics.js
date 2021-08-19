@@ -1,46 +1,31 @@
+import * as utils from "./utils.js";
+
+function createScaledCanvas(screenWidth, screenHeight, scale) {
+    let canvas = document.createElement("canvas");
+    let unscaledWidth = screenWidth / scale;
+    let unscaledHeight = screenHeight / scale;
+    canvas.width = unscaledWidth;
+    canvas.style.width = screenWidth + "px";
+    canvas.height = unscaledHeight;
+    canvas.style.height = screenHeight + "px";
+    let context = canvas.getContext('2d');
+    // important for pixel art style : no smoothing when scaling or animating
+    context.imageSmoothingEnabled = false;
+    return [canvas, context];
+}
+
 export const View = (function build_View() {
     const obj_View = {};
     let View_canvas, View_context;
-    let View_isDirtyQueue;
-    let View_renderQueue = [];
 
     obj_View.init = function View_init(initOptions) {
-        //#region start init HTML
+        obj_View.screenWidth = initOptions.width;
+        obj_View.screenHeight = initOptions.height;
+        obj_View.scale = initOptions.scale;
+        [View_canvas, View_context] = createScaledCanvas(obj_View.screenWidth, obj_View.screenHeight, obj_View.scale);
         let parentId = initOptions.parentId || "game";
         const elParent = document.getElementById(parentId);
-        View_canvas = document.createElement("canvas");
-        //#endregion
-        //#region set up canvas-level scaling (for bigger pixels)
-        let screenWidth = initOptions.width;
-        let screenHeight = initOptions.height;
-        let unscaledWidth = screenWidth / initOptions.scale;
-        let unscaledHeight = screenHeight / initOptions.scale;
-        View_canvas.width = unscaledWidth;
-        View_canvas.style.width = screenWidth + "px";
-        View_canvas.height = unscaledHeight;
-        View_canvas.style.height = screenHeight + "px";
-        View_context = View_canvas.getContext('2d');
-        View_context.imageSmoothingEnabled = false;
         elParent.appendChild(View_canvas);
-        View_isDirtyQueue = true;
-    };
-
-    /*
-    * Add graphics to render queue
-    */
-    obj_View.queueRendering = function View_queueRendering(graphics) {
-        View_renderQueue.push(graphics);
-        View_isDirtyQueue = true;
-    };
-
-    /*
-    * Remove `graphics` from render queue
-    */
-    obj_View.unqueueRendering = function View_unqueueRendering(searchedGraphics) {
-        const graphicsIndex = View_renderQueue.indexOf(searchedGraphics);
-        if (graphicsIndex > -1) {
-            View_renderQueue.splice(graphicsIndex, 1);
-        }
     };
 
     /*
@@ -51,10 +36,10 @@ export const View = (function build_View() {
     };
 
     /*
-    * Render all render queue now
+    * Render all this sprite now
     */
-    obj_View.render = function View_render(time, sprite, position) {
-        sprite.updateAnimation(time.dt);
+    obj_View.render = function View_render(sprite, position) {
+
         sprite.draw(View_context, position);
     };
 
@@ -146,7 +131,7 @@ export const newSprite = function newSprite(initOptions) {
                 // Y position in the sprite sheet is the animation pose
                 let rowOptions = initOptions.sheetLayout[poseIndex];
                 Sprite_animations[rowOptions.pose] = [];
-                for (let sourceX = 0, frameIndex = 0; frameIndex < rowOptions.animationLength ; sourceX += obj_Sprite.sheetCellWidth, frameIndex++) {
+                for (let sourceX = 0, frameIndex = 0; frameIndex < rowOptions.animationLength; sourceX += obj_Sprite.sheetCellWidth, frameIndex++) {
                     // X position in the sprite sheet is the animation frame for this pose
                     Sprite_animations[rowOptions.pose][frameIndex] = [Sprite_sheet, sourceX, sourceY, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight];
                 }
@@ -179,7 +164,7 @@ export const newSprite = function newSprite(initOptions) {
             let screenPosition = convertPositionToSprite(position);
             context.drawImage(...Sprite_animations[Sprite_pose][Sprite_frame], screenPosition.x, screenPosition.y, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight);
         } else {
-            console.log("sprite not loaded yet");
+            // sprite not loaded yet
         }
     };
 
@@ -237,6 +222,101 @@ export const newSprite = function newSprite(initOptions) {
     return obj_Sprite;
 };
 
+export const BackgroundResource = (function newBackground() {
+    // the object we are building
+    const obj_Background = {
+        name: "background"
+    };
+
+    let Background_sheet, Background_data, Background_image;
+
+    obj_Background.init = function Background_init(initOptions) {
+        obj_Background.sheetCellWidth = initOptions.sheetCellWidth;
+        obj_Background.sheetCellHeight = initOptions.sheetCellHeight;
+        return utils.Http.Request({
+            url: initOptions.mapUrl,
+        })
+            .then(function gotBackgroundFile(data) {
+                let json_obj = JSON.parse(data.responseText);
+                Background_data = json_obj.map;
+            })
+            .then(function loadSheetImage() {
+                return ImageLoader.get(initOptions.sheetSrc)
+                    .then(function sheetImageLoaded(image) {
+                        Background_sheet = image;
+                        generateMap();
+                    });
+            });
+
+    };
+
+    function generateMap() {
+        let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
+
+        for (let rowIndex = 0, destinationY = 0; rowIndex < Background_data.length; rowIndex++, destinationY += obj_Background.sheetCellHeight) {
+            const row = Background_data[rowIndex];
+            const upRow = Background_data[rowIndex - 1];
+            let upBit = 1;
+            const downRow = Background_data[rowIndex + 1];
+            let downBit = 1;
+            for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_Background.sheetCellWidth) {
+                const mapValue = row[columnIndex];
+                let tileCode10;
+                let leftBit = row[columnIndex - 1];
+                let rightBit = row[columnIndex + 1];
+                if (leftBit == undefined) {
+                    leftBit = 1;
+                }
+                if (rightBit == undefined) {
+                    rightBit = 1;
+                }
+                if (upRow != undefined) {
+                    upBit = upRow[columnIndex];
+                }
+                if (downRow != undefined) {
+                    downBit = downRow[columnIndex];
+                }
+                if (mapValue == 1) {
+                    tileCode10 = 1 * leftBit + 2 * downBit + 4 * rightBit + 8 * upBit;
+                } else if (mapValue == 0) {
+                    tileCode10 = 16;
+                }
+                let sourceX = tileCode10 * obj_Background.sheetCellWidth;
+                context.drawImage(Background_sheet,
+                    sourceX, 0,
+                    obj_Background.sheetCellWidth, obj_Background.sheetCellHeight,
+                    destinationX, destinationY,
+                    obj_Background.sheetCellWidth, obj_Background.sheetCellHeight);
+            }
+        }
+        let imageUri = canvas.toDataURL();
+        Background_image = new Image();
+        Background_image.src = imageUri;
+    };
+
+    obj_Background.isInitialized = function Background_isInitialized() {
+        if (Background_image) {
+            return true;
+        } else {
+            return false;;
+        }
+    };
+
+    obj_Background.draw = function Background_draw(context, position) {
+        if (obj_Background.isInitialized()) {
+            context.drawImage(Background_image, 0, 0);
+        } else {
+            // map not generated yet
+        }
+    };
+
+    obj_Background.update = function Background_update() {
+        // do nothing
+    };
+
+    return obj_Background;
+})();
+
 export function init(ecs) {
     ecs.Controller.addInitSystem(View.init, {
         width: 960,
@@ -244,15 +324,37 @@ export function init(ecs) {
         scale: 3.0,
     });
 
+    ecs.Data.addResource(BackgroundResource,
+        {
+            mapUrl: "www/levelmap.json",
+            sheetSrc: "assets/terrain_sheet.png",
+            sheetCellWidth: 16,
+            sheetCellHeight: 16,
+        }
+    );
+
     ecs.Controller.addSystem({
-        run: View.clear,
+        queryResources: ["background"],
+        run: function clearBackground(background) {
+            View.render(background, { x: 0, y: 0 });
+        },
     },
         ecs.SYSTEM_STAGE.END);
 
     ecs.Controller.addSystem({
         queryResources: ["time"],
+        queryComponents: ["sprite"],
+        run: function updateAnimation(time, sprite) {
+            sprite.updateAnimation(time.dt);
+        },
+    },
+        ecs.SYSTEM_STAGE.END);
+
+    ecs.Controller.addSystem({
         queryComponents: ["sprite", "position"],
-        run: View.render,
+        run: function drawSprite(sprite, position) {
+            View.render(sprite, position);
+        }
     },
         ecs.SYSTEM_STAGE.END);
 }
