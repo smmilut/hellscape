@@ -1,9 +1,14 @@
 const Timer = {
     name: "timer",
-    init: function Time_init(initOptions) {
+    isInitialized: false,
+    prepareInit: function Physics_prepareInit(initOptions) {
+        this.initOptions = initOptions || {};
+    },
+    init: function Time_init() {
         this.t = 0.0;
         this.old_t = 0.0;
         this.dt = 0.0;
+        this.isInitialized = true;
     },
     update: function updateTime() {
         this.old_t = this.t;
@@ -36,6 +41,7 @@ export const Controller = (function build_Controller() {
     * Run systems
     */
     obj_Controller.start = function Controller_start() {
+        initResourceSystems();
         runInitSystems();
         Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
     };
@@ -69,9 +75,42 @@ export const Controller = (function build_Controller() {
         }
     }
 
+    function initResourceSystems() {
+        for (let resourceList of Data.resources) {
+            // for each priority level
+            for (let resource of resourceList) {
+                resource.init();
+                waitForInit(resource)
+            }
+            /*
+            while (!resourceList.every(function isInitialized(resource) {
+                if (!resource.isInitialized) {
+                    console.log("waiting for resource", resource);
+                }
+                return resource.isInitialized;
+            })) {
+                // waiting for all resources of that prioriy level to finish initializing
+            }
+            */
+        }
+    }
+
+    function waitForInit(resource) {
+        if (resource.isInitialized === true) {
+            return;
+        } else {
+            setTimeout(function keepWaiting() {
+                waitForInit(resource)
+            }, 0);
+        }
+    }
+
     function runResourceSystems() {
-        for (let resource of Data.resources) {
-            resource.update();
+        for (let resourceList of Data.resources) {
+            // for each priority level
+            for (let resource of resourceList) {
+                resource.update();
+            }
         }
     }
 
@@ -161,22 +200,30 @@ export const Data = (function build_Data() {
 
     obj_Data.resources = [];
 
-    obj_Data.addResource = function Data_addResource(resource, initOptions) {
-        obj_Data.resources.push(resource);
-        resource.init(initOptions);
+    obj_Data.addResource = function Data_addResource(resource, initOptions, priority) {
+        if (priority == undefined) {
+            priority = 0;
+        }
+        if (obj_Data.resources[priority] == undefined) {
+            obj_Data.resources[priority] = [];
+        }
+        obj_Data.resources[priority].push(resource);
+        resource.prepareInit(initOptions);
         return obj_Data;
     };
 
-    obj_Data.hasResource = function Entity_hasResource(resourceName) {
-        return obj_Data.resources.some(function verifyResource(resource) {
-            return resource.name == resourceName;
-        });
-    };
-
     obj_Data.getResources = function Entity_getResources(resourceName) {
-        return obj_Data.resources.filter(function filterResource(resource) {
-            return resource.name == resourceName;
-        });
+        let filteredResources = []
+        for (let resourceList of obj_Data.resources) {
+            // for each priority level
+            if (resourceList == undefined) {
+                continue;
+            }
+            filteredResources.push(...resourceList.filter(function filterResource(resource) {
+                return resource.name == resourceName;
+            }));
+        }
+        return filteredResources;
     };
 
     return obj_Data;

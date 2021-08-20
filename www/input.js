@@ -10,22 +10,29 @@ export const USER_ACTION = Object.freeze({
 export const KeyboardResource = (function build_Keyboard() {
     const obj_Keyboard = {
         name: "keyboard",
+        isInitialized: false,
     };
     const KeysState = new Map();
     const KeyMap = new Map();
+    let Keyboard_initOptions;
 
-    obj_Keyboard.init = function Keyboard_init(initOptions) {
+    obj_Keyboard.prepareInit = function Keyboard_prepareInit(initOptions) {
+        Keyboard_initOptions = initOptions || {};
+    };
+
+    obj_Keyboard.init = function Keyboard_init() {
         window.addEventListener("keydown", function keyPressed(event) {
             KeysState.set(event.key, true);
         });
         window.addEventListener("keyup", function keyUnpressed(event) {
             KeysState.set(event.key, false);
         });
-        if (initOptions && initOptions.defaultKeys) {
-            for (let [key, action] of initOptions.defaultKeys) {
+        if (Keyboard_initOptions.defaultKeys) {
+            for (let [key, action] of Keyboard_initOptions.defaultKeys) {
                 obj_Keyboard.mapKey(key, action);
             }
         }
+        obj_Keyboard.isInitialized = true;
     };
 
     obj_Keyboard.update = function Keyboard_update() {

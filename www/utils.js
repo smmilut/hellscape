@@ -50,6 +50,7 @@ export const Http = (function build_HttpUtils() {
                     responseText: xhr.responseText
                 });
             };
+            console.log("sending HTTP request", options.url);
             xhr.send(options.data);
         });
     };

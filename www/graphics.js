@@ -104,6 +104,7 @@ const ImageLoader = (function build_ImageLoader() {
 export const newSprite = function newSprite(initOptions) {
     const obj_Sprite = {
         name: "sprite",
+        isInitialized: false,
     };
     let Sprite_sheet;
     let Sprite_pose, Sprite_frame, Sprite_frameTime, Sprite_animationDirection;
@@ -136,17 +137,10 @@ export const newSprite = function newSprite(initOptions) {
                     Sprite_animations[rowOptions.pose][frameIndex] = [Sprite_sheet, sourceX, sourceY, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight];
                 }
             }
+            obj_Sprite.isInitialized = true;
             return obj_Sprite;
         });
         //#endregion
-    };
-
-    obj_Sprite.isInitialized = function Sprite_isInitialized() {
-        if (Sprite_sheet) {
-            return true;
-        } else {
-            return false;;
-        }
     };
 
     /*
@@ -160,7 +154,7 @@ export const newSprite = function newSprite(initOptions) {
     }
 
     obj_Sprite.draw = function Sprite_draw(context, position) {
-        if (obj_Sprite.isInitialized()) {
+        if (obj_Sprite.isInitialized) {
             let screenPosition = convertPositionToSprite(position);
             context.drawImage(...Sprite_animations[Sprite_pose][Sprite_frame], screenPosition.x, screenPosition.y, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight);
         } else {
@@ -183,7 +177,7 @@ export const newSprite = function newSprite(initOptions) {
     * update animation frame time, change frame, change animation direction if necessary
     */
     obj_Sprite.updateAnimation = function Sprite_updateAnimation(timePassed) {
-        if (obj_Sprite.isInitialized()) {
+        if (obj_Sprite.isInitialized) {
             Sprite_frameTime += timePassed;
             while (Sprite_frameTime > obj_Sprite.frameDuration) {
                 nextFrame();
@@ -228,36 +222,49 @@ export const newSprite = function newSprite(initOptions) {
 export const BackgroundResource = (function newBackground() {
     // the object we are building
     const obj_Background = {
-        name: "background"
+        name: "background",
+        isInitialized: false,
     };
 
-    let Background_sheet, Background_data, Background_image;
+    let Background_sheet, Background_data, Background_image, Background_initOptions;
 
-    obj_Background.init = function Background_init(initOptions) {
-        obj_Background.sheetCellWidth = initOptions.sheetCellWidth;
-        obj_Background.sheetCellHeight = initOptions.sheetCellHeight;
-        return utils.Http.Request({
-            url: initOptions.mapUrl,
+    obj_Background.prepareInit = function Background_prepareInit(initOptions) {
+        console.log("Background prepare init", initOptions);
+        Background_initOptions = initOptions;
+    }
+
+    obj_Background.init = function Background_init() {
+        console.log("Background start init", Background_initOptions);
+        obj_Background.sheetCellWidth = Background_initOptions.sheetCellWidth;
+        obj_Background.sheetCellHeight = Background_initOptions.sheetCellHeight;
+        console.log("WAT");
+        let p = utils.Http.Request({
+            url: Background_initOptions.mapUrl,
         })
             .then(function gotBackgroundFile(data) {
                 let json_obj = JSON.parse(data.responseText);
                 Background_data = json_obj.map;
+                console.log("Background got JSON file", Background_data);
             })
             .then(function loadSheetImage() {
-                return ImageLoader.get(initOptions.sheetSrc)
+                console.log("Background loading image");
+                return ImageLoader.get(Background_initOptions.sheetSrc)
                     .then(function sheetImageLoaded(image) {
                         Background_sheet = image;
+                        console.log("Background got image", Background_sheet);
                         // finally we have map data and a sprite sheet
                         generateMap();
                     });
             });
-
+        console.log("promising");
+        return p;
     };
 
     /*
     * Generate the background image from the level map data
     */
     function generateMap() {
+        console.log("Background generating map", Background_sheet);
         // create a new canvas for compositing the image
         let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
 
@@ -317,18 +324,12 @@ export const BackgroundResource = (function newBackground() {
         let imageUri = canvas.toDataURL();
         Background_image = new Image();
         Background_image.src = imageUri;
-    };
-
-    obj_Background.isInitialized = function Background_isInitialized() {
-        if (Background_image) {
-            return true;
-        } else {
-            return false;;
-        }
+        obj_Background.isInitialized = true;
+        console.log("OK Background initialized !");
     };
 
     obj_Background.draw = function Background_draw(context, position) {
-        if (obj_Background.isInitialized()) {
+        if (obj_Background.isInitialized) {
             context.drawImage(Background_image, position.x, position.y);
         } else {
             // map not generated yet
