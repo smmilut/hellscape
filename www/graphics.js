@@ -1,5 +1,8 @@
 import * as utils from "./utils.js";
 
+/*
+* return a canvas correctly scaled for pixel art
+*/
 function createScaledCanvas(screenWidth, screenHeight, scale) {
     let canvas = document.createElement("canvas");
     let unscaledWidth = screenWidth / scale;
@@ -47,15 +50,15 @@ export const View = (function build_View() {
 })();
 
 export const ANIMATION_DIRECTION = Object.freeze({
-    FORWARD: 1,
-    BACKWARD: -1,
+    FORWARD: 1,  // currently animate frames in order
+    BACKWARD: -1,  // currently animate frames in reverse order
     STOPPED: 0,
 });
 
 export const ANIMATION_TYPE = Object.freeze({
-    FORWARD: 1,
-    REVERSE: 2,
-    PINGPONG: 3,
+    FORWARD: 1,  // animation happens in continuous forward order
+    REVERSE: 2,  // animation happens in continuous reverse order
+    PINGPONG: 3,  // animation happens in ping-pong mode, alternating forward and backward
 });
 
 /*
@@ -111,8 +114,6 @@ export const newSprite = function newSprite(initOptions) {
     const Sprite_animations = {};
 
     obj_Sprite.init = function Sprite_init(initOptions) {
-        /* TODO : deduce render priority from Z position ? */
-        obj_Sprite.renderPriority = 1;
         //#region init animation
         for (let row of initOptions.sheetLayout) {
 
@@ -217,65 +218,81 @@ export const newSprite = function newSprite(initOptions) {
 };
 
 /*
-* A level map background
+* the Level grid data
 */
-export const BackgroundResource = (function newBackground() {
-    // the object we are building
-    const obj_Background = {
-        name: "background",
+export const LevelGridResource = (function build_LevelGrid() {
+    const obj_LevelGrid = {
+        name: "levelgrid",
         isInitialized: false,
     };
 
-    let Background_sheet, Background_data, Background_image, Background_initOptions;
+    let LevelGrid_initOptions;
 
-    obj_Background.prepareInit = function Background_prepareInit(initOptions) {
-        console.log("Background prepare init", initOptions);
-        Background_initOptions = initOptions;
-    }
+    obj_LevelGrid.prepareInit = function LevelGrid_prepareInit(initOptions) {
+        LevelGrid_initOptions = initOptions || {};
+    };
 
-    obj_Background.init = function Background_init() {
-        console.log("Background start init", Background_initOptions);
-        obj_Background.sheetCellWidth = Background_initOptions.sheetCellWidth;
-        obj_Background.sheetCellHeight = Background_initOptions.sheetCellHeight;
-        console.log("WAT");
-        let p = utils.Http.Request({
-            url: Background_initOptions.mapUrl,
+    obj_LevelGrid.init = function LevelGrid_init() {
+        utils.Http.Request({
+            url: LevelGrid_initOptions.url,
         })
             .then(function gotBackgroundFile(data) {
                 let json_obj = JSON.parse(data.responseText);
-                Background_data = json_obj.map;
-                console.log("Background got JSON file", Background_data);
+                obj_LevelGrid.data = json_obj.map;
+                obj_LevelGrid.isInitialized = true;
             })
-            .then(function loadSheetImage() {
-                console.log("Background loading image");
-                return ImageLoader.get(Background_initOptions.sheetSrc)
-                    .then(function sheetImageLoaded(image) {
-                        Background_sheet = image;
-                        console.log("Background got image", Background_sheet);
-                        // finally we have map data and a sprite sheet
-                        generateMap();
-                    });
+    };
+
+    obj_LevelGrid.update = function LevelGrid_update() {
+        // nothing for now, but has to exist for a Resource
+    };
+
+    return obj_LevelGrid;
+})();
+
+/*
+* A level map background
+*/
+export const LevelSpriteResource = (function build_LevelSprite() {
+    // the object we are building
+    const obj_LevelSprite = {
+        name: "levelsprite",
+        isInitialized: false,
+    };
+
+    let LevelSprite_sheet, LevelSprite_image, LevelSprite_initOptions;
+
+    obj_LevelSprite.prepareInit = function LevelSprite_prepareInit(initOptions) {
+        LevelSprite_initOptions = initOptions;
+        obj_LevelSprite.initQueryResources = initOptions.initQueryResources;
+    }
+
+    obj_LevelSprite.init = function LevelSprite_init(levelGrid) {
+        obj_LevelSprite.sheetCellWidth = LevelSprite_initOptions.sheetCellWidth;
+        obj_LevelSprite.sheetCellHeight = LevelSprite_initOptions.sheetCellHeight;
+        return ImageLoader.get(LevelSprite_initOptions.sheetSrc)
+            .then(function sheetImageLoaded(image) {
+                LevelSprite_sheet = image;
+                // finally we have map data and a sprite sheet
+                generateBackgroundImage(levelGrid);
             });
-        console.log("promising");
-        return p;
     };
 
     /*
     * Generate the background image from the level map data
     */
-    function generateMap() {
-        console.log("Background generating map", Background_sheet);
+    function generateBackgroundImage(levelGrid) {
         // create a new canvas for compositing the image
         let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
-
+        const levelData = levelGrid.data;
         // iterate the level map data
-        for (let rowIndex = 0, destinationY = 0; rowIndex < Background_data.length; rowIndex++, destinationY += obj_Background.sheetCellHeight) {
-            const row = Background_data[rowIndex];
-            const upRow = Background_data[rowIndex - 1];
+        for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
+            const row = levelData[rowIndex];
+            const upRow = levelData[rowIndex - 1];
             let upBit = 1;
-            const downRow = Background_data[rowIndex + 1];
+            const downRow = levelData[rowIndex + 1];
             let downBit = 1;
-            for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_Background.sheetCellWidth) {
+            for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_LevelSprite.sheetCellWidth) {
                 const mapValue = row[columnIndex];
                 // The index of the sprite in the sheet is based on which adjacent tiles have blocks or sky
                 let tileCode10;
@@ -310,38 +327,37 @@ export const BackgroundResource = (function newBackground() {
                     // The sprite is at a fixed location in the sheet
                     tileCode10 = 16;
                 }
-                let sourceX = tileCode10 * obj_Background.sheetCellWidth;
+                let sourceX = tileCode10 * obj_LevelSprite.sheetCellWidth;
                 // Draw to the hidden temporary canvas
-                context.drawImage(Background_sheet,
+                context.drawImage(LevelSprite_sheet,
                     sourceX, 0,
-                    obj_Background.sheetCellWidth, obj_Background.sheetCellHeight,
+                    obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight,
                     destinationX, destinationY,
-                    obj_Background.sheetCellWidth, obj_Background.sheetCellHeight);
+                    obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight);
             }
         }
         // Background drawing is finished
         // Export to image
         let imageUri = canvas.toDataURL();
-        Background_image = new Image();
-        Background_image.src = imageUri;
-        obj_Background.isInitialized = true;
-        console.log("OK Background initialized !");
+        LevelSprite_image = new Image();
+        LevelSprite_image.src = imageUri;
+        obj_LevelSprite.isInitialized = true;
     };
 
-    obj_Background.draw = function Background_draw(context, position) {
-        if (obj_Background.isInitialized) {
-            context.drawImage(Background_image, position.x, position.y);
+    obj_LevelSprite.draw = function LevelSprite_draw(context, position) {
+        if (obj_LevelSprite.isInitialized) {
+            context.drawImage(LevelSprite_image, position.x, position.y);
         } else {
             // map not generated yet
         }
     };
 
-    obj_Background.update = function Background_update() {
+    obj_LevelSprite.update = function LevelSprite_update() {
         // do nothing
         // function necessary as a Resource
     };
 
-    return obj_Background;
+    return obj_LevelSprite;
 })();
 
 export function init(ecs) {
@@ -351,18 +367,26 @@ export function init(ecs) {
         scale: 3.0,
     });
 
-    ecs.Data.addResource(BackgroundResource,
+    ecs.Data.addResource(LevelGridResource,
         {
-            mapUrl: "www/levelmap.json",
+            url: "www/levelmap.json",
+        },
+        1 // higher priority than LevelSprite
+    );
+
+    ecs.Data.addResource(LevelSpriteResource,
+        {
+            initQueryResources: ["levelgrid"],
             sheetSrc: "assets/terrain_sheet.png",
             sheetCellWidth: 16,
             sheetCellHeight: 16,
-        }
+        },
+        2 // lower priority than LevelGrid
     );
 
     // clear background
     ecs.Controller.addSystem({
-        queryResources: ["background"],
+        queryResources: ["levelsprite"],
         run: function clearBackground(background) {
             View.render(background, { x: 0, y: 0 });
         },

@@ -79,26 +79,30 @@ export const Controller = (function build_Controller() {
         for (let resourceList of Data.resources) {
             // for each priority level
             for (let resource of resourceList) {
-                resource.init();
+                // Resources may query for other resources during initialization
+                let queryResourcesResult = [];
+                if (resource.initQueryResources) {
+                    queryResourcesResult = resource.initQueryResources.map(function getQueryResource(queryName) {
+                        // take the 1st one only, don't expect several Resources with the same name
+                        return Data.getResources(queryName)[0];
+                    });
+                }
+                // initiate initialization
+                resource.init(...queryResourcesResult);
+                // wait for completion of initilaization
                 waitForInit(resource)
             }
-            /*
-            while (!resourceList.every(function isInitialized(resource) {
-                if (!resource.isInitialized) {
-                    console.log("waiting for resource", resource);
-                }
-                return resource.isInitialized;
-            })) {
-                // waiting for all resources of that prioriy level to finish initializing
-            }
-            */
         }
     }
 
+    /*
+    * wait indefinitely that `resource` becomes initialized
+    */
     function waitForInit(resource) {
         if (resource.isInitialized === true) {
             return;
         } else {
+            // recursively call self each event loop
             setTimeout(function keepWaiting() {
                 waitForInit(resource)
             }, 0);
