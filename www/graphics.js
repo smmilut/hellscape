@@ -150,7 +150,7 @@ export const newSprite = function newSprite(initOptions) {
     * */
     function convertPositionToSprite(position) {
         let x = position.x - obj_Sprite.sheetCellWidth / 2.0;
-        let y = position.y - obj_Sprite.sheetCellHeight;
+        let y = position.y - obj_Sprite.sheetCellHeight / 2.0;
         return { x: x, y: y };
     }
 
@@ -217,6 +217,13 @@ export const newSprite = function newSprite(initOptions) {
     return obj_Sprite;
 };
 
+export const COLLISION_DIRECTION = Object.freeze({
+    LEFT: [-1, 0],
+    RIGHT: [1, 0],
+    UP: [0, 1],
+    DOWN: [0, -1],
+});
+
 /*
 * the Level grid data
 */
@@ -226,13 +233,15 @@ export const LevelGridResource = (function build_LevelGrid() {
         isInitialized: false,
     };
 
-    let LevelGrid_initOptions;
+    let LevelGrid_initOptions, LevelGrid_cellWidth, LevelGrid_cellHeight;
 
     obj_LevelGrid.prepareInit = function LevelGrid_prepareInit(initOptions) {
         LevelGrid_initOptions = initOptions || {};
     };
 
     obj_LevelGrid.init = function LevelGrid_init() {
+        LevelGrid_cellWidth = LevelGrid_initOptions.gridCellWidth;
+        LevelGrid_cellHeight = LevelGrid_initOptions.gridCellHeight;
         utils.Http.Request({
             url: LevelGrid_initOptions.url,
         })
@@ -245,6 +254,36 @@ export const LevelGridResource = (function build_LevelGrid() {
 
     obj_LevelGrid.update = function LevelGrid_update() {
         // nothing for now, but has to exist for a Resource
+    };
+
+    obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
+        return obj_LevelGrid.data[y][x] != 0;
+    }
+
+    obj_LevelGrid.hasCollisionAtCell = function LevelGrid_hasCollisionAtCell(cellX, cellY) {
+        return obj_LevelGrid.isTileBusy(position.gridX, position.gridY);
+    };
+
+    obj_LevelGrid.hasCollisionAtDirection = function LevelGrid_hasCollisionLeft(position, direction) {
+        return obj_LevelGrid.isTileBusy(position.gridX + direction[0], position.gridY + direction[1]);
+    };
+
+    /*
+    * update the pixel position of a `position` based on its grid position
+    */
+    obj_LevelGrid.updatePixelPosition = function LevelGrid_updatePixelPosition(position) {
+        position.x = (position.gridX + position.xRatio) * LevelGrid_cellWidth;
+        position.y = (position.gridY + position.yRatio) * LevelGrid_cellHeight;
+    };
+
+    /*
+    * update the grid position of a `position` based on its pixel position
+    */
+    obj_LevelGrid.updateGridPosition = function LevelGrid_updateGridPosition(position) {
+        position.gridX = Math.floor(position.x / LevelGrid_cellWidth);
+        position.xRatio = position.x / LevelGrid_cellWidth - position.gridX;
+        position.gridY = Math.floor(position.y / LevelGrid_cellHeight);
+        position.yRatio = position.y / LevelGrid_cellHeight - position.gridY;
     };
 
     return obj_LevelGrid;
@@ -370,6 +409,8 @@ export function init(ecs) {
     ecs.Data.addResource(LevelGridResource,
         {
             url: "www/levelmap.json",
+            gridCellWidth: 16,
+            gridCellHeight: 16,
         },
         1 // higher priority than LevelSprite
     );

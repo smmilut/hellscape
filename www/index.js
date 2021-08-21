@@ -21,11 +21,14 @@ const PhysicsResource = {
 
 const newPosition = function newPosition(initOptions) {
     initOptions = initOptions || {};
-    return {
+    const obj_Position = {
         name: "position",
-        x: initOptions.x || 0,
-        y: initOptions.y || 0,
+        gridX: initOptions.x || 0,
+        gridY: initOptions.y || 0,
+        xRatio: 0.0,
+        yRatio: 0.0,
     };
+    return obj_Position;
 };
 
 const newSpeed = function newSpeed(initOptions) {
@@ -60,11 +63,11 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
     ECS.Data.newEntity()
         .addComponent(newTagPlayer())
         .addComponent(newPosition({
-            x: 100,
-            y: 100,
+            x: 2,
+            y: 2,
         }))
         .addComponent(newSpeed({
-            x: 2,
+            x: 0,
             y: 0,
             max: 80,
         }))
@@ -97,15 +100,50 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
     //#endregion
 
     ECS.Controller.addSystem({
-        queryResources: ["time", "physics"],
+        queryResources: ["levelgrid", "time", "physics"],
         queryComponents: ["position", "speed"],
-        run: function moveSprite(time, physics, position, speed) {
-            position.x += speed.x * time.dt;
+        run: function moveSprite(levelgrid, time, physics, position, speed) {
+            levelgrid.updatePixelPosition(position);
+            
+            position.xRatio += speed.x * time.dt;
             speed.x *= physics.friction;
 
-            position.y += speed.y * time.dt;
+            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.RIGHT)
+            && position.xRatio >= 0.7) {
+                position.xRatio = 0.7;
+                speed.x = 0;
+            };
+
+            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.LEFT)
+            && position.xRatio <= 0.3) {
+                position.xRatio = 0.3;
+                speed.x = 0;
+            };
+
+            while( position.xRatio > 1 ) {	position.xRatio--;	position.gridX++;}
+            while( position.xRatio < 0 ) {	position.xRatio++;	position.gridX--;}
+
+            position.yRatio += speed.y * time.dt;
             speed.y += physics.gravity;
             speed.y *= physics.friction;
+            
+            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.UP)
+            && position.yRatio >= 0.5) {
+                position.yRatio = 0.5;
+                speed.y = 0;
+            };
+
+            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.DOWN)
+            && position.yRatio <= 0.3) {
+                position.yRatio = 0.3;
+                speed.x = 0;
+            };
+
+            while( position.yRatio > 1 ) {	position.yRatio--;	position.gridY++;}
+            while( position.yRatio < 0 ) {	position.yRatio++;	position.gridY--;}
+
+            //levelgrid.updateGridPosition(position);
+            console.log(position.gridX, position.gridY);
         },
     });
 

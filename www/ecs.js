@@ -90,7 +90,8 @@ export const Controller = (function build_Controller() {
                 // initiate initialization
                 resource.init(...queryResourcesResult);
                 // wait for completion of initilaization
-                waitForInit(resource)
+                waitForInit(resource);
+                console.log("resource init", resource.name, resource.isInitialized, resource);
             }
         }
     }
@@ -103,6 +104,7 @@ export const Controller = (function build_Controller() {
             return;
         } else {
             // recursively call self each event loop
+            console.log("still waiting for resource", resource.name, resource.isInitialized, resource);
             setTimeout(function keepWaiting() {
                 waitForInit(resource)
             }, 0);
