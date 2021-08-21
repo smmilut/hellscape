@@ -155,8 +155,9 @@ export const newSprite = function newSprite(initOptions) {
     * Return the upper left corner of the sprite, when the `position` indicates the position of the bottom-middle.
     * */
     function convertPositionToSprite(position) {
-        let x = position.x - obj_Sprite.sheetCellWidth / 2.0;
-        let y = position.y - obj_Sprite.sheetCellHeight / 2.0;
+        let x = position.x - obj_Sprite.sheetCellWidth * 0.5;
+        // a bit off-center downwards, so that feet appear to walk on top of the lower map tile
+        let y = position.y - obj_Sprite.sheetCellHeight * 0.4;
         return { x: x, y: y };
     }
 
