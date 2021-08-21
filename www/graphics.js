@@ -226,8 +226,8 @@ export const newSprite = function newSprite(initOptions) {
 export const COLLISION_DIRECTION = Object.freeze({
     LEFT: [-1, 0],
     RIGHT: [1, 0],
-    UP: [0, 1],
-    DOWN: [0, -1],
+    UP: [0, -1],
+    DOWN: [0, 1],
 });
 
 /*
@@ -265,7 +265,7 @@ export const LevelGridResource = (function build_LevelGrid() {
     }
 
     obj_LevelGrid.hasCollisionAtCell = function LevelGrid_hasCollisionAtCell(cellX, cellY) {
-        return obj_LevelGrid.isTileBusy(position.gridX, position.gridY);
+        return obj_LevelGrid.isTileBusy(cellX, cellY);
     };
 
     obj_LevelGrid.hasCollisionAtDirection = function LevelGrid_hasCollisionLeft(position, direction) {

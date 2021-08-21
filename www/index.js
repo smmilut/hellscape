@@ -35,7 +35,15 @@ const newSpeed = function newSpeed(initOptions) {
         name: "speed",
         x: initOptions.x || 0,
         y: initOptions.y || 0,
-        max: initOptions.max || 1000,
+        increment: initOptions.increment || 1,
+        incrementLeft : function Speed_incrementLeft() {
+            console.log(this.x, "+", this.increment);
+            this.x -= this.increment;
+        },
+        incrementRight : function Speed_incrementRight() {
+            console.log(this.x, "+", this.increment);
+            this.x += this.increment;
+        },
     };
 };
 
@@ -53,7 +61,7 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
     ECS.Data.addResource(PhysicsResource,
         {
             friction: 0.9,
-            gravity: 5,
+            gravity: 2.5,
         }
     );
 
@@ -67,7 +75,7 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
         .addComponent(newSpeed({
             x: 0,
             y: 0,
-            max: 80,
+            increment: 1.0,
         }))
         .addComponent(gfx.newSprite({
             src: "assets/player_sheet.png",
@@ -102,7 +110,7 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
         queryComponents: ["position", "speed"],
         run: function moveSprite(levelgrid, time, physics, position, speed) {
             levelgrid.updatePixelPosition(position);
-            
+
             position.xRatio += speed.x * time.dt;
             speed.x *= physics.friction;
 
@@ -126,45 +134,39 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             speed.y *= physics.friction;
             
             if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.UP)
+            && position.yRatio <= 0.3) {
+                position.yRatio = 0.3;
+                speed.y = Math.max(speed.y, 0);
+            };
+
+            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.DOWN)
             && position.yRatio >= 0.5) {
                 position.yRatio = 0.5;
                 speed.y = 0;
             };
 
-            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.DOWN)
-            && position.yRatio <= 0.3) {
-                position.yRatio = 0.3;
-                speed.x = 0;
-            };
-
             while( position.yRatio > 1 ) {	position.yRatio--;	position.gridY++;}
             while( position.yRatio < 0 ) {	position.yRatio++;	position.gridY--;}
-
-            //levelgrid.updateGridPosition(position);
-            console.log(position.gridX, position.gridY);
         },
     });
 
     ECS.Controller.addSystem({
-        queryResources: ["keyboard", "physics"],
+        queryResources: ["keyboard"],
         queryComponents: ["speed", "sprite", "tagPlayer"],
-        run: function userInput(keyboard, physics, speed, sprite) {
-            let speedIncrement = speed.max * (1 - physics.friction) / physics.friction;
+        run: function userInput(keyboard, speed, sprite) {
+            let jumpSpeedIncrement = 5.0;
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
-                speed.x += -speedIncrement;
-                speed.x = Math.max(speed.x, -speed.max);
+                speed.incrementLeft();
                 sprite.setPose("WalkLeft");
             } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
-                speed.x += speedIncrement;
-                speed.x = Math.min(speed.x, speed.max);
+                speed.incrementRight();
                 sprite.setPose("WalkRight");
             } else {
                 // still pose
             }
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
-                console.log("jump");
-                speed.y += -speedIncrement;
-                speed.y = Math.max(speed.y, -speed.max);
+                speed.y += -jumpSpeedIncrement;
+                console.log("jump", speed.y);
             }
 
         },
