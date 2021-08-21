@@ -36,14 +36,20 @@ const newSpeed = function newSpeed(initOptions) {
         x: initOptions.x || 0,
         y: initOptions.y || 0,
         increment: initOptions.increment || 1,
+        jumpSpeedIncrement: initOptions.jumpSpeedIncrement || 1,
         incrementLeft : function Speed_incrementLeft() {
-            console.log(this.x, "+", this.increment);
             this.x -= this.increment;
         },
         incrementRight : function Speed_incrementRight() {
-            console.log(this.x, "+", this.increment);
             this.x += this.increment;
         },
+        attemptJump: function Speed_attemptJump(){
+            if (this.jumpSpeedIncrement != undefined && Math.abs(this.y) < 0.1) {
+                // not currently moving vertically (falling or already jumping)
+                // assume collision down (feet on ground)
+                this.y = -this.jumpSpeedIncrement;
+            }
+        }
     };
 };
 
@@ -76,6 +82,7 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             x: 0,
             y: 0,
             increment: 1.0,
+            jumpSpeedIncrement: 40.0,
         }))
         .addComponent(gfx.newSprite({
             src: "assets/player_sheet.png",
@@ -154,7 +161,6 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
         queryResources: ["keyboard"],
         queryComponents: ["speed", "sprite", "tagPlayer"],
         run: function userInput(keyboard, speed, sprite) {
-            let jumpSpeedIncrement = 5.0;
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
                 speed.incrementLeft();
                 sprite.setPose("WalkLeft");
@@ -164,9 +170,9 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             } else {
                 // still pose
             }
+            let jumpSpeedIncrement = 40.0;
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
-                speed.y += -jumpSpeedIncrement;
-                console.log("jump", speed.y);
+                speed.attemptJump();
             }
 
         },
