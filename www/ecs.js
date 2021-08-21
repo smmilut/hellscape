@@ -1,6 +1,5 @@
 const Timer = {
     name: "timer",
-    isInitialized: false,
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
     },
@@ -8,7 +7,6 @@ const Timer = {
         this.t = 0.0;
         this.old_t = 0.0;
         this.dt = 0.0;
-        this.isInitialized = true;
     },
     update: function updateTime() {
         this.old_t = this.t;
@@ -41,9 +39,11 @@ export const Controller = (function build_Controller() {
     * Run systems
     */
     obj_Controller.start = function Controller_start() {
-        initResourceSystems();
-        runInitSystems();
-        Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+        initResourceSystems().then(function promiseRunInitSystems(resolve, reject) {
+            runInitSystems();
+        }).then(function promiseStartAnimationFrame(resolve, reject) {
+            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+        });
     };
 
     /*
@@ -76,46 +76,40 @@ export const Controller = (function build_Controller() {
     }
 
     function initResourceSystems() {
-        for (let resourceList of Data.resources) {
-            // for each priority level
-            for (let resource of resourceList) {
-                // Resources may query for other resources during initialization
-                let queryResourcesResult = [];
-                if (resource.initQueryResources) {
-                    queryResourcesResult = resource.initQueryResources.map(function getQueryResource(queryName) {
-                        // take the 1st one only, don't expect several Resources with the same name
-                        return Data.getResources(queryName)[0];
-                    });
+        return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
+            for (let priority = 0; priority < Data.resources.length; priority++) {
+                const resourceList = Data.resources[priority];
+                let resourcePromises = [];
+                for (let resource of resourceList) {
+                    // Resources may query for other resources during initialization
+                    let queryResourcesResult = [];
+                    if (resource.initQueryResources) {
+                        queryResourcesResult = resource.initQueryResources.map(function getQueryResource(queryName) {
+                            // take the 1st one only, don't expect several Resources with the same name
+                            return Data.getResources(queryName)[0];
+                        });
+                    }
+                    // initiate initialization
+                    let initResult = resource.init(...queryResourcesResult);
+                    if (initResult && initResult.then != undefined) {
+                        // add to wait list
+                        resourcePromises.push(initResult);
+                    }
                 }
-                // initiate initialization
-                resource.init(...queryResourcesResult);
-                // wait for completion of initilaization
-                waitForInit(resource);
-                console.log("resource init", resource.name, resource.isInitialized, resource);
+                // wait for completion of all resources of this priority level
+                await Promise.all(resourcePromises);
             }
-        }
-    }
-
-    /*
-    * wait indefinitely that `resource` becomes initialized
-    */
-    function waitForInit(resource) {
-        if (resource.isInitialized === true) {
-            return;
-        } else {
-            // recursively call self each event loop
-            console.log("still waiting for resource", resource.name, resource.isInitialized, resource);
-            setTimeout(function keepWaiting() {
-                waitForInit(resource)
-            }, 0);
-        }
+            resolve();
+        });
     }
 
     function runResourceSystems() {
         for (let resourceList of Data.resources) {
             // for each priority level
             for (let resource of resourceList) {
-                resource.update();
+                if (resource.update) {
+                    resource.update();
+                }
             }
         }
     }

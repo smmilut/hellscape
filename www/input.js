@@ -10,7 +10,6 @@ export const USER_ACTION = Object.freeze({
 export const KeyboardResource = (function build_Keyboard() {
     const obj_Keyboard = {
         name: "keyboard",
-        isInitialized: false,
     };
     const KeysState = new Map();
     const KeyMap = new Map();
@@ -32,7 +31,6 @@ export const KeyboardResource = (function build_Keyboard() {
                 obj_Keyboard.mapKey(key, action);
             }
         }
-        obj_Keyboard.isInitialized = true;
     };
 
     obj_Keyboard.update = function Keyboard_update() {
@@ -46,13 +44,10 @@ export const KeyboardResource = (function build_Keyboard() {
 
     obj_Keyboard.isKeyDown = function Keyboard_isKeyDown(expectedAction) {
         for (let [key, action] of KeyMap) {
-            //console.log("checking key down", key, KeysState.get(key), action, expectedAction);
             if (action == expectedAction && KeysState.get(key)) {
-                //console.log("yes down");
                 return true;
             }
         }
-        //console.log("not down");
         return false;
     };
 

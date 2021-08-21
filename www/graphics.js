@@ -18,15 +18,21 @@ function createScaledCanvas(screenWidth, screenHeight, scale) {
 }
 
 export const View = (function build_View() {
-    const obj_View = {};
-    let View_canvas, View_context;
+    const obj_View = {
+        name: "view",
+    };
+    let View_canvas, View_context, View_initOptions;
 
-    obj_View.init = function View_init(initOptions) {
-        obj_View.screenWidth = initOptions.width;
-        obj_View.screenHeight = initOptions.height;
-        obj_View.scale = initOptions.scale;
+    obj_View.prepareInit = function View_prepareInit(initOptions) {
+        View_initOptions = initOptions || {};
+    };
+
+    obj_View.init = function View_init() {
+        obj_View.screenWidth = View_initOptions.width;
+        obj_View.screenHeight = View_initOptions.height;
+        obj_View.scale = View_initOptions.scale;
         [View_canvas, View_context] = createScaledCanvas(obj_View.screenWidth, obj_View.screenHeight, obj_View.scale);
-        let parentId = initOptions.parentId || "game";
+        let parentId = View_initOptions.parentId || "game";
         const elParent = document.getElementById(parentId);
         elParent.appendChild(View_canvas);
     };
@@ -230,7 +236,6 @@ export const COLLISION_DIRECTION = Object.freeze({
 export const LevelGridResource = (function build_LevelGrid() {
     const obj_LevelGrid = {
         name: "levelgrid",
-        isInitialized: false,
     };
 
     let LevelGrid_initOptions, LevelGrid_cellWidth, LevelGrid_cellHeight;
@@ -242,14 +247,13 @@ export const LevelGridResource = (function build_LevelGrid() {
     obj_LevelGrid.init = function LevelGrid_init() {
         LevelGrid_cellWidth = LevelGrid_initOptions.gridCellWidth;
         LevelGrid_cellHeight = LevelGrid_initOptions.gridCellHeight;
-        utils.Http.Request({
+        return utils.Http.Request({
             url: LevelGrid_initOptions.url,
         })
             .then(function gotBackgroundFile(data) {
                 let json_obj = JSON.parse(data.responseText);
                 obj_LevelGrid.data = json_obj.map;
-                obj_LevelGrid.isInitialized = true;
-            })
+            });
     };
 
     obj_LevelGrid.update = function LevelGrid_update() {
@@ -296,7 +300,6 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     // the object we are building
     const obj_LevelSprite = {
         name: "levelsprite",
-        isInitialized: false,
     };
 
     let LevelSprite_sheet, LevelSprite_image, LevelSprite_initOptions;
@@ -323,6 +326,7 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     function generateBackgroundImage(levelGrid) {
         // create a new canvas for compositing the image
         let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
+        // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
         const levelData = levelGrid.data;
         // iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
@@ -380,15 +384,10 @@ export const LevelSpriteResource = (function build_LevelSprite() {
         let imageUri = canvas.toDataURL();
         LevelSprite_image = new Image();
         LevelSprite_image.src = imageUri;
-        obj_LevelSprite.isInitialized = true;
     };
 
     obj_LevelSprite.draw = function LevelSprite_draw(context, position) {
-        if (obj_LevelSprite.isInitialized) {
-            context.drawImage(LevelSprite_image, position.x, position.y);
-        } else {
-            // map not generated yet
-        }
+        context.drawImage(LevelSprite_image, position.x, position.y);
     };
 
     obj_LevelSprite.update = function LevelSprite_update() {
@@ -400,11 +399,22 @@ export const LevelSpriteResource = (function build_LevelSprite() {
 })();
 
 export function init(ecs) {
+    /*
     ecs.Controller.addInitSystem(View.init, {
         width: 960,
         height: 576,
         scale: 3.0,
     });
+    */
+
+    ecs.Data.addResource(View,
+        {
+            width: 960,
+            height: 576,
+            scale: 3.0,
+        },
+        0 // higher priority than LevelSprite
+    );
 
     ecs.Data.addResource(LevelGridResource,
         {

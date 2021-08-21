@@ -4,14 +4,12 @@ import * as input from "./input.js";
 
 const PhysicsResource = {
     name: "physics",
-    isInitialized: false,
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
     },
     init: function Physics_init(initOptions) {
         this.friction = this.initOptions.friction || 1.0;
         this.gravity = this.initOptions.gravity || 1.0;
-        this.isInitialized = true;
     },
     update: function updatePhysics() {
         // nothing
