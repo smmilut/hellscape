@@ -57,16 +57,21 @@ const newFacing = function newFacing(initOptions) {
 
 const newJump = function newJump(initOptions) {
     initOptions = initOptions || {};
+    let Jump_expended = false;
     const obj_Jump = {
         name: "jump",
         speedIncrement: initOptions.speedIncrement || 1.0,
         apply: function Jump_apply(speed){
-            if (this.speedIncrement != undefined && Math.abs(speed.y) < 0.1) {
+            if (!Jump_expended && Math.abs(speed.y) < 0.1) {
                 // not currently moving vertically (falling or already jumping)
                 // assume collision down (feet on ground)
                 speed.y = -this.speedIncrement;
+                Jump_expended = true;
             }
-        }
+        },
+        rearm: function Jump_rearm() {
+            Jump_expended = false;
+        },
     };
     return obj_Jump;
 }
@@ -359,6 +364,9 @@ const newTagMob = function newTagMob(_initOptions) {
                 if (jump.apply(speed)) {
                     actionName = "Jump";
                 };
+            }
+            if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
+                jump.rearm();
             }
             sprite.setPose(actionName + directionName);
         },

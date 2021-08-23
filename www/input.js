@@ -51,6 +51,16 @@ export const KeyboardResource = (function build_Keyboard() {
         return false;
     };
 
+    obj_Keyboard.isKeyUp = function Keyboard_isKeyUp(expectedAction) {
+        for (let [key, action] of KeyMap) {
+            if (action == expectedAction && KeysState.get(key)) {
+                return false;
+            }
+        }
+        // none of the key bindings are currently pressed down, so ok it's Up
+        return true;
+    };
+
     return obj_Keyboard;
 })();
 
