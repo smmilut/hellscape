@@ -43,19 +43,43 @@ const newSpeed = function newSpeed(initOptions) {
         incrementRight : function Speed_incrementRight() {
             this.x += this.increment;
         },
-        attemptJump: function Speed_attemptJump(){
-            if (this.jumpSpeedIncrement != undefined && Math.abs(this.y) < 0.1) {
+    };
+};
+
+const newFacing = function newFacing(initOptions) {
+    initOptions = initOptions || {};
+    const obj_Facing = {
+        name: "facing",
+        directionFacing: initOptions.directionFacing || "",
+    };
+    return obj_Facing;
+};
+
+const newJump = function newJump(initOptions) {
+    initOptions = initOptions || {};
+    const obj_Jump = {
+        name: "jump",
+        speedIncrement: initOptions.speedIncrement || 1.0,
+        apply: function Jump_apply(speed){
+            if (this.speedIncrement != undefined && Math.abs(speed.y) < 0.1) {
                 // not currently moving vertically (falling or already jumping)
                 // assume collision down (feet on ground)
-                this.y = -this.jumpSpeedIncrement;
+                speed.y = -this.speedIncrement;
             }
         }
     };
-};
+    return obj_Jump;
+}
 
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
         name: "tagPlayer",
+    };
+};
+
+const newTagMob = function newTagMob(_initOptions) {
+    return {
+        name: "tagMob",
     };
 };
 
@@ -82,7 +106,9 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             x: 0,
             y: 0,
             increment: 1.0,
-            jumpSpeedIncrement: 40.0,
+        }))
+        .addComponent(newJump({
+            speedIncrement: 40.0,
         }))
         .addComponent(gfx.newSprite({
             src: "assets/player_sheet.png",
@@ -119,13 +145,155 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             animationType: gfx.ANIMATION_TYPE.PINGPONG,
         }));
     //#endregion
-    //#region test
-    /*
-    ECS.Data.newEntity().addComponent(newPosition()).addComponent(newSpeed());
+    //#region spawn an enemy
+    ECS.Data.newEntity()
+    .addComponent(newTagMob())
+        .addComponent(newPosition({
+            x: 5,
+            y: 5,
+        }))
+        .addComponent(newSpeed({
+            x: -5,
+            y: 0,
+            increment: 1.0,
+        }))
+        .addComponent(newJump({
+            speedIncrement: 40.0,
+        }))
+        .addComponent(gfx.newSprite({
+            src: "assets/enemy_sheet.png",
+            sheetCellWidth: 16,
+            sheetCellHeight: 16,
+            sheetLayout: [
+                {
+                    pose: "WalkRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "WalkLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "TalkRight",
+                    animationLength: 2,
+                },
+                {
+                    pose: "TalkLeft",
+                    animationLength: 2,
+                },
+                {
+                    pose: "CloseFolderRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "CloseFolderWigRight",
+                    animationLength: 4,
+                },
+                {
+                    pose: "WalkPanicRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "WalkPanicLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "JumpRight",
+                    animationLength: 1,
+                },
+                {
+                    pose: "JumpLeft",
+                    animationLength: 1,
+                },
+                {
+                    pose: "PinnnedLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "PinnnedRight",
+                    animationLength: 3,
+                },
+            ],
+            pose: "WalkPanicLeft",
+            frameDuration: 0.100,
+            animationType: gfx.ANIMATION_TYPE.PINGPONG,
+        }));
+        ECS.Data.newEntity()
+    .addComponent(newTagMob())
+        .addComponent(newPosition({
+            x: 8,
+            y: 2,
+        }))
+        .addComponent(newSpeed({
+            x: 5,
+            y: 0,
+            increment: 1.0,
+        }))
+        .addComponent(newJump({
+            speedIncrement: 40.0,
+        }))
+        .addComponent(gfx.newSprite({
+            src: "assets/enemy_sheet.png",
+            sheetCellWidth: 16,
+            sheetCellHeight: 16,
+            sheetLayout: [
+                {
+                    pose: "WalkRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "WalkLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "TalkRight",
+                    animationLength: 2,
+                },
+                {
+                    pose: "TalkLeft",
+                    animationLength: 2,
+                },
+                {
+                    pose: "CloseFolderRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "CloseFolderWigRight",
+                    animationLength: 4,
+                },
+                {
+                    pose: "WalkPanicRight",
+                    animationLength: 3,
+                },
+                {
+                    pose: "WalkPanicLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "JumpRight",
+                    animationLength: 1,
+                },
+                {
+                    pose: "JumpLeft",
+                    animationLength: 1,
+                },
+                {
+                    pose: "PinnnedLeft",
+                    animationLength: 3,
+                },
+                {
+                    pose: "PinnnedRight",
+                    animationLength: 3,
+                },
+            ],
+            pose: "WalkPanicRight",
+            frameDuration: 0.100,
+            animationType: gfx.ANIMATION_TYPE.PINGPONG,
+        }));
+    // some debug
     for (let entity of ECS.Data.entities) {
         console.log(entity);
     }
-    */
     //#endregion
 
     ECS.Controller.addSystem({
@@ -175,8 +343,8 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
 
     ECS.Controller.addSystem({
         queryResources: ["keyboard"],
-        queryComponents: ["speed", "sprite", "tagPlayer"],
-        run: function userInput(keyboard, speed, sprite) {
+        queryComponents: ["speed", "jump", "sprite", "tagPlayer"],
+        run: function userInput(keyboard, speed, jump, sprite) {
             let actionName = "";
             let directionName = "";
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
@@ -192,7 +360,7 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
                 directionName = "Left";
             }
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
-                if (speed.attemptJump()) {
+                if (jump.apply(speed)) {
                     actionName = "Jump";
                 };
             }
