@@ -1,21 +1,43 @@
 import * as utils from "./utils.js";
 
 /*
-* return a canvas correctly scaled for pixel art
+* a canvas correctly scaled for pixel art
 */
-function createScaledCanvas(screenWidth, screenHeight, scale) {
-    let canvas = document.createElement("canvas");
-    let unscaledWidth = screenWidth / scale;
-    let unscaledHeight = screenHeight / scale;
-    canvas.width = unscaledWidth;
-    canvas.style.width = screenWidth + "px";
-    canvas.height = unscaledHeight;
-    canvas.style.height = screenHeight + "px";
-    let context = canvas.getContext('2d');
-    // important for pixel art style : no smoothing when scaling or animating
-    context.imageSmoothingEnabled = false;
-    return [canvas, context];
-}
+const PixelCanvas = (function build_PixelCanvas() {
+    const obj_PixelCanvas = {
+        name: "pixelCanvas",
+    };
+
+    let PixelCanvas_initOptions, PixelCanvas_scale;
+
+    obj_PixelCanvas.prepareInit = function PixelCanvas_prepareInit(initOptions) {
+        PixelCanvas_initOptions = initOptions || {};
+    };
+
+    obj_PixelCanvas.init = function PixelCanvas_init() {
+        PixelCanvas_scale = PixelCanvas_initOptions.scale;
+    };
+
+    /*
+    * return a [canvas, context] correctly scaled for pixel art
+    */
+    obj_PixelCanvas.new = function createScaledCanvas(screenWidth, screenHeight) {
+        let canvas = document.createElement("canvas");
+        let unscaledWidth = screenWidth / PixelCanvas_scale;
+        let unscaledHeight = screenHeight / PixelCanvas_scale;
+        canvas.width = unscaledWidth;
+        canvas.style.width = screenWidth + "px";
+        canvas.height = unscaledHeight;
+        canvas.style.height = screenHeight + "px";
+        let context = canvas.getContext('2d');
+        // important for pixel art style : no smoothing when scaling or animating
+        context.imageSmoothingEnabled = false;
+        return [canvas, context];
+    }
+
+    return obj_PixelCanvas;
+})();
+
 
 export const View = (function build_View() {
     const obj_View = {
@@ -25,16 +47,20 @@ export const View = (function build_View() {
 
     obj_View.prepareInit = function View_prepareInit(initOptions) {
         View_initOptions = initOptions || {};
+        obj_View.initQueryResources = initOptions.initQueryResources;
     };
 
-    obj_View.init = function View_init() {
-        obj_View.screenWidth = View_initOptions.width;
-        obj_View.screenHeight = View_initOptions.height;
-        obj_View.scale = View_initOptions.scale;
-        [View_canvas, View_context] = createScaledCanvas(obj_View.screenWidth, obj_View.screenHeight, obj_View.scale);
-        let parentId = View_initOptions.parentId || "game";
-        const elParent = document.getElementById(parentId);
-        elParent.appendChild(View_canvas);
+    obj_View.init = function View_init(pixelCanvas) {
+        return new Promise(function promise_View_init(resolve, reject) {
+            obj_View.screenWidth = View_initOptions.width;
+            obj_View.screenHeight = View_initOptions.height;
+            obj_View.scale = View_initOptions.scale;
+            [View_canvas, View_context] = pixelCanvas.new(obj_View.screenWidth, obj_View.screenHeight);
+            let parentId = View_initOptions.parentId || "game";
+            const elParent = document.getElementById(parentId);
+            elParent.appendChild(View_canvas);
+            resolve();
+        });
     };
 
     /*
@@ -48,7 +74,6 @@ export const View = (function build_View() {
     * Render all this sprite now
     */
     obj_View.render = function View_render(sprite, position) {
-
         sprite.draw(View_context, position);
     };
 
@@ -310,23 +335,23 @@ export const LevelSpriteResource = (function build_LevelSprite() {
         obj_LevelSprite.initQueryResources = initOptions.initQueryResources;
     }
 
-    obj_LevelSprite.init = function LevelSprite_init(levelGrid) {
+    obj_LevelSprite.init = function LevelSprite_init(levelGrid, pixelCanvas) {
         obj_LevelSprite.sheetCellWidth = LevelSprite_initOptions.sheetCellWidth;
         obj_LevelSprite.sheetCellHeight = LevelSprite_initOptions.sheetCellHeight;
         return ImageLoader.get(LevelSprite_initOptions.sheetSrc)
             .then(function sheetImageLoaded(image) {
                 LevelSprite_sheet = image;
                 // finally we have map data and a sprite sheet
-                generateBackgroundImage(levelGrid);
+                generateBackgroundImage(levelGrid, pixelCanvas);
             });
     };
 
     /*
     * Generate the background image from the level map data
     */
-    function generateBackgroundImage(levelGrid) {
+    function generateBackgroundImage(levelGrid, pixelCanvas) {
         // create a new canvas for compositing the image
-        let [canvas, context] = createScaledCanvas(View.screenWidth, View.screenHeight, View.scale);
+        let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
         // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
         const levelData = levelGrid.data;
         // iterate the level map data
@@ -408,13 +433,20 @@ export function init(ecs) {
     });
     */
 
-    ecs.Data.addResource(View,
+    ecs.Data.addResource(PixelCanvas,
         {
-            width: 1280,
-            height: 768,
             scale: 4.0,
         },
-        0 // higher priority than LevelSprite
+        0, // higher priority than View
+    );
+
+    ecs.Data.addResource(View,
+        {
+            initQueryResources: ["pixelCanvas"],
+            width: 1280,
+            height: 768,
+        },
+        1, // higher priority than LevelSprite, lower than PixelCanvas
     );
 
     ecs.Data.addResource(LevelGridResource,
@@ -423,17 +455,17 @@ export function init(ecs) {
             gridCellWidth: 16,
             gridCellHeight: 16,
         },
-        1 // higher priority than LevelSprite
+        2, // higher priority than LevelSprite
     );
 
     ecs.Data.addResource(LevelSpriteResource,
         {
-            initQueryResources: ["levelgrid"],
+            initQueryResources: ["levelgrid", "pixelCanvas"],
             sheetSrc: "assets/terrain_sheet.png",
             sheetCellWidth: 16,
             sheetCellHeight: 16,
         },
-        2 // lower priority than LevelGrid
+        3, // lower priority than LevelGrid
     );
 
     // clear background

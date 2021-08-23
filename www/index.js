@@ -290,10 +290,6 @@ const newTagMob = function newTagMob(_initOptions) {
             frameDuration: 0.100,
             animationType: gfx.ANIMATION_TYPE.PINGPONG,
         }));
-    // some debug
-    for (let entity of ECS.Data.entities) {
-        console.log(entity);
-    }
     //#endregion
 
     ECS.Controller.addSystem({

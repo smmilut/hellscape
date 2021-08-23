@@ -51,6 +51,7 @@ export const Controller = (function build_Controller() {
     */
     function animateFrame(_timeNow) {
         runResourceSystems();
+        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
         runSystems(Controller_systemQueue.get(SYSTEM_STAGE.MAIN));
         runSystems(Controller_systemQueue.get(SYSTEM_STAGE.END));
         Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
@@ -86,7 +87,8 @@ export const Controller = (function build_Controller() {
                     if (resource.initQueryResources) {
                         queryResourcesResult = resource.initQueryResources.map(function getQueryResource(queryName) {
                             // take the 1st one only, don't expect several Resources with the same name
-                            return Data.getResources(queryName)[0];
+                            let requiredResource = Data.getResources(queryName)[0];
+                            return requiredResource;
                         });
                     }
                     // initiate initialization
