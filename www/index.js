@@ -90,15 +90,31 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
             sheetCellHeight: 16,
             sheetLayout: [
                 {
+                    pose: "WalkLeft",
+                    animationLength: 3,
+                },
+                {
                     pose: "WalkRight",
                     animationLength: 3,
                 },
                 {
-                    pose: "WalkLeft",
-                    animationLength: 3,
+                    pose: "StandLeft",
+                    animationLength: 1,
+                },
+                {
+                    pose: "StandRight",
+                    animationLength: 1,
+                },
+                {
+                    pose: "JumpLeft",
+                    animationLength: 1,
+                },
+                {
+                    pose: "JumpRight",
+                    animationLength: 1,
                 },
             ],
-            pose: "WalkLeft",
+            pose: "StandLeft",
             frameDuration: 0.100,
             animationType: gfx.ANIMATION_TYPE.PINGPONG,
         }));
@@ -161,20 +177,26 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
         queryResources: ["keyboard"],
         queryComponents: ["speed", "sprite", "tagPlayer"],
         run: function userInput(keyboard, speed, sprite) {
+            let actionName = "";
+            let directionName = "";
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
                 speed.incrementLeft();
-                sprite.setPose("WalkLeft");
+                actionName = "Walk";
+                directionName = "Left";
             } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
                 speed.incrementRight();
-                sprite.setPose("WalkRight");
+                actionName = "Walk";
+                directionName = "Right";
             } else {
-                // still pose
+                actionName = "Stand";
+                directionName = "Left";
             }
-            let jumpSpeedIncrement = 40.0;
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
-                speed.attemptJump();
+                if (speed.attemptJump()) {
+                    actionName = "Jump";
+                };
             }
-
+            sprite.setPose(actionName + directionName);
         },
     });
 

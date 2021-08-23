@@ -410,9 +410,9 @@ export function init(ecs) {
 
     ecs.Data.addResource(View,
         {
-            width: 960,
-            height: 576,
-            scale: 3.0,
+            width: 1280,
+            height: 768,
+            scale: 4.0,
         },
         0 // higher priority than LevelSprite
     );
