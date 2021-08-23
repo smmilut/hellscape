@@ -46,11 +46,17 @@ const newSpeed = function newSpeed(initOptions) {
     };
 };
 
+
+const FACING = Object.freeze({
+    LEFT: "Left",
+    RIGHT: "Right",
+});
+
 const newFacing = function newFacing(initOptions) {
     initOptions = initOptions || {};
     const obj_Facing = {
         name: "facing",
-        directionFacing: initOptions.directionFacing || "",
+        direction: initOptions.direction || FACING.LEFT,
     };
     return obj_Facing;
 };
@@ -112,6 +118,7 @@ const newTagMob = function newTagMob(_initOptions) {
             y: 0,
             increment: 1.0,
         }))
+        .addComponent(newFacing())
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
@@ -344,21 +351,20 @@ const newTagMob = function newTagMob(_initOptions) {
 
     ECS.Controller.addSystem({
         queryResources: ["keyboard"],
-        queryComponents: ["speed", "jump", "sprite", "tagPlayer"],
-        run: function userInput(keyboard, speed, jump, sprite) {
+        queryComponents: ["speed", "facing", "jump", "sprite", "tagPlayer"],
+        run: function userInput(keyboard, speed, facing, jump, sprite) {
             let actionName = "";
             let directionName = "";
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
                 speed.incrementLeft();
                 actionName = "Walk";
-                directionName = "Left";
+                facing.direction = FACING.LEFT;
             } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
                 speed.incrementRight();
                 actionName = "Walk";
-                directionName = "Right";
+                facing.direction = FACING.RIGHT;
             } else {
                 actionName = "Stand";
-                directionName = "Left";
             }
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
                 if (jump.apply(speed)) {
@@ -368,7 +374,7 @@ const newTagMob = function newTagMob(_initOptions) {
             if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
                 jump.rearm();
             }
-            sprite.setPose(actionName + directionName);
+            sprite.setPose(actionName + facing.direction);
         },
     });
 
