@@ -92,6 +92,13 @@ const newJump = function newJump(initOptions) {
     return obj_Jump;
 };
 
+const newAttack = function newAttack(_initOptions) {
+    return {
+        name: "attack",
+        isAttacking: false,
+    };
+};
+
 const newCollider = function newCollider(initOptions) {
     initOptions = initOptions || {};
     return {
@@ -120,6 +127,21 @@ const newCollider = function newCollider(initOptions) {
                 return false;
             }
         },
+    };
+};
+
+const MOB_STATES = Object.freeze({
+    STANDING: 0,
+    FLEEING: 1,
+    DYING: 2,
+    DEAD: 3,
+});
+
+const newMobState = function newMobState(initOptions) {
+    initOptions = initOptions || {};
+    return {
+        name: "mobState",
+        state: initOptions.state,
     };
 };
 
@@ -269,6 +291,7 @@ const newTagMob = function newTagMob(_initOptions) {
             width: 10,
             height: 15,
         }))
+        .addComponent(newAttack())
         .addComponent(gfx.newSprite(playerSpriteSheetOptions));
     //#endregion
     //#region spawn an enemy
@@ -425,20 +448,24 @@ const newTagMob = function newTagMob(_initOptions) {
     ECS.Data.newEntity()
         .addComponent(newTagMob())
         .addComponent(newPosition({
-            x: 5,
-            y: 5,
+            x: 2,
+            y: 7,
         }))
         .addComponent(newSpeed({
             x: -5,
             y: 0,
             increment: 1.0,
         }))
+        .addComponent(newFacing())
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
         .addComponent(newCollider({
             width: 10,
             height: 15,
+        }))
+        .addComponent(newMobState({
+            state: MOB_STATES.FLEEING,
         }))
         .addComponent(gfx.newSprite(enemySpriteSheetOptions));
     ECS.Data.newEntity()
@@ -452,12 +479,16 @@ const newTagMob = function newTagMob(_initOptions) {
             y: 0,
             increment: 1.0,
         }))
+        .addComponent(newFacing())
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
         .addComponent(newCollider({
             width: 10,
             height: 15,
+        }))
+        .addComponent(newMobState({
+            state: MOB_STATES.FLEEING,
         }))
         .addComponent(gfx.newSprite(enemySpriteSheetOptions));
     //#endregion
@@ -518,7 +549,7 @@ const newTagMob = function newTagMob(_initOptions) {
     ECS.Controller.addSystem({
         resourceQuery: ["keyboard"],
         componentQueries: {
-            player: ["speed", "facing", "jump", "sprite", "tagPlayer"],
+            player: ["speed", "facing", "jump", "sprite", "attack", "tagPlayer"],
         },
         run: function userInput(queryResults) {
             let keyboard = queryResults.resources.keyboard;
@@ -542,6 +573,10 @@ const newTagMob = function newTagMob(_initOptions) {
                 }
                 if (keyboard.isKeyDown(input.USER_ACTION.ATTACK)) {
                     actionName = ACTION_POSE.ATTACK;
+                    e.attack.isAttacking = true;
+                }
+                if (keyboard.isKeyUp(input.USER_ACTION.ATTACK)) {
+                    e.attack.isAttacking = false;
                 }
                 if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
                     e.jump.rearm();
@@ -555,15 +590,57 @@ const newTagMob = function newTagMob(_initOptions) {
     });
 
     ECS.Controller.addSystem({
+        resourceQuery: ["levelgrid"],
         componentQueries: {
-            player: ["position", "collider", "tagPlayer"],
-            ennemies: ["position", "collider", "tagMob"],
+            mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
+        },
+        run: function mobBehave(queryResults) {
+            let levelgrid = queryResults.resources.levelgrid;
+            for (let e of queryResults.components.mobs) {
+                let actionName = ACTION_POSE.NONE;
+                if (e.mobState.state == MOB_STATES.FLEEING) {
+                    // console.log("mob fleeing");
+                    e.speed.incrementRight();
+                    e.facing.direction = FACING.RIGHT;
+                    actionName = ACTION_POSE.WALKPANIC;
+                } else if (e.mobState.state == MOB_STATES.DYING) {
+                    // console.log("mob dying", e, e.position);
+                    e.speed.x = 0;
+                    if (levelgrid.hasCollisionAtDirection(e.position, gfx.COLLISION_DIRECTION.UP)
+                        && e.position.yRatio <= 0.3
+                    ) {
+                        // console.log("mob pinning up");
+                        e.speed.y = 0;
+                        e.mobState.state == MOB_STATES.DYING;
+                        actionName = ACTION_POSE.PINNED;
+                    } else {
+                        // console.log("mob dying up");
+                        e.speed.y = -20;
+                        actionName = ACTION_POSE.JUMP;
+                    }
+                }
+                e.sprite.setPose({
+                    action: actionName,
+                    facing: e.facing.direction
+                });
+            }
+        },
+    });
+
+    ECS.Controller.addSystem({
+        componentQueries: {
+            player: ["position", "collider", "attack", "tagPlayer"],
+            mobs: ["position", "collider", "mobState", "tagMob"],
         },
         run: function checkCollisions(queryResults) {
             for (let p of queryResults.components.player) {
-                for (let e of queryResults.components.ennemies) {
-                    if (p.collider.hasCollisionWith(p.position, e.collider, e.position)) {
-                        console.log("COLLISION");
+                for (let mob of queryResults.components.mobs) {
+                    if (
+                        p.collider.hasCollisionWith(p.position, mob.collider, mob.position) &&
+                        p.attack.isAttacking
+                    ) {
+                        console.log("attacking that victim");
+                        mob.mobState.state = MOB_STATES.DYING;
                     }
                 }
             }
