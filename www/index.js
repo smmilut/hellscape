@@ -92,6 +92,37 @@ const newJump = function newJump(initOptions) {
     return obj_Jump;
 };
 
+const newCollider = function newCollider(initOptions) {
+    initOptions = initOptions || {};
+    return {
+        name: "collider",
+        width: initOptions.width || 16,
+        height: initOptions.height || 16,
+        hasCollisionWith: function Collider_hasCollisionWith(thisPosition, otherCollider, otherPosition) {
+            const thisLeft = thisPosition.x - this.width / 2.0;
+            const thisRight = thisPosition.x + this.width / 2.0;
+            const thisTop = thisPosition.y - this.height / 2.0;
+            const thisBottom = thisPosition.y + this.height / 2.0;
+            const otherLeft = otherPosition.x - otherCollider.width / 2.0;
+            const otherRight = otherPosition.x + otherCollider.width / 2.0;
+            const otherTop = otherPosition.y - otherCollider.height / 2.0;
+            const otherBottom = otherPosition.y + otherCollider.height / 2.0;
+            // or collision based on center only
+            //if (otherPosition.x >= thisLeft && otherPosition.x <= thisRight && otherPosition.y <= thisBottom && otherPosition.y >= thisTop) {
+            if (
+                thisLeft <= otherRight &&
+                thisRight >= otherLeft &&
+                thisBottom >= otherTop &&
+                thisTop <= otherBottom
+            ) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+    };
+};
+
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
         name: "tagPlayer",
@@ -233,6 +264,10 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newFacing())
         .addComponent(newJump({
             speedIncrement: 40.0,
+        }))
+        .addComponent(newCollider({
+            width: 10,
+            height: 15,
         }))
         .addComponent(gfx.newSprite(playerSpriteSheetOptions));
     //#endregion
@@ -401,6 +436,10 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
+        .addComponent(newCollider({
+            width: 10,
+            height: 15,
+        }))
         .addComponent(gfx.newSprite(enemySpriteSheetOptions));
     ECS.Data.newEntity()
         .addComponent(newTagMob())
@@ -416,6 +455,10 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
+        .addComponent(newCollider({
+            width: 10,
+            height: 15,
+        }))
         .addComponent(gfx.newSprite(enemySpriteSheetOptions));
     //#endregion
 
@@ -429,7 +472,7 @@ const newTagMob = function newTagMob(_initOptions) {
             let time = queryResults.resources.time;
             let physics = queryResults.resources.physics;
 
-            for(let e of queryResults.components.mobiles) {
+            for (let e of queryResults.components.mobiles) {
                 levelgrid.updatePixelPosition(e.position);
 
                 e.position.xRatio += e.speed.x * time.dt;
@@ -507,6 +550,22 @@ const newTagMob = function newTagMob(_initOptions) {
                     action: actionName,
                     facing: e.facing.direction
                 });
+            }
+        },
+    });
+
+    ECS.Controller.addSystem({
+        componentQueries: {
+            player: ["position", "collider", "tagPlayer"],
+            ennemies: ["position", "collider", "tagMob"],
+        },
+        run: function checkCollisions(queryResults) {
+            for (let p of queryResults.components.player) {
+                for (let e of queryResults.components.ennemies) {
+                    if (p.collider.hasCollisionWith(p.position, e.collider, e.position)) {
+                        console.log("COLLISION");
+                    }
+                }
             }
         },
     });
