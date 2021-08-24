@@ -129,34 +129,37 @@ export const Controller = (function build_Controller() {
     */
     function runSystems(systemQueue) {
         for (let system of systemQueue) {
+            const queryResults = {};
             //#region prepare requested Resources
-            let queryResourcesResult = [];
-            if (system.queryResources) {
-                queryResourcesResult = system.queryResources.map(function getQueryResource(queryName) {
-                    // take the 1st one only, don't expect several Resources with the same name
-                    return Data.getResources(queryName)[0];
-                });
+            if (system.resourceQuery) {
+                queryResults.resources = Data.getAllResourcesNamed(system.resourceQuery);
             }
             //#endregion
-            if (system.queryComponents == undefined) {
-                // no Components requested, run once
-                system.run(...queryResourcesResult);
-            } else {
+            if (system.componentQueries != undefined) {
                 //#region prepare requested Components
-                let queryComponents = system.queryComponents;
-                for (let entity of Data.entities) {
-                    let queryComponentsResult = [];
-                    if (entity.hasAllComponents(queryComponents)) {
-                        // this Entity is valid for the query
-                        queryComponentsResult = queryComponents.map(function getQueryComponent(queryName) {
-                            // take the 1st one only, don't expect several Components with the same name
-                            return entity.getComponents(queryName)[0];
-                        });
-                        system.run(...queryResourcesResult, ...queryComponentsResult);
+                // the map of { queryName: queryResult }
+                queryResults.components = {};
+                for (let componentQueryName in system.componentQueries) {
+                    // the list of names of queried Components
+                    const componentQuery = system.componentQueries[componentQueryName];
+                    // the list of result [Entities,] for this query
+                    queryResults.components[componentQueryName] = [];
+                    for (let entity of Data.entities) {
+                        if (entity.hasAllComponents(componentQuery)) {
+                            // this Entity is valid for the query, get all Components
+                            const resultComponents = {};
+                            for (let queriedComponentName of componentQuery) {
+                                // take the 1st one only, don't expect several Components with the same name
+                                let resultComponent = entity.getComponents(queriedComponentName)[0];
+                                resultComponents[queriedComponentName] = resultComponent;
+                            }
+                            queryResults.components[componentQueryName].push(resultComponents);
+                        }
                     }
                 }
+                //#endregion
             }
-            //#endregion
+            system.run(queryResults);
         }
     }
 
@@ -214,7 +217,7 @@ export const Data = (function build_Data() {
         return obj_Data;
     };
 
-    obj_Data.getResources = function Entity_getResources(resourceName) {
+    obj_Data.getResources = function Data_getResources(resourceName) {
         let filteredResources = []
         for (let resourceList of obj_Data.resources) {
             // for each priority level
@@ -226,6 +229,14 @@ export const Data = (function build_Data() {
             }));
         }
         return filteredResources;
+    };
+
+    obj_Data.getAllResourcesNamed = function Data_getAllResourcesNamed(resourceQuery) {
+        const resourceResult = {};
+        for (const queryName of resourceQuery) {
+            resourceResult[queryName] = obj_Data.getResources(queryName)[0];
+        }
+        return resourceResult;
     };
 
     return obj_Data;

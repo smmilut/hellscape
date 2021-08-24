@@ -420,81 +420,94 @@ const newTagMob = function newTagMob(_initOptions) {
     //#endregion
 
     ECS.Controller.addSystem({
-        queryResources: ["levelgrid", "time", "physics"],
-        queryComponents: ["position", "speed"],
-        run: function moveSprite(levelgrid, time, physics, position, speed) {
-            levelgrid.updatePixelPosition(position);
+        resourceQuery: ["levelgrid", "time", "physics"],
+        componentQueries: {
+            mobiles: ["position", "speed"],
+        },
+        run: function moveSprite(queryResults) {
+            let levelgrid = queryResults.resources.levelgrid;
+            let time = queryResults.resources.time;
+            let physics = queryResults.resources.physics;
 
-            position.xRatio += speed.x * time.dt;
-            speed.x *= physics.friction;
+            for(let e of queryResults.components.mobiles) {
+                levelgrid.updatePixelPosition(e.position);
 
-            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.RIGHT)
-                && position.xRatio >= 0.7) {
-                position.xRatio = 0.7;
-                speed.x = 0;
-            };
+                e.position.xRatio += e.speed.x * time.dt;
+                e.speed.x *= physics.friction;
 
-            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.LEFT)
-                && position.xRatio <= 0.3) {
-                position.xRatio = 0.3;
-                speed.x = 0;
-            };
+                if (levelgrid.hasCollisionAtDirection(e.position, gfx.COLLISION_DIRECTION.RIGHT)
+                    && e.position.xRatio >= 0.7) {
+                    e.position.xRatio = 0.7;
+                    e.speed.x = 0;
+                };
 
-            while (position.xRatio > 1) { position.xRatio--; position.gridX++; }
-            while (position.xRatio < 0) { position.xRatio++; position.gridX--; }
+                if (levelgrid.hasCollisionAtDirection(e.position, gfx.COLLISION_DIRECTION.LEFT)
+                    && e.position.xRatio <= 0.3) {
+                    e.position.xRatio = 0.3;
+                    e.speed.x = 0;
+                };
 
-            position.yRatio += speed.y * time.dt;
-            speed.y += physics.gravity;
-            speed.y *= physics.friction;
+                while (e.position.xRatio > 1) { e.position.xRatio--; e.position.gridX++; }
+                while (e.position.xRatio < 0) { e.position.xRatio++; e.position.gridX--; }
 
-            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.UP)
-                && position.yRatio <= 0.3) {
-                position.yRatio = 0.3;
-                speed.y = Math.max(speed.y, 0);
-            };
+                e.position.yRatio += e.speed.y * time.dt;
+                e.speed.y += physics.gravity;
+                e.speed.y *= physics.friction;
 
-            if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.DOWN)
-                && position.yRatio >= 0.5) {
-                position.yRatio = 0.5;
-                speed.y = 0;
-            };
+                if (levelgrid.hasCollisionAtDirection(e.position, gfx.COLLISION_DIRECTION.UP)
+                    && e.position.yRatio <= 0.3) {
+                    e.position.yRatio = 0.3;
+                    e.speed.y = Math.max(e.speed.y, 0);
+                };
 
-            while (position.yRatio > 1) { position.yRatio--; position.gridY++; }
-            while (position.yRatio < 0) { position.yRatio++; position.gridY--; }
+                if (levelgrid.hasCollisionAtDirection(e.position, gfx.COLLISION_DIRECTION.DOWN)
+                    && e.position.yRatio >= 0.5) {
+                    e.position.yRatio = 0.5;
+                    e.speed.y = 0;
+                };
+
+                while (e.position.yRatio > 1) { e.position.yRatio--; e.position.gridY++; }
+                while (e.position.yRatio < 0) { e.position.yRatio++; e.position.gridY--; }
+            }
         },
     });
 
     ECS.Controller.addSystem({
-        queryResources: ["keyboard"],
-        queryComponents: ["speed", "facing", "jump", "sprite", "tagPlayer"],
-        run: function userInput(keyboard, speed, facing, jump, sprite) {
-            let actionName = ACTION_POSE.NONE;
-            if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
-                speed.incrementLeft();
-                actionName = ACTION_POSE.WALK;
-                facing.direction = FACING.LEFT;
-            } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
-                speed.incrementRight();
-                actionName = ACTION_POSE.WALK;
-                facing.direction = FACING.RIGHT;
-            } else {
-                actionName = ACTION_POSE.STAND;
+        resourceQuery: ["keyboard"],
+        componentQueries: {
+            player: ["speed", "facing", "jump", "sprite", "tagPlayer"],
+        },
+        run: function userInput(queryResults) {
+            let keyboard = queryResults.resources.keyboard;
+            for (let e of queryResults.components.player) {
+                let actionName = ACTION_POSE.NONE;
+                if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
+                    e.speed.incrementLeft();
+                    actionName = ACTION_POSE.WALK;
+                    e.facing.direction = FACING.LEFT;
+                } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
+                    e.speed.incrementRight();
+                    actionName = ACTION_POSE.WALK;
+                    e.facing.direction = FACING.RIGHT;
+                } else {
+                    actionName = ACTION_POSE.STAND;
+                }
+                if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
+                    if (e.jump.apply(e.speed)) {
+                        actionName = ACTION_POSE.JUMP;
+                    };
+                }
+                if (keyboard.isKeyDown(input.USER_ACTION.ATTACK)) {
+                    actionName = ACTION_POSE.ATTACK;
+                }
+                if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
+                    e.jump.rearm();
+                }
+                e.sprite.setPose({
+                    action: actionName,
+                    facing: e.facing.direction
+                });
             }
-            if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
-                if (jump.apply(speed)) {
-                    actionName = ACTION_POSE.JUMP;
-                };
-            }
-            if (keyboard.isKeyDown(input.USER_ACTION.ATTACK)) {
-                actionName = ACTION_POSE.ATTACK;
-            }
-            if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
-                jump.rearm();
-            }
-            sprite.setPose({
-                action: actionName,
-                facing: facing.direction
-            });
         },
     });
 

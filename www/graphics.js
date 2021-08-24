@@ -528,26 +528,36 @@ export function init(ecs) {
 
     // clear background
     ecs.Controller.addSystem({
-        queryResources: ["levelsprite"],
-        run: function clearBackground(background) {
-            View.render(background, { x: 0, y: 0 });
+        resourceQuery: ["levelsprite"],
+        run: function clearBackground(queryResults) {
+            const levelsprite = queryResults.resources.levelsprite;
+            View.render(levelsprite, { x: 0, y: 0 });
         },
     },
         ecs.SYSTEM_STAGE.END);
     // update animation
     ecs.Controller.addSystem({
-        queryResources: ["time"],
-        queryComponents: ["sprite"],
-        run: function updateAnimation(time, sprite) {
-            sprite.updateAnimation(time.dt);
+        resourceQuery: ["time"],
+        componentQueries: {
+            sprites: ["sprite"],
+        },
+        run: function updateAnimation(queryResults) {
+            const time = queryResults.resources.time;
+            for (let e of queryResults.components.sprites) {
+                e.sprite.updateAnimation(time.dt);
+            }
         },
     },
         ecs.SYSTEM_STAGE.END);
     // render sprites
     ecs.Controller.addSystem({
-        queryComponents: ["sprite", "position"],
-        run: function drawSprite(sprite, position) {
-            View.render(sprite, position);
+        componentQueries: {
+            sprites: ["sprite", "position"],
+        },
+        run: function drawSprite(queryResults) {
+            for(let e of queryResults.components.sprites) {
+                View.render(e.sprite, e.position);
+            }
         }
     },
         ecs.SYSTEM_STAGE.END);
