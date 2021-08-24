@@ -5,6 +5,7 @@ export const USER_ACTION = Object.freeze({
     UP: "UP",
     DOWN: "DOWN",
     JUMP: "JUMP",
+    ATTACK: "ATTACK",
 });
 
 export const KeyboardResource = (function build_Keyboard() {
@@ -70,6 +71,11 @@ export function init(ecs) {
             ["ArrowLeft", USER_ACTION.LEFT],
             ["ArrowRight", USER_ACTION.RIGHT],
             [" ", USER_ACTION.JUMP],
+            ["q", USER_ACTION.LEFT],
+            ["a", USER_ACTION.LEFT],
+            ["d", USER_ACTION.RIGHT],
+            ["j", USER_ACTION.JUMP],
+            ["h", USER_ACTION.ATTACK],
         ],
     });
 }

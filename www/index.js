@@ -37,10 +37,10 @@ const newSpeed = function newSpeed(initOptions) {
         y: initOptions.y || 0,
         increment: initOptions.increment || 1,
         jumpSpeedIncrement: initOptions.jumpSpeedIncrement || 1,
-        incrementLeft : function Speed_incrementLeft() {
+        incrementLeft: function Speed_incrementLeft() {
             this.x -= this.increment;
         },
-        incrementRight : function Speed_incrementRight() {
+        incrementRight: function Speed_incrementRight() {
             this.x += this.increment;
         },
     };
@@ -52,13 +52,23 @@ const FACING = Object.freeze({
     RIGHT: "Right",
 });
 
+const ACTION_POSE = Object.freeze({
+    UNUSED: "*unused*", // pose exists in the sprite sheet, but not in the game
+    NONE: "",
+    STAND: "Stand",
+    WALK: "Walk",
+    WALKPANIC: "WalkPanic",
+    PINNED: "Pinned",
+    JUMP: "Jump",
+    ATTACK: "Attack",
+});
+
 const newFacing = function newFacing(initOptions) {
     initOptions = initOptions || {};
-    const obj_Facing = {
+    return {
         name: "facing",
         direction: initOptions.direction || FACING.LEFT,
     };
-    return obj_Facing;
 };
 
 const newJump = function newJump(initOptions) {
@@ -67,7 +77,7 @@ const newJump = function newJump(initOptions) {
     const obj_Jump = {
         name: "jump",
         speedIncrement: initOptions.speedIncrement || 1.0,
-        apply: function Jump_apply(speed){
+        apply: function Jump_apply(speed) {
             if (!Jump_expended && Math.abs(speed.y) < 0.1) {
                 // not currently moving vertically (falling or already jumping)
                 // assume collision down (feet on ground)
@@ -80,7 +90,7 @@ const newJump = function newJump(initOptions) {
         },
     };
     return obj_Jump;
-}
+};
 
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
@@ -107,6 +117,108 @@ const newTagMob = function newTagMob(_initOptions) {
     );
 
     //#region spawn a Player
+    const playerSpriteSheetOptions = {
+        src: "assets/player_sheet.png",
+        sheetCellWidth: 16,
+        sheetCellHeight: 16,
+        sheetLayout: [
+            {
+                pose: {
+                    name: "WalkLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.WALK,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "WalkRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.WALK,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "StandLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.STAND,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "StandRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.STAND,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "JumpLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.JUMP,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                },
+            },
+            {
+                pose: {
+                    name: "JumpRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.JUMP,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                },
+            },
+            {
+                pose: {
+                    name: "AttackLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.ATTACK,
+                },
+                animation: {
+                    length: 2,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "AttackRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.ATTACK,
+                },
+                animation: {
+                    length: 2,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+        ],
+        defaultPose: "StandLeft",
+    };
     ECS.Data.newEntity()
         .addComponent(newTagPlayer())
         .addComponent(newPosition({
@@ -122,44 +234,161 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
-        .addComponent(gfx.newSprite({
-            src: "assets/player_sheet.png",
-            sheetCellWidth: 16,
-            sheetCellHeight: 16,
-            sheetLayout: [
-                {
-                    pose: "WalkLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "WalkRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "StandLeft",
-                    animationLength: 1,
-                },
-                {
-                    pose: "StandRight",
-                    animationLength: 1,
-                },
-                {
-                    pose: "JumpLeft",
-                    animationLength: 1,
-                },
-                {
-                    pose: "JumpRight",
-                    animationLength: 1,
-                },
-            ],
-            pose: "StandLeft",
-            frameDuration: 0.100,
-            animationType: gfx.ANIMATION_TYPE.PINGPONG,
-        }));
+        .addComponent(gfx.newSprite(playerSpriteSheetOptions));
     //#endregion
     //#region spawn an enemy
+    const enemySpriteSheetOptions = {
+        src: "assets/enemy_sheet.png",
+        sheetCellWidth: 16,
+        sheetCellHeight: 16,
+        sheetLayout: [
+            {
+                pose: {
+                    name: "WalkRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.WALK,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "WalkLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.WALK,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "TalkRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.UNUSED,
+                },
+                animation: {
+                    length: 2,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "TalkLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.UNUSED,
+                },
+                animation: {
+                    length: 2,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "CloseFolderRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.UNUSED,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "CloseFolderWigRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.UNUSED,
+                },
+                animation: {
+                    length: 4,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "WalkPanicRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.WALKPANIC,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "WalkPanicLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.WALKPANIC,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.PINGPONG,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "JumpRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.JUMP,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                },
+            },
+            {
+                pose: {
+                    name: "JumpLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.JUMP,
+                },
+                animation: {
+                    length: 1,
+                    type: gfx.ANIMATION_TYPE.NONE,
+                },
+            },
+            {
+                pose: {
+                    name: "PinnnedLeft",
+                    facing: FACING.LEFT,
+                    action: ACTION_POSE.PINNED,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+            {
+                pose: {
+                    name: "PinnnedRight",
+                    facing: FACING.RIGHT,
+                    action: ACTION_POSE.PINNED,
+                },
+                animation: {
+                    length: 3,
+                    type: gfx.ANIMATION_TYPE.FORWARD,
+                    frameDuration: 0.100,
+                },
+            },
+        ],
+        defaultPose: "WalkPanicLeft",
+    };
     ECS.Data.newEntity()
-    .addComponent(newTagMob())
+        .addComponent(newTagMob())
         .addComponent(newPosition({
             x: 5,
             y: 5,
@@ -172,66 +401,9 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
-        .addComponent(gfx.newSprite({
-            src: "assets/enemy_sheet.png",
-            sheetCellWidth: 16,
-            sheetCellHeight: 16,
-            sheetLayout: [
-                {
-                    pose: "WalkRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "WalkLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "TalkRight",
-                    animationLength: 2,
-                },
-                {
-                    pose: "TalkLeft",
-                    animationLength: 2,
-                },
-                {
-                    pose: "CloseFolderRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "CloseFolderWigRight",
-                    animationLength: 4,
-                },
-                {
-                    pose: "WalkPanicRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "WalkPanicLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "JumpRight",
-                    animationLength: 1,
-                },
-                {
-                    pose: "JumpLeft",
-                    animationLength: 1,
-                },
-                {
-                    pose: "PinnnedLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "PinnnedRight",
-                    animationLength: 3,
-                },
-            ],
-            pose: "WalkPanicLeft",
-            frameDuration: 0.100,
-            animationType: gfx.ANIMATION_TYPE.PINGPONG,
-        }));
-        ECS.Data.newEntity()
-    .addComponent(newTagMob())
+        .addComponent(gfx.newSprite(enemySpriteSheetOptions));
+    ECS.Data.newEntity()
+        .addComponent(newTagMob())
         .addComponent(newPosition({
             x: 8,
             y: 2,
@@ -244,64 +416,7 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newJump({
             speedIncrement: 40.0,
         }))
-        .addComponent(gfx.newSprite({
-            src: "assets/enemy_sheet.png",
-            sheetCellWidth: 16,
-            sheetCellHeight: 16,
-            sheetLayout: [
-                {
-                    pose: "WalkRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "WalkLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "TalkRight",
-                    animationLength: 2,
-                },
-                {
-                    pose: "TalkLeft",
-                    animationLength: 2,
-                },
-                {
-                    pose: "CloseFolderRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "CloseFolderWigRight",
-                    animationLength: 4,
-                },
-                {
-                    pose: "WalkPanicRight",
-                    animationLength: 3,
-                },
-                {
-                    pose: "WalkPanicLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "JumpRight",
-                    animationLength: 1,
-                },
-                {
-                    pose: "JumpLeft",
-                    animationLength: 1,
-                },
-                {
-                    pose: "PinnnedLeft",
-                    animationLength: 3,
-                },
-                {
-                    pose: "PinnnedRight",
-                    animationLength: 3,
-                },
-            ],
-            pose: "WalkPanicRight",
-            frameDuration: 0.100,
-            animationType: gfx.ANIMATION_TYPE.PINGPONG,
-        }));
+        .addComponent(gfx.newSprite(enemySpriteSheetOptions));
     //#endregion
 
     ECS.Controller.addSystem({
@@ -314,38 +429,38 @@ const newTagMob = function newTagMob(_initOptions) {
             speed.x *= physics.friction;
 
             if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.RIGHT)
-            && position.xRatio >= 0.7) {
+                && position.xRatio >= 0.7) {
                 position.xRatio = 0.7;
                 speed.x = 0;
             };
 
             if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.LEFT)
-            && position.xRatio <= 0.3) {
+                && position.xRatio <= 0.3) {
                 position.xRatio = 0.3;
                 speed.x = 0;
             };
 
-            while( position.xRatio > 1 ) {	position.xRatio--;	position.gridX++;}
-            while( position.xRatio < 0 ) {	position.xRatio++;	position.gridX--;}
+            while (position.xRatio > 1) { position.xRatio--; position.gridX++; }
+            while (position.xRatio < 0) { position.xRatio++; position.gridX--; }
 
             position.yRatio += speed.y * time.dt;
             speed.y += physics.gravity;
             speed.y *= physics.friction;
-            
+
             if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.UP)
-            && position.yRatio <= 0.3) {
+                && position.yRatio <= 0.3) {
                 position.yRatio = 0.3;
                 speed.y = Math.max(speed.y, 0);
             };
 
             if (levelgrid.hasCollisionAtDirection(position, gfx.COLLISION_DIRECTION.DOWN)
-            && position.yRatio >= 0.5) {
+                && position.yRatio >= 0.5) {
                 position.yRatio = 0.5;
                 speed.y = 0;
             };
 
-            while( position.yRatio > 1 ) {	position.yRatio--;	position.gridY++;}
-            while( position.yRatio < 0 ) {	position.yRatio++;	position.gridY--;}
+            while (position.yRatio > 1) { position.yRatio--; position.gridY++; }
+            while (position.yRatio < 0) { position.yRatio++; position.gridY--; }
         },
     });
 
@@ -353,28 +468,33 @@ const newTagMob = function newTagMob(_initOptions) {
         queryResources: ["keyboard"],
         queryComponents: ["speed", "facing", "jump", "sprite", "tagPlayer"],
         run: function userInput(keyboard, speed, facing, jump, sprite) {
-            let actionName = "";
-            let directionName = "";
+            let actionName = ACTION_POSE.NONE;
             if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
                 speed.incrementLeft();
-                actionName = "Walk";
+                actionName = ACTION_POSE.WALK;
                 facing.direction = FACING.LEFT;
             } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
                 speed.incrementRight();
-                actionName = "Walk";
+                actionName = ACTION_POSE.WALK;
                 facing.direction = FACING.RIGHT;
             } else {
-                actionName = "Stand";
+                actionName = ACTION_POSE.STAND;
             }
             if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
                 if (jump.apply(speed)) {
-                    actionName = "Jump";
+                    actionName = ACTION_POSE.JUMP;
                 };
+            }
+            if (keyboard.isKeyDown(input.USER_ACTION.ATTACK)) {
+                actionName = ACTION_POSE.ATTACK;
             }
             if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
                 jump.rearm();
             }
-            sprite.setPose(actionName + facing.direction);
+            sprite.setPose({
+                action: actionName,
+                facing: facing.direction
+            });
         },
     });
 

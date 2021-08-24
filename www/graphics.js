@@ -87,6 +87,7 @@ export const ANIMATION_DIRECTION = Object.freeze({
 });
 
 export const ANIMATION_TYPE = Object.freeze({
+    NONE: 0,
     FORWARD: 1,  // animation happens in continuous forward order
     REVERSE: 2,  // animation happens in continuous reverse order
     PINGPONG: 3,  // animation happens in ping-pong mode, alternating forward and backward
@@ -140,35 +141,56 @@ export const newSprite = function newSprite(initOptions) {
         name: "sprite",
         isInitialized: false,
     };
-    let Sprite_sheet;
+    let Sprite_sheetImage;
     let Sprite_pose, Sprite_frame, Sprite_frameTime, Sprite_animationDirection;
-    const Sprite_animations = {};
+    let Sprite_poseInfo, Sprite_frameInfo;
+    /*
+    * A map of :
+    *   {
+    *       poseName: {
+    *           frames: [
+    *               {  // frame info
+    *                   sourceX,
+    *                   sourceY
+    *               },
+    *           ],
+    *           pose,
+    *           animation,
+    *       }
+    *   }
+    */
+    const Sprite_sheetLayout = {};
 
     obj_Sprite.init = function Sprite_init(initOptions) {
         //#region init animation
-        for (let row of initOptions.sheetLayout) {
-
-        }
-        obj_Sprite.setPose(initOptions.pose);
-        obj_Sprite.frameDuration = initOptions.frameDuration || 0.1;
-        obj_Sprite.animationType = initOptions.animationType || ANIMATION_TYPE.FORWARD;
-        Sprite_animationDirection = ANIMATION_DIRECTION.FORWARD;
+        let sheetLayout = initOptions.sheetLayout;
         //#endregion
         //#region init sprite sheet
         obj_Sprite.sheetCellWidth = initOptions.sheetCellWidth;
         obj_Sprite.sheetCellHeight = initOptions.sheetCellHeight;
         return ImageLoader.get(initOptions.src).then(function spriteImageLoaded(image) {
-            Sprite_sheet = image;
+            Sprite_sheetImage = image;
             // Run through all cells in the sprite sheet to define separate animation frames
-            for (let sourceY = 0, poseIndex = 0; sourceY < Sprite_sheet.height; sourceY += obj_Sprite.sheetCellHeight, poseIndex++) {
+            for (let sourceY = 0, poseIndex = 0; sourceY < Sprite_sheetImage.height; sourceY += obj_Sprite.sheetCellHeight, poseIndex++) {
                 // Y position in the sprite sheet is the animation pose
-                let rowOptions = initOptions.sheetLayout[poseIndex];
-                Sprite_animations[rowOptions.pose] = [];
-                for (let sourceX = 0, frameIndex = 0; frameIndex < rowOptions.animationLength; sourceX += obj_Sprite.sheetCellWidth, frameIndex++) {
+                let options = sheetLayout[poseIndex];
+                let animationOptions = options.animation;
+                let poseOptions = options.pose;
+                poseOptions.name = poseOptions.action + poseOptions.facing; // should already be like this, but instead of checking, I force, because it's only a convenience for inputting the options
+                Sprite_sheetLayout[poseOptions.name] = {
+                    frames: [],
+                    pose: poseOptions,
+                    animation: animationOptions,
+                };
+                for (let sourceX = 0, frameIndex = 0; frameIndex < animationOptions.length; sourceX += obj_Sprite.sheetCellWidth, frameIndex++) {
                     // X position in the sprite sheet is the animation frame for this pose
-                    Sprite_animations[rowOptions.pose][frameIndex] = [Sprite_sheet, sourceX, sourceY, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight];
+                    Sprite_sheetLayout[poseOptions.name].frames[frameIndex] = {
+                        sourceX: sourceX,
+                        sourceY: sourceY,
+                    };
                 }
             }
+            obj_Sprite.setPose({ name: initOptions.defaultPose });
             obj_Sprite.isInitialized = true;
             return obj_Sprite;
         });
@@ -189,20 +211,53 @@ export const newSprite = function newSprite(initOptions) {
     obj_Sprite.draw = function Sprite_draw(context, position) {
         if (obj_Sprite.isInitialized) {
             let screenPosition = convertPositionToSprite(position);
-            context.drawImage(...Sprite_animations[Sprite_pose][Sprite_frame], screenPosition.x, screenPosition.y, obj_Sprite.sheetCellWidth, obj_Sprite.sheetCellHeight);
+            context.drawImage(
+                Sprite_sheetImage,
+                Sprite_frameInfo.sourceX,
+                Sprite_frameInfo.sourceY,
+                obj_Sprite.sheetCellWidth,
+                obj_Sprite.sheetCellHeight,
+                screenPosition.x,
+                screenPosition.y,
+                obj_Sprite.sheetCellHeight,
+                obj_Sprite.sheetCellHeight
+            );
         } else {
             // sprite not loaded yet
+            console.log("sprite not loaded yet");
         }
     };
 
     /*
     * set animation pose
     */
-    obj_Sprite.setPose = function Sprite_setPose(poseName) {
-        if (Sprite_pose != poseName) {
+    obj_Sprite.setPose = function Sprite_setPose(poseInfo) {
+        let poseName = poseInfo.name;
+        if (poseInfo.action && poseInfo.facing) {
+            poseName = poseInfo.action + poseInfo.facing;
+        }
+        if (poseName != undefined && Sprite_pose != poseName) {
+            // the pose changed
             Sprite_pose = poseName;
-            Sprite_frame = 0;
+            // reset animation
             Sprite_frameTime = 0;
+            Sprite_poseInfo = Sprite_sheetLayout[Sprite_pose];
+            switch(Sprite_poseInfo.animation.type) {
+                case ANIMATION_TYPE.FORWARD:
+                case ANIMATION_TYPE.PINGPONG:
+                    Sprite_frame = 0;
+                    Sprite_animationDirection = ANIMATION_DIRECTION.FORWARD;
+                case ANIMATION_TYPE.REVERSE:
+                    // last frame
+                    Sprite_frame = Sprite_poseInfo.animation.length - 1;
+                    Sprite_animationDirection = ANIMATION_DIRECTION.BACKWARD;
+                    break;
+                case ANIMATION_TYPE.NONE:
+                    Sprite_frame = 0;
+                    Sprite_animationDirection = ANIMATION_DIRECTION.STOPPED;
+                    break;
+            }
+            Sprite_frameInfo = Sprite_poseInfo.frames[Sprite_frame];
         }
     };
 
@@ -210,14 +265,16 @@ export const newSprite = function newSprite(initOptions) {
     * update animation frame time, change frame, change animation direction if necessary
     */
     obj_Sprite.updateAnimation = function Sprite_updateAnimation(timePassed) {
-        if (obj_Sprite.isInitialized) {
-            Sprite_frameTime += timePassed;
-            while (Sprite_frameTime > obj_Sprite.frameDuration) {
-                nextFrame();
-                Sprite_frameTime -= obj_Sprite.frameDuration;
-            }
-        } else {
+        if (!obj_Sprite.isInitialized) {
             console.log("sprite not loaded yet");
+            return;
+        }
+        if (Sprite_animationDirection != ANIMATION_DIRECTION.STOPPED ) {
+            Sprite_frameTime += timePassed;
+            while (Sprite_frameTime > Sprite_poseInfo.animation.frameDuration) {
+                nextFrame();
+                Sprite_frameTime -= Sprite_poseInfo.animation.frameDuration;
+            }
         }
     };
 
@@ -225,10 +282,10 @@ export const newSprite = function newSprite(initOptions) {
     * move animation to next frame, change animation direction if necessary
     */
     function nextFrame() {
-        const animationLength = Sprite_animations[Sprite_pose].length;
+        const animationLength = Sprite_poseInfo.frames.length;
         Sprite_frame += Sprite_animationDirection;
         if (Sprite_frame >= animationLength || Sprite_frame < 0) {
-            switch (obj_Sprite.animationType) {
+            switch (Sprite_poseInfo.animation.type) {
                 case ANIMATION_TYPE.FORWARD:
                 case ANIMATION_TYPE.BACKWARD:
                     Sprite_frame = (Sprite_frame + animationLength) % animationLength;
@@ -242,6 +299,7 @@ export const newSprite = function newSprite(initOptions) {
                     break;
             }
         }
+        Sprite_frameInfo = Sprite_poseInfo.frames[Sprite_frame];
     };
 
     obj_Sprite.init(initOptions);
