@@ -242,7 +242,7 @@ export const newSprite = function newSprite(initOptions) {
             // reset animation
             Sprite_frameTime = 0;
             Sprite_poseInfo = Sprite_sheetLayout[Sprite_pose];
-            switch(Sprite_poseInfo.animation.type) {
+            switch (Sprite_poseInfo.animation.type) {
                 case ANIMATION_TYPE.FORWARD:
                 case ANIMATION_TYPE.PINGPONG:
                     Sprite_frame = 0;
@@ -269,7 +269,7 @@ export const newSprite = function newSprite(initOptions) {
             console.log("sprite not loaded yet");
             return;
         }
-        if (Sprite_animationDirection != ANIMATION_DIRECTION.STOPPED ) {
+        if (Sprite_animationDirection != ANIMATION_DIRECTION.STOPPED) {
             Sprite_frameTime += timePassed;
             while (Sprite_frameTime > Sprite_poseInfo.animation.frameDuration) {
                 nextFrame();
@@ -387,6 +387,7 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     };
 
     let LevelSprite_sheet, LevelSprite_image, LevelSprite_initOptions;
+    let LevelSprite_sheetLayout;
 
     obj_LevelSprite.prepareInit = function LevelSprite_prepareInit(initOptions) {
         LevelSprite_initOptions = initOptions;
@@ -396,71 +397,165 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     obj_LevelSprite.init = function LevelSprite_init(levelGrid, pixelCanvas) {
         obj_LevelSprite.sheetCellWidth = LevelSprite_initOptions.sheetCellWidth;
         obj_LevelSprite.sheetCellHeight = LevelSprite_initOptions.sheetCellHeight;
+        obj_LevelSprite.theme = LevelSprite_initOptions.defaultTheme;
         return ImageLoader.get(LevelSprite_initOptions.sheetSrc)
             .then(function sheetImageLoaded(image) {
                 LevelSprite_sheet = image;
+                parseSheetLayout(LevelSprite_initOptions.sheetLayout)
                 // finally we have map data and a sprite sheet
                 generateBackgroundImage(levelGrid, pixelCanvas);
             });
     };
 
+    function parseSheetLayout(sheetLayout) {
+        /*
+        {
+            "theme0": {
+                "neighborcode0": [  // variations
+                    {  // variation 0
+                        sourceX: x,
+                        sourceY: y,
+                    },
+                ],
+            },
+        }
+        */
+        console.log("parsing sheet layout", sheetLayout)
+        LevelSprite_sheetLayout = {};
+        for (const cellInfo of sheetLayout) {
+            console.log("cell info", cellInfo);
+            if (!(cellInfo.theme in LevelSprite_sheetLayout)) {
+                LevelSprite_sheetLayout[cellInfo.theme] = {};
+            }
+            let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 1];
+            /// bits we know are connecting
+            for (const numpadConnect of cellInfo.neighborConnect) {
+                let bitIndex = indexOfNumpad(numpadConnect);
+                neighborBits[bitIndex] = 1;
+            }
+            /// bits we know are not connecting
+            for (const numpadNoconnect of cellInfo.neighborNoconnect) {
+                let bitIndex = indexOfNumpad(numpadNoconnect);
+                neighborBits[bitIndex] = 0;
+            }
+            console.log("known neighbors", neighborBits);
+            /// now generate all combinations of neighbor codes that exist for all the ignored neighbors (connecting and not connecting)
+            const ignoredLength = cellInfo.neighborIgnored.length;
+            const ignoredIndices = cellInfo.neighborIgnored.sort().map(indexOfNumpad);
+            console.log("ignoredIndices", cellInfo.neighborIgnored, ignoredIndices);
+            for (let ignoredCombination = 0; ignoredCombination < (2 ** ignoredLength); ignoredCombination++) {
+                let ignoredCombinationBits = utils.Number.numToBitArray(ignoredCombination, ignoredLength);
+                console.log("generating combination", ignoredCombination, ignoredCombinationBits);
+                let neighborCodeBits = [...neighborBits];
+                for (let bitIndex = 0, combinationIndex = 0; bitIndex < neighborCodeBits.length; bitIndex++) {
+                    if (ignoredIndices.includes(bitIndex)) {
+                        neighborCodeBits[bitIndex] = ignoredCombinationBits[combinationIndex];
+                        console.log("setting ignored bit", combinationIndex, ignoredCombinationBits[combinationIndex]);
+                        combinationIndex++;
+                    }
+                }
+                let neighborCode = utils.Number.bitArrayToNum(neighborCodeBits);
+                console.log("generated neighbor code", neighborCodeBits, neighborCode)
+                if (!(neighborCode in LevelSprite_sheetLayout[cellInfo.theme])) {
+                    LevelSprite_sheetLayout[cellInfo.theme][neighborCode] = [];
+                }
+                console.log("building cell info", cellInfo);
+                LevelSprite_sheetLayout[cellInfo.theme][neighborCode].push({
+                    sourceX: cellInfo.cellPosition[0],
+                    sourceY: cellInfo.cellPosition[1],
+                });
+            }
+        }
+    }
+
+    /*
+    *   numpad notation : visualize a computer keyboard numpad, the main tile is at the center (number 5),
+    *       789
+    *       456
+    *       123
+    *   neighbor code: bits presence(1)/absence(0) of neighbor connection at that neighboring location, in the following order :
+    *       low bit at left (numpad 4), increasing counter-clockwise, high bit at topleft (7),
+    *       finishing eventually with highest bit at center (5) but considered granted to be 1 for now
+    */
+    function indexOfNumpad(numpadNotation) {
+        const numpads = [4, 1, 2, 3, 6, 9, 8, 7, 5]
+        for (let numpadIndex = 0; numpadIndex < numpads.length; numpadIndex++) {
+            const numpadValue = numpads[numpadIndex];
+            if (numpadNotation == numpadValue) {
+                return numpadIndex;
+            }
+        }
+    }
+
     /*
     * Generate the background image from the level map data
     */
     function generateBackgroundImage(levelGrid, pixelCanvas) {
+        console.log("got sheet layout", LevelSprite_sheetLayout);
         // create a new canvas for compositing the image
         let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
-        // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
+        document.getElementById("hiddenloading").appendChild(canvas);  // easy debug // 
         const levelData = levelGrid.data;
         // iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
             const row = levelData[rowIndex];
             const upRow = levelData[rowIndex - 1];
-            let upBit = 1;
             const downRow = levelData[rowIndex + 1];
-            let downBit = 1;
             for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_LevelSprite.sheetCellWidth) {
                 const mapValue = row[columnIndex];
-                // The index of the sprite in the sheet is based on which adjacent tiles have blocks or sky
-                let tileCode10;
-                let leftBit = row[columnIndex - 1];
-                let rightBit = row[columnIndex + 1];
-                if (leftBit == undefined) {
-                    // left edge of the map
-                    // consider it has a block
-                    leftBit = 1;
-                }
-                if (rightBit == undefined) {
-                    // right edge of the map
-                    // consider it has a block
-                    rightBit = 1;
-                }
-                if (upRow != undefined) {
+                let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                if (upRow == undefined) {
                     // top edge of the map
-                    // consider it has a block
-                    upBit = upRow[columnIndex];
+                    neighborBits[5] = undefined;
+                    neighborBits[6] = undefined;
+                    neighborBits[7] = undefined;
+                } else {
+                    neighborBits[5] = upRow[columnIndex + 1];
+                    neighborBits[6] = upRow[columnIndex];
+                    neighborBits[7] = upRow[columnIndex - 1];
                 }
-                if (downRow != undefined) {
+                if (downRow == undefined) {
                     // bottom edge of the map
-                    // consider it has a block
-                    downBit = downRow[columnIndex];
+                    neighborBits[1] = undefined;
+                    neighborBits[2] = undefined;
+                    neighborBits[3] = undefined;
+                } else {
+                    neighborBits[1] = downRow[columnIndex - 1];
+                    neighborBits[2] = downRow[columnIndex];
+                    neighborBits[3] = downRow[columnIndex + 1];
                 }
+                neighborBits[0] = row[columnIndex - 1];
+                neighborBits[8] = row[columnIndex];
+                neighborBits[4] = row[columnIndex + 1];
+                for (let neighborIndex = 0; neighborIndex < neighborBits.length; neighborIndex++) {
+                    const neighborBit = neighborBits[neighborIndex];
+                    if (neighborBit == undefined) {
+                        // edge of the map
+                        // consider it has a block
+                        neighborBits[neighborIndex] = 1;
+                    }
+                }
+                let neighborCode = utils.Number.bitArrayToNum(neighborBits);
+                console.log("trying to drawn neighbor code", neighborCode, neighborBits);
                 if (mapValue == 1) {
-                    // The center is a block,
-                    // We can find the sprite in the sheet based on neighboors
-                    tileCode10 = 1 * leftBit + 2 * downBit + 4 * rightBit + 8 * upBit;
+                    // The center is a block
                 } else if (mapValue == 0) {
                     // The center is a sky
-                    // The sprite is at a fixed location in the sheet
-                    tileCode10 = 16;
+                    // nothing to draw
                 }
-                let sourceX = tileCode10 * obj_LevelSprite.sheetCellWidth;
-                // Draw to the hidden temporary canvas
-                context.drawImage(LevelSprite_sheet,
-                    sourceX, 0,
-                    obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight,
-                    destinationX, destinationY,
-                    obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight);
+                let variations = LevelSprite_sheetLayout[obj_LevelSprite.theme][neighborCode];
+                if (variations != undefined) {
+                    let cellInfo = variations[0];  // 0 because first variation
+                    let sourceX = cellInfo.sourceX * obj_LevelSprite.sheetCellWidth;
+                    let sourceY = cellInfo.sourceY * obj_LevelSprite.sheetCellHeight;
+                    console.log("drawing cellInfo", cellInfo);
+                    // Draw to the hidden temporary canvas
+                    context.drawImage(LevelSprite_sheet,
+                        sourceX, sourceY,
+                        obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight,
+                        destinationX, destinationY,
+                        obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight);
+                }
             }
         }
         // Background drawing is finished
@@ -519,9 +614,174 @@ export function init(ecs) {
     ecs.Data.addResource(LevelSpriteResource,
         {
             initQueryResources: ["levelgrid", "pixelCanvas"],
-            sheetSrc: "assets/terrain_sheet.png",
+            sheetSrc: "assets/terrain_tilemap.png",
+            defaultTheme: "hellplatform",
             sheetCellWidth: 16,
             sheetCellHeight: 16,
+            sheetLayout: [
+                {
+                    theme: "hellplatform",
+                    type: "block",  // ignored for now
+                    cellPosition: [0, 0],  // [X column, Y row] topleft [0, 0]
+                    neighborConnect: [6, 2],  // numpad notation
+                    neighborNoconnect: [4, 8],  // block definitely not there, numpad notation
+                    neighborIgnored: [7, 9, 1, 3],  // block might or might not be there, numpad notation
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [1, 0],
+                    neighborConnect: [4, 2, 6],
+                    neighborNoconnect: [8],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [2, 0],
+                    neighborConnect: [4, 2],
+                    neighborNoconnect: [8, 6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [3, 0],
+                    neighborConnect: [2],
+                    neighborNoconnect: [4, 8, 6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [0, 1],
+                    neighborConnect: [8, 6, 2],
+                    neighborNoconnect: [4],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [1, 1],
+                    neighborConnect: [4, 8, 6, 2],
+                    neighborNoconnect: [],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [2, 1],
+                    neighborConnect: [8, 4, 2],
+                    neighborNoconnect: [6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [3, 1],
+                    neighborConnect: [8, 2],
+                    neighborNoconnect: [4, 6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [0, 2],
+                    neighborConnect: [8, 6],
+                    neighborNoconnect: [4, 2],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [1, 2],
+                    neighborConnect: [4, 8, 6],
+                    neighborNoconnect: [2],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [2, 2],
+                    neighborConnect: [4, 8],
+                    neighborNoconnect: [2, 6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [3, 2],
+                    neighborConnect: [8],
+                    neighborNoconnect: [4, 2, 6],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [0, 3],
+                    neighborConnect: [6],
+                    neighborNoconnect: [4, 8, 2],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [1, 3],
+                    neighborConnect: [4, 6],
+                    neighborNoconnect: [8, 2],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [2, 3],
+                    neighborConnect: [4],
+                    neighborNoconnect: [8, 6, 2],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [3, 3],
+                    neighborConnect: [],
+                    neighborNoconnect: [4, 2, 6, 8],
+                    neighborIgnored: [7, 9, 1, 3],
+                },
+                /*
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [4,1],
+                    neighborConnect: [4,8,6,2],
+                    neighborNoconnect: [3],
+                    neighborIgnored: [7,9,1],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [5,1],
+                    neighborConnect: [4,8,6,2],
+                    neighborNoconnect: [1],
+                    neighborIgnored: [7,9,3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [4,2],
+                    neighborConnect: [4,8,6,2],
+                    neighborNoconnect: [9],
+                    neighborIgnored: [7,1,3],
+                },
+                {
+                    theme: "hellplatform",
+                    type: "block",
+                    cellPosition: [5,2],
+                    neighborConnect: [4,8,6,2],
+                    neighborNoconnect: [7],
+                    neighborIgnored: [9,1,3],
+                },
+                */
+            ],
         },
         3, // lower priority than LevelGrid
     );
@@ -530,6 +790,7 @@ export function init(ecs) {
     ecs.Controller.addSystem({
         resourceQuery: ["levelsprite"],
         run: function clearBackground(queryResults) {
+            View.clear();  // TODO : remove when implementing background
             const levelsprite = queryResults.resources.levelsprite;
             View.render(levelsprite, { x: 0, y: 0 });
         },
@@ -555,7 +816,7 @@ export function init(ecs) {
             sprites: ["sprite", "position"],
         },
         run: function drawSprite(queryResults) {
-            for(let e of queryResults.components.sprites) {
+            for (let e of queryResults.components.sprites) {
                 View.render(e.sprite, e.position);
             }
         }

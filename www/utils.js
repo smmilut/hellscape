@@ -59,3 +59,23 @@ export const Http = (function build_HttpUtils() {
         Request: HttpRequest
     };
 })();
+
+export const Number = (function build_Number() {
+    return {
+        bitArrayToNum: function Number_bitArrayToNum(bitArray) {
+            return parseInt(bitArray.join(""), 2);
+        },
+        numToBitArray: function Number_numToBitArray(num, padLength) {
+            let bitArray = (num >>> 0).toString(2).split("").map(function toNum(str) {
+                return parseInt(str, 10);
+            });
+            const length = bitArray.length;
+            if (padLength && length < padLength) {
+                for (let i = 0; i < padLength - length; i++) {
+                    bitArray.unshift(0);
+                }
+            }
+            return bitArray.reverse();
+        },
+    }
+})();
