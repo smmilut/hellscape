@@ -436,9 +436,15 @@ export const LevelSpriteResource = (function build_LevelSprite() {
                 let bitIndex = indexOfNumpad(numpadNoconnect);
                 neighborBits[bitIndex] = 0;
             }
+            /// find all bits that were not considered by the sprite author
+            let ignoredIndices = [1,2,3,4,6,7,8,9].map(indexOfNumpad);
+            let neighborKnownIndices = [...cellInfo.neighborConnect.map(indexOfNumpad), ...cellInfo.neighborNoconnect.map(indexOfNumpad)];
+            for (const bitIndex of neighborKnownIndices) {
+                let removeIndex = ignoredIndices.indexOf(bitIndex);
+                ignoredIndices.splice(removeIndex, 1);
+            }
             /// now generate all combinations of neighbor codes that exist for all the ignored neighbors (connecting and not connecting)
-            const ignoredLength = cellInfo.neighborIgnored.length;
-            const ignoredIndices = cellInfo.neighborIgnored.sort().map(indexOfNumpad);
+            const ignoredLength = ignoredIndices.length;
             for (let ignoredCombination = 0; ignoredCombination < (2 ** ignoredLength); ignoredCombination++) {
                 let ignoredCombinationBits = utils.Number.numToBitArray(ignoredCombination, ignoredLength);
                 let neighborCodeBits = [...neighborBits];
@@ -679,7 +685,6 @@ export function init(ecs) {
                     cellPosition: [0, 0],  // [X column, Y row] topleft [0, 0]
                     neighborConnect: [6, 2],  // numpad notation
                     neighborNoconnect: [4, 8],  // block definitely not there, numpad notation
-                    neighborIgnored: [7, 9, 1, 3],  // block might or might not be there, numpad notation
                 },
                 {
                     theme: "hellplatform",
@@ -687,7 +692,6 @@ export function init(ecs) {
                     cellPosition: [1, 0],
                     neighborConnect: [4, 2, 6],
                     neighborNoconnect: [8],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -695,7 +699,6 @@ export function init(ecs) {
                     cellPosition: [2, 0],
                     neighborConnect: [4, 2],
                     neighborNoconnect: [8, 6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -703,7 +706,6 @@ export function init(ecs) {
                     cellPosition: [3, 0],
                     neighborConnect: [2],
                     neighborNoconnect: [4, 8, 6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -711,7 +713,6 @@ export function init(ecs) {
                     cellPosition: [0, 1],
                     neighborConnect: [8, 6, 2],
                     neighborNoconnect: [4],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -719,7 +720,6 @@ export function init(ecs) {
                     cellPosition: [1, 1],
                     neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -727,7 +727,6 @@ export function init(ecs) {
                     cellPosition: [2, 1],
                     neighborConnect: [8, 4, 2],
                     neighborNoconnect: [6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -735,7 +734,6 @@ export function init(ecs) {
                     cellPosition: [3, 1],
                     neighborConnect: [8, 2],
                     neighborNoconnect: [4, 6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -743,7 +741,6 @@ export function init(ecs) {
                     cellPosition: [0, 2],
                     neighborConnect: [8, 6],
                     neighborNoconnect: [4, 2],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -751,7 +748,6 @@ export function init(ecs) {
                     cellPosition: [1, 2],
                     neighborConnect: [4, 8, 6],
                     neighborNoconnect: [2],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -759,7 +755,6 @@ export function init(ecs) {
                     cellPosition: [2, 2],
                     neighborConnect: [4, 8],
                     neighborNoconnect: [2, 6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -767,7 +762,6 @@ export function init(ecs) {
                     cellPosition: [3, 2],
                     neighborConnect: [8],
                     neighborNoconnect: [4, 2, 6],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -775,7 +769,6 @@ export function init(ecs) {
                     cellPosition: [0, 3],
                     neighborConnect: [6],
                     neighborNoconnect: [4, 8, 2],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -783,7 +776,6 @@ export function init(ecs) {
                     cellPosition: [1, 3],
                     neighborConnect: [4, 6],
                     neighborNoconnect: [8, 2],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -791,7 +783,6 @@ export function init(ecs) {
                     cellPosition: [2, 3],
                     neighborConnect: [4],
                     neighborNoconnect: [8, 6, 2],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
@@ -799,39 +790,34 @@ export function init(ecs) {
                     cellPosition: [3, 3],
                     neighborConnect: [],
                     neighborNoconnect: [4, 2, 6, 8],
-                    neighborIgnored: [7, 9, 1, 3],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [4, 1],
+                    cellPosition: [8, 1],
                     neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [3],
-                    neighborIgnored: [7, 9, 1],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [5, 1],
+                    cellPosition: [9, 1],
                     neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [1],
-                    neighborIgnored: [7, 9, 3],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [4, 2],
+                    cellPosition: [8, 2],
                     neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [9],
-                    neighborIgnored: [7, 1, 3],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [5, 2],
+                    cellPosition: [9, 2],
                     neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [7],
-                    neighborIgnored: [9, 1, 3],
                 },
             ],
         },
