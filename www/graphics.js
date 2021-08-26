@@ -420,14 +420,12 @@ export const LevelSpriteResource = (function build_LevelSprite() {
             },
         }
         */
-        console.log("parsing sheet layout", sheetLayout)
         LevelSprite_sheetLayout = {};
         for (const cellInfo of sheetLayout) {
-            console.log("cell info", cellInfo);
             if (!(cellInfo.theme in LevelSprite_sheetLayout)) {
                 LevelSprite_sheetLayout[cellInfo.theme] = {};
             }
-            let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 1];
+            let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 1];  // little endian
             /// bits we know are connecting
             for (const numpadConnect of cellInfo.neighborConnect) {
                 let bitIndex = indexOfNumpad(numpadConnect);
@@ -438,31 +436,37 @@ export const LevelSpriteResource = (function build_LevelSprite() {
                 let bitIndex = indexOfNumpad(numpadNoconnect);
                 neighborBits[bitIndex] = 0;
             }
-            console.log("known neighbors", neighborBits);
             /// now generate all combinations of neighbor codes that exist for all the ignored neighbors (connecting and not connecting)
             const ignoredLength = cellInfo.neighborIgnored.length;
             const ignoredIndices = cellInfo.neighborIgnored.sort().map(indexOfNumpad);
-            console.log("ignoredIndices", cellInfo.neighborIgnored, ignoredIndices);
             for (let ignoredCombination = 0; ignoredCombination < (2 ** ignoredLength); ignoredCombination++) {
                 let ignoredCombinationBits = utils.Number.numToBitArray(ignoredCombination, ignoredLength);
-                console.log("generating combination", ignoredCombination, ignoredCombinationBits);
                 let neighborCodeBits = [...neighborBits];
+                /// for this combination, set all the relavant bits
                 for (let bitIndex = 0, combinationIndex = 0; bitIndex < neighborCodeBits.length; bitIndex++) {
                     if (ignoredIndices.includes(bitIndex)) {
+                        /// that bit in the final array if an ignored neighbor,
+                        /// so it must be set by the combination generation
                         neighborCodeBits[bitIndex] = ignoredCombinationBits[combinationIndex];
-                        console.log("setting ignored bit", combinationIndex, ignoredCombinationBits[combinationIndex]);
+                        // iterating the bits in the generated combination
                         combinationIndex++;
                     }
                 }
                 let neighborCode = utils.Number.bitArrayToNum(neighborCodeBits);
-                console.log("generated neighbor code", neighborCodeBits, neighborCode)
                 if (!(neighborCode in LevelSprite_sheetLayout[cellInfo.theme])) {
+                    /// initialize the list of variations
                     LevelSprite_sheetLayout[cellInfo.theme][neighborCode] = [];
                 }
-                console.log("building cell info", cellInfo);
                 LevelSprite_sheetLayout[cellInfo.theme][neighborCode].push({
                     sourceX: cellInfo.cellPosition[0],
                     sourceY: cellInfo.cellPosition[1],
+                    neighborAwareness: neighborBits.length - ignoredLength,  // how many neighbors were not ignored
+                });
+                /// Variations now include tiles that are specifically made for this neighbor situation,
+                /// and tiles that are here only because they ignored many neighbors.
+                /// So now we must sort them to put the most aware first (and later draw the most aware).
+                LevelSprite_sheetLayout[cellInfo.theme][neighborCode].sort(function sortAwareness(a, b) {
+                    return b.neighborAwareness - a.neighborAwareness;
                 });
             }
         }
@@ -491,21 +495,19 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     * Generate the background image from the level map data
     */
     function generateBackgroundImage(levelGrid, pixelCanvas) {
-        console.log("got sheet layout", LevelSprite_sheetLayout);
         // create a new canvas for compositing the image
         let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
-        document.getElementById("hiddenloading").appendChild(canvas);  // easy debug // 
+        // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
         const levelData = levelGrid.data;
-        // iterate the level map data
+        /// iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
             const row = levelData[rowIndex];
             const upRow = levelData[rowIndex - 1];
             const downRow = levelData[rowIndex + 1];
             for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_LevelSprite.sheetCellWidth) {
-                const mapValue = row[columnIndex];
                 let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 0];
                 if (upRow == undefined) {
-                    // top edge of the map
+                    /// top edge of the map
                     neighborBits[5] = undefined;
                     neighborBits[6] = undefined;
                     neighborBits[7] = undefined;
@@ -515,7 +517,7 @@ export const LevelSpriteResource = (function build_LevelSprite() {
                     neighborBits[7] = upRow[columnIndex - 1];
                 }
                 if (downRow == undefined) {
-                    // bottom edge of the map
+                    /// bottom edge of the map
                     neighborBits[1] = undefined;
                     neighborBits[2] = undefined;
                     neighborBits[3] = undefined;
@@ -524,31 +526,26 @@ export const LevelSpriteResource = (function build_LevelSprite() {
                     neighborBits[2] = downRow[columnIndex];
                     neighborBits[3] = downRow[columnIndex + 1];
                 }
-                neighborBits[0] = row[columnIndex - 1];
+                /// current row
+                neighborBits[0] = row[columnIndex - 1];  // left cell may be undefined if left edge
                 neighborBits[8] = row[columnIndex];
-                neighborBits[4] = row[columnIndex + 1];
+                neighborBits[4] = row[columnIndex + 1];  // right cell may be undefined if right edge
                 for (let neighborIndex = 0; neighborIndex < neighborBits.length; neighborIndex++) {
                     const neighborBit = neighborBits[neighborIndex];
                     if (neighborBit == undefined) {
-                        // edge of the map
-                        // consider it has a block
+                        /// edge of the map
+                        // consider it has a block for the purpose of calculating neighbors
                         neighborBits[neighborIndex] = 1;
                     }
                 }
                 let neighborCode = utils.Number.bitArrayToNum(neighborBits);
-                console.log("trying to drawn neighbor code", neighborCode, neighborBits);
-                if (mapValue == 1) {
-                    // The center is a block
-                } else if (mapValue == 0) {
-                    // The center is a sky
-                    // nothing to draw
-                }
                 let variations = LevelSprite_sheetLayout[obj_LevelSprite.theme][neighborCode];
                 if (variations != undefined) {
-                    let cellInfo = variations[0];  // 0 because first variation
+                    /// This neighbor code has been defined in the sheet layout,
+                    /// we can draw it.
+                    let cellInfo = variations[0];  // 0 because first variation has the highest neighbor awareness
                     let sourceX = cellInfo.sourceX * obj_LevelSprite.sheetCellWidth;
                     let sourceY = cellInfo.sourceY * obj_LevelSprite.sheetCellHeight;
-                    console.log("drawing cellInfo", cellInfo);
                     // Draw to the hidden temporary canvas
                     context.drawImage(LevelSprite_sheet,
                         sourceX, sourceY,
@@ -747,7 +744,6 @@ export function init(ecs) {
                     neighborNoconnect: [4, 2, 6, 8],
                     neighborIgnored: [7, 9, 1, 3],
                 },
-                /*
                 {
                     theme: "hellplatform",
                     type: "block",
@@ -780,7 +776,6 @@ export function init(ecs) {
                     neighborNoconnect: [7],
                     neighborIgnored: [9,1,3],
                 },
-                */
             ],
         },
         3, // lower priority than LevelGrid

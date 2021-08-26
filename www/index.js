@@ -639,7 +639,7 @@ const newTagMob = function newTagMob(_initOptions) {
                         p.collider.hasCollisionWith(p.position, mob.collider, mob.position) &&
                         p.attack.isAttacking
                     ) {
-                        console.log("attacking that victim");
+                        //console.log("attacking that victim");
                         mob.mobState.state = MOB_STATES.DYING;
                     }
                 }
