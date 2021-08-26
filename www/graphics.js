@@ -574,6 +574,63 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     return obj_LevelSprite;
 })();
 
+
+/*
+* A level background image
+*/
+export const BackdropResource = (function build_Backdrop() {
+    // the object we are building
+    const obj_Backdrop = {
+        name: "backdrop",
+    };
+
+    let Backdrop_sheet, Backdrop_image, Backdrop_initOptions;
+
+    obj_Backdrop.prepareInit = function Backdrop_prepareInit(initOptions) {
+        Backdrop_initOptions = initOptions;
+        obj_Backdrop.initQueryResources = initOptions.initQueryResources;
+    }
+
+    obj_Backdrop.init = function Backdrop_init(pixelCanvas) {
+        obj_Backdrop.theme = Backdrop_initOptions.theme;
+        return ImageLoader.get(Backdrop_initOptions.sheetSrc)
+            .then(function sheetImageLoaded(image) {
+                Backdrop_sheet = image;
+                // finally we have map data and a sprite sheet
+                generateBackdropImage(pixelCanvas);
+            });
+    };
+    /*
+    * Generate the background image from individual tile
+    */
+    function generateBackdropImage(pixelCanvas) {
+        // create a new canvas for compositing the image
+        let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
+        // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
+        /// Draw
+        let backdropPattern = context.createPattern(Backdrop_sheet, "repeat");
+        context.rect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = backdropPattern;
+        context.fill();
+        /// Export to image
+        let imageUri = canvas.toDataURL();
+        Backdrop_image = new Image();
+        Backdrop_image.src = imageUri;
+    };
+
+    obj_Backdrop.draw = function LevelSprite_draw(context, position) {
+        context.drawImage(Backdrop_image, position.x, position.y);
+    };
+
+    obj_Backdrop.update = function LevelSprite_update() {
+        // do nothing
+        // function necessary as a Resource
+    };
+
+    return obj_Backdrop;
+})();
+
+
 export function init(ecs) {
     /*
     ecs.Controller.addInitSystem(View.init, {
@@ -747,45 +804,55 @@ export function init(ecs) {
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [4,1],
-                    neighborConnect: [4,8,6,2],
+                    cellPosition: [4, 1],
+                    neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [3],
-                    neighborIgnored: [7,9,1],
+                    neighborIgnored: [7, 9, 1],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [5,1],
-                    neighborConnect: [4,8,6,2],
+                    cellPosition: [5, 1],
+                    neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [1],
-                    neighborIgnored: [7,9,3],
+                    neighborIgnored: [7, 9, 3],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [4,2],
-                    neighborConnect: [4,8,6,2],
+                    cellPosition: [4, 2],
+                    neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [9],
-                    neighborIgnored: [7,1,3],
+                    neighborIgnored: [7, 1, 3],
                 },
                 {
                     theme: "hellplatform",
                     type: "block",
-                    cellPosition: [5,2],
-                    neighborConnect: [4,8,6,2],
+                    cellPosition: [5, 2],
+                    neighborConnect: [4, 8, 6, 2],
                     neighborNoconnect: [7],
-                    neighborIgnored: [9,1,3],
+                    neighborIgnored: [9, 1, 3],
                 },
             ],
         },
         3, // lower priority than LevelGrid
     );
 
+    ecs.Data.addResource(BackdropResource,
+        {
+            initQueryResources: ["pixelCanvas"],
+            sheetSrc: "assets/backdrop.png",
+            theme: "hellplatform",
+        },
+        3, // lower priority than LevelGrid
+    );
+
     // clear background
     ecs.Controller.addSystem({
-        resourceQuery: ["levelsprite"],
+        resourceQuery: ["backdrop", "levelsprite"],
         run: function clearBackground(queryResults) {
-            View.clear();  // TODO : remove when implementing background
+            const backdrop = queryResults.resources.backdrop;
+            View.render(backdrop, { x: 0, y: 0 });
             const levelsprite = queryResults.resources.levelsprite;
             View.render(levelsprite, { x: 0, y: 0 });
         },
