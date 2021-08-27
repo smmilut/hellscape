@@ -1,6 +1,6 @@
 import * as ECS from "./ecs.js";
 import * as gfx from "./graphics.js";
-import * as input from "./input.js";
+import * as userInput from "./userInput.js";
 
 const PhysicsResource = {
     name: "physics",
@@ -160,7 +160,7 @@ const newTagMob = function newTagMob(_initOptions) {
 (function onLoadPage() {
     ECS.init();
     gfx.init(ECS);
-    input.init(ECS);
+    userInput.init(ECS);
 
     ECS.Data.addResource(PhysicsResource,
         {
@@ -547,38 +547,38 @@ const newTagMob = function newTagMob(_initOptions) {
     });
 
     ECS.Controller.addSystem({
-        resourceQuery: ["keyboard"],
+        resourceQuery: ["input"],
         componentQueries: {
             player: ["speed", "facing", "jump", "sprite", "attack", "tagPlayer"],
         },
-        run: function userInput(queryResults) {
-            let keyboard = queryResults.resources.keyboard;
+        run: function handleInput(queryResults) {
+            let input = queryResults.resources.input;
             for (let e of queryResults.components.player) {
                 let actionName = ACTION_POSE.NONE;
-                if (keyboard.isKeyDown(input.USER_ACTION.LEFT)) {
+                if (input.isKeyDown(userInput.USER_ACTION.LEFT)) {
                     e.speed.incrementLeft();
                     actionName = ACTION_POSE.WALK;
                     e.facing.direction = FACING.LEFT;
-                } else if (keyboard.isKeyDown(input.USER_ACTION.RIGHT)) {
+                } else if (input.isKeyDown(userInput.USER_ACTION.RIGHT)) {
                     e.speed.incrementRight();
                     actionName = ACTION_POSE.WALK;
                     e.facing.direction = FACING.RIGHT;
                 } else {
                     actionName = ACTION_POSE.STAND;
                 }
-                if (keyboard.isKeyDown(input.USER_ACTION.JUMP)) {
+                if (input.isKeyDown(userInput.USER_ACTION.JUMP)) {
                     if (e.jump.apply(e.speed)) {
                         actionName = ACTION_POSE.JUMP;
                     };
                 }
-                if (keyboard.isKeyDown(input.USER_ACTION.ATTACK)) {
+                if (input.isKeyDown(userInput.USER_ACTION.ATTACK)) {
                     actionName = ACTION_POSE.ATTACK;
                     e.attack.isAttacking = true;
                 }
-                if (keyboard.isKeyUp(input.USER_ACTION.ATTACK)) {
+                if (input.isKeyUp(userInput.USER_ACTION.ATTACK)) {
                     e.attack.isAttacking = false;
                 }
-                if (keyboard.isKeyUp(input.USER_ACTION.JUMP)) {
+                if (input.isKeyUp(userInput.USER_ACTION.JUMP)) {
                     e.jump.rearm();
                 }
                 e.sprite.setPose({
