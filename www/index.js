@@ -448,7 +448,7 @@ const newTagMob = function newTagMob(_initOptions) {
     ECS.Data.newEntity()
         .addComponent(newTagMob())
         .addComponent(newPosition({
-            x: 2,
+            x: 4,
             y: 7,
         }))
         .addComponent(newSpeed({
@@ -471,7 +471,7 @@ const newTagMob = function newTagMob(_initOptions) {
     ECS.Data.newEntity()
         .addComponent(newTagMob())
         .addComponent(newPosition({
-            x: 8,
+            x: 10,
             y: 2,
         }))
         .addComponent(newSpeed({
