@@ -157,10 +157,18 @@ const newTagMob = function newTagMob(_initOptions) {
     };
 };
 
+/*
+* Main program entry point
+*   when loading this script, all starts
+*/
 (function onLoadPage() {
+    //#region initialize modules
+    /// Always init ECS first
     ECS.init();
+    /// init other modules
     gfx.init(ECS);
     userInput.init(ECS);
+    //#endregion
 
     ECS.Data.addResource(PhysicsResource,
         {
@@ -294,7 +302,7 @@ const newTagMob = function newTagMob(_initOptions) {
         .addComponent(newAttack())
         .addComponent(gfx.newSprite(playerSpriteSheetOptions));
     //#endregion
-    //#region spawn an enemy
+    //#region spawn some enemies manually
     const enemySpriteSheetOptions = {
         src: "assets/enemy_sheet.png",
         sheetCellWidth: 16,

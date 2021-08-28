@@ -300,6 +300,9 @@ export const InputResource = (function build_Input() {
     return obj_Input;
 })();
 
+/*
+*   Initialize user input : make user input Resource available
+*/
 export function init(ecs) {
     ecs.Data.addResource(InputResource, {
         defaultKeys: [
@@ -365,5 +368,4 @@ export function init(ecs) {
             },
         ],
     });
-
 }

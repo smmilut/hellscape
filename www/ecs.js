@@ -1,3 +1,189 @@
+/*
+    "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
+
+    # Concepts :
+
+     - Entity : a data "id"
+     - Component : a data that belongs to an Entity
+     - System : a routine that performs actions on Components, using Resources
+     - Resource : global data detached from Entities
+
+
+    # Data
+
+    The global object `Data` holds all Entities and Resources.
+    It can spawn Entities with `Data.newEntity()`
+    It can add a new Resource with `Data.addResource()`
+
+    ## Entity
+
+    Each Entity holds its own Components.
+    You can add "someComponent" to "someEntity" with `someEntity.addComponent(someComponent)`
+
+    # Controller
+
+    The global object `Controller` controls the program flow.
+    It holds Systems and runs them.
+    It is responsible of the main program loop.
+
+    Start the program with `Controller.start()`
+
+    ## Program flow
+
+    1. Initialize Resource systems in order of their priority. Wait for completion of each priority.
+    2. Run "init"-type Systems. Wait for completion.
+    3. Start the main loop :
+        1. Run Resource systems `Resource.update()`. TODO Wait for completion ?
+        2. Run "normal" Systems in "order" (TODO actually wait to make it really ordered ?) :
+            1. SYSTEM_STAGE.INIT
+            2. SYSTEM_STAGE.MAIN
+            3. SYSTEM_STAGE.END
+
+
+    # Resources
+
+    ## Purpose
+
+    Resources are global objects available regardless of the Entities.
+    They can be queried by Systems or by other Resources.
+    Example : the keyboard input.
+
+    ## Resource API
+
+    ```
+    Resource = {
+        name: "thisResourceName",
+        initQueryResources: ["otherResource1", "otherResource2", ...],  // will be passed as argument to init()
+        prepareInit: function(initOptions),  // return a Promise if you need order
+        init: function(otherResource1, otherResource2, ...),
+        update: function(),
+    }
+    ```
+    
+    It is referred by its `.name` property.
+    It can query other Resources during initilaization, through its `.initQueryResources` property.
+    If it has an `.update()` function, then it will be called at every frame.
+
+    ## Add a new Resource
+
+    Add a new Resource to the program flow with :
+    
+    ```
+    Data.addResource(Resource, initOptions, priority)
+    ```
+
+    # Systems
+
+    ## Purpose
+
+    Systems are routines that are run at every frame.
+    They can query Resources and Components.
+    
+    Example1 : to apply physics to all characters, add a System that makes 1 query :
+     - all positions (Component)
+     - all speeds (Component)
+     - the global gravity (Resource)
+     The System will update those data objects when run at every frame.
+
+    Example2 : to collide lasers with monsters, add a System that makes 2 queries :
+     1. laserQuery :
+        - all positions (Component)
+        - that also have tag "isLaser" (Component)
+     2. monsterQuery :
+        - all positions (Component)
+        - that also have tag "isMonster" (Component)
+     The System will be able to iterate both queries to check for collisions.
+
+    ## System API
+
+    ```
+    System = {
+        resourceQuery: ["resource1", "resource2", ...],
+        componentQueries: {
+            queryName1: ["componentA", "componentB", ...],
+            queryName2: ["componentC", "componentA", ...],
+        },
+        run: function(queryResults) {
+            // queryResults will contain the following :
+            queryResults == {
+                resources: {
+                    resource1: {},
+                    resource2: {},
+                },
+                components: {
+                    queryName1: [
+                        {  // query result for an Entity
+                            componentA: {},
+                            componentB: {},
+                        },
+                        {  // query result for another Entity
+                            componentA: {},
+                            componentB: {},
+                        },
+                        // ... for all Entities that match
+                    ],
+                    queryName2: [
+                        {  // query result for an Entity
+                            componentC: {},
+                            componentA: {},
+                        },
+                        {  // query result for another Entity
+                            componentC: {},
+                            componentA: {},
+                        },
+                        // ... for all Entities that match
+                    ],
+                }
+            }
+        },
+    }
+    ```
+
+    The `componentQueries` are named queries for Entities.
+    Each query is defined by the set (an Array actually) of Components that are required.
+    The response of each query will be the list of Entities that each have *all* the required Components for that query.
+
+    ## Add a new System
+
+    Add a new System with :
+    ```
+    Controller.addSystem(
+        someSystem,
+        SYSTEM_STAGE,  // optional, default to MAIN
+    );
+    ```
+
+    # Components
+
+    ## Components API
+
+    ```
+    Component = {
+        name,
+    }
+    ```
+
+    Basically any object that has a `.name` property can be a Component.
+
+    ## Add a new Component to an Entity
+
+    To add a new Component to an Entity, you must first access that Entity, and do :
+    ```
+    someEntity.addComponent(someComponent);
+    ```
+
+    Usually, during setup with :
+    ```
+    Data.newEntity()
+        .addComponent(someComponent1)
+        .addComponent(someComponent2)
+        .addComponent(someComponent3)
+    ```
+*/
+
+/*
+*   A Timer Resource or Component that can be derived with Object.create()
+*/
 const Timer = {
     name: "timer",
     prepareInit: function Physics_prepareInit(initOptions) {
@@ -15,15 +201,24 @@ const Timer = {
     },
 };
 
+/*
+* The main Time Resource that tracks the frame duration
+*/
 export const TimeResource = Object.create(Timer);
 TimeResource.name = "time";
 
+/*
+* System stages : priorities for running Systems each frame
+*/
 export const SYSTEM_STAGE = Object.freeze({
     INIT: 0,
     MAIN: 1,
     END: 2,
 });
 
+/*
+* Program flow control
+*/
 export const Controller = (function build_Controller() {
     const obj_Controller = {};
 
@@ -166,7 +361,9 @@ export const Controller = (function build_Controller() {
     return obj_Controller;
 })();
 
-
+/*
+* Program data, holds Entities and Resources
+*/
 export const Data = (function build_Data() {
     const obj_Data = {};
 
@@ -242,6 +439,9 @@ export const Data = (function build_Data() {
     return obj_Data;
 })();
 
+/*
+*   Initialize system : make user system Resources available
+*/
 export function init() {
     Data.addResource(TimeResource);
 }

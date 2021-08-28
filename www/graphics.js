@@ -230,6 +230,17 @@ export const newSprite = function newSprite(initOptions) {
 
     /*
     * set animation pose
+    *
+    *   poseInfo = {
+    *       name,
+    *   }
+    * 
+    * or
+    * 
+    *   poseInfo = {
+    *       action,
+    *       facing,
+    *   }
     */
     obj_Sprite.setPose = function Sprite_setPose(poseInfo) {
         let poseName = poseInfo.name;
@@ -642,16 +653,11 @@ export const BackdropResource = (function build_Backdrop() {
     return obj_Backdrop;
 })();
 
-
+/*
+*   Initialize graphics : make graphic Resource available, run graphics Systems every frame
+*/
 export function init(ecs) {
-    /*
-    ecs.Controller.addInitSystem(View.init, {
-        width: 960,
-        height: 576,
-        scale: 3.0,
-    });
-    */
-
+    //#region graphics Resources available to all
     ecs.Data.addResource(PixelCanvas,
         {
             scale: 4.0,
@@ -694,42 +700,48 @@ export function init(ecs) {
         },
         3, // lower priority than LevelGrid
     );
+    //#endregion
 
-    // clear background
-    ecs.Controller.addSystem({
-        resourceQuery: ["backdrop", "levelsprite"],
-        run: function clearBackground(queryResults) {
-            const backdrop = queryResults.resources.backdrop;
-            View.render(backdrop, { x: 0, y: 0 });
-            const levelsprite = queryResults.resources.levelsprite;
-            View.render(levelsprite, { x: 0, y: 0 });
+    //#region graphics Systems running always
+    ecs.Controller.addSystem(
+        {
+            resourceQuery: ["backdrop", "levelsprite"],
+            run: function clearBackground(queryResults) {
+                const backdrop = queryResults.resources.backdrop;
+                View.render(backdrop, { x: 0, y: 0 });
+                const levelsprite = queryResults.resources.levelsprite;
+                View.render(levelsprite, { x: 0, y: 0 });
+            },
         },
-    },
-        ecs.SYSTEM_STAGE.END);
-    // update animation
-    ecs.Controller.addSystem({
-        resourceQuery: ["time"],
-        componentQueries: {
-            sprites: ["sprite"],
+        ecs.SYSTEM_STAGE.END
+    );
+    ecs.Controller.addSystem(
+        {
+            resourceQuery: ["time"],
+            componentQueries: {
+                sprites: ["sprite"],
+            },
+            run: function updateAnimation(queryResults) {
+                const time = queryResults.resources.time;
+                for (let e of queryResults.components.sprites) {
+                    e.sprite.updateAnimation(time.dt);
+                }
+            },
         },
-        run: function updateAnimation(queryResults) {
-            const time = queryResults.resources.time;
-            for (let e of queryResults.components.sprites) {
-                e.sprite.updateAnimation(time.dt);
+        ecs.SYSTEM_STAGE.END
+    );
+    ecs.Controller.addSystem(
+        {
+            componentQueries: {
+                sprites: ["sprite", "position"],
+            },
+            run: function renderSprites(queryResults) {
+                for (let e of queryResults.components.sprites) {
+                    View.render(e.sprite, e.position);
+                }
             }
         },
-    },
-        ecs.SYSTEM_STAGE.END);
-    // render sprites
-    ecs.Controller.addSystem({
-        componentQueries: {
-            sprites: ["sprite", "position"],
-        },
-        run: function drawSprite(queryResults) {
-            for (let e of queryResults.components.sprites) {
-                View.render(e.sprite, e.position);
-            }
-        }
-    },
-        ecs.SYSTEM_STAGE.END);
+        ecs.SYSTEM_STAGE.END
+    );
+    //#endregion
 }
