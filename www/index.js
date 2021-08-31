@@ -598,6 +598,19 @@ const newTagMob = function newTagMob(_initOptions) {
     });
 
     ECS.Controller.addSystem({
+        resourceQuery: ["camera"],
+        componentQueries: {
+            player: ["position", "tagPlayer"],
+        },
+        run: function moveCamera(queryResults) {
+            let camera = queryResults.resources.camera;
+            for (let e of queryResults.components.player) {
+                camera.setTarget(e.position);
+            }
+        },
+    });
+
+    ECS.Controller.addSystem({
         resourceQuery: ["levelgrid"],
         componentQueries: {
             mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],

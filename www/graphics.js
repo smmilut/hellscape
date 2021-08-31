@@ -8,14 +8,14 @@ const PixelCanvas = (function build_PixelCanvas() {
         name: "pixelCanvas",
     };
 
-    let PixelCanvas_initOptions, PixelCanvas_scale;
+    let PixelCanvas_initOptions;
 
     obj_PixelCanvas.prepareInit = function PixelCanvas_prepareInit(initOptions) {
         PixelCanvas_initOptions = initOptions || {};
     };
 
     obj_PixelCanvas.init = function PixelCanvas_init() {
-        PixelCanvas_scale = PixelCanvas_initOptions.scale;
+        obj_PixelCanvas.scale = PixelCanvas_initOptions.scale;
     };
 
     /*
@@ -23,8 +23,8 @@ const PixelCanvas = (function build_PixelCanvas() {
     */
     obj_PixelCanvas.new = function createScaledCanvas(screenWidth, screenHeight) {
         let canvas = document.createElement("canvas");
-        let unscaledWidth = screenWidth / PixelCanvas_scale;
-        let unscaledHeight = screenHeight / PixelCanvas_scale;
+        let unscaledWidth = screenWidth / obj_PixelCanvas.scale;
+        let unscaledHeight = screenHeight / obj_PixelCanvas.scale;
         canvas.width = unscaledWidth;
         canvas.style.width = screenWidth + "px";
         canvas.height = unscaledHeight;
@@ -33,32 +33,46 @@ const PixelCanvas = (function build_PixelCanvas() {
         // important for pixel art style : no smoothing when scaling or animating
         context.imageSmoothingEnabled = false;
         return [canvas, context];
-    }
+    };
+
+    /*
+    * return a [canvas, context] correctly scaled for pixel art
+    * call with a size in "small pixels"
+    */
+    obj_PixelCanvas.newUnscaled = function createUnscaledCanvas(screenWidth, screenHeight) {
+        return obj_PixelCanvas.new(screenWidth * obj_PixelCanvas.scale, screenHeight * obj_PixelCanvas.scale);
+    };
 
     return obj_PixelCanvas;
 })();
 
 
-export const View = (function build_View() {
-    const obj_View = {
-        name: "view",
+export const Camera = (function build_Camera() {
+    const obj_Camera = {
+        name: "camera",
     };
-    let View_canvas, View_context, View_initOptions;
+    let Camera_canvas, Camera_context, Camera_initOptions;
+    let Camera_gameCenter;
 
-    obj_View.prepareInit = function View_prepareInit(initOptions) {
-        View_initOptions = initOptions || {};
-        obj_View.initQueryResources = initOptions.initQueryResources;
+    obj_Camera.prepareInit = function Camera_prepareInit(initOptions) {
+        Camera_initOptions = initOptions || {};
+        obj_Camera.initQueryResources = initOptions.initQueryResources;
     };
 
-    obj_View.init = function View_init(pixelCanvas) {
-        return new Promise(function promise_View_init(resolve, reject) {
-            obj_View.screenWidth = View_initOptions.width;
-            obj_View.screenHeight = View_initOptions.height;
-            obj_View.scale = View_initOptions.scale;
-            [View_canvas, View_context] = pixelCanvas.new(obj_View.screenWidth, obj_View.screenHeight);
-            let parentId = View_initOptions.parentId || "game";
+    obj_Camera.init = function Camera_init(pixelCanvas) {
+        return new Promise(function promise_Camera_init(resolve, reject) {
+            obj_Camera.screenWidth = Camera_initOptions.screenWidth;
+            obj_Camera.screenHeight = Camera_initOptions.screenHeight;
+            obj_Camera.scale = pixelCanvas.scale;
+            [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);
+            let parentId = Camera_initOptions.parentId || "game";
             const elParent = document.getElementById(parentId);
-            elParent.appendChild(View_canvas);
+            elParent.appendChild(Camera_canvas);
+
+            obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
+            obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
+            Camera_gameCenter = Camera_initOptions.gameCenter || { x: 0, y: 0 };
+
             resolve();
         });
     };
@@ -66,18 +80,33 @@ export const View = (function build_View() {
     /*
     * Clear screen for drawing next
     */
-    obj_View.clear = function View_clear() {
-        View_context.clearRect(0, 0, View_canvas.width, View_canvas.height);
+    obj_Camera.clear = function Camera_clear() {
+        Camera_context.clearRect(0, 0, Camera_canvas.width, Camera_canvas.height);
     };
 
     /*
     * Render all this sprite now
     */
-    obj_View.render = function View_render(sprite, position) {
-        sprite.draw(View_context, position);
+    obj_Camera.render = function Camera_render(sprite, gamePosition) {
+        let screenPosition = gameToScreenPosition(gamePosition);
+        sprite.draw(Camera_context, screenPosition);
     };
 
-    return obj_View;
+    obj_Camera.setTarget = function Camera_setTarget(gamePosition) {
+        Camera_gameCenter.x = gamePosition.x;
+        Camera_gameCenter.y = gamePosition.y;
+    };
+
+    function gameToScreenPosition(gamePosition) {
+        let cameraTopLeftX = Camera_gameCenter.x - obj_Camera.gameWidth / 2.0;
+        let cameraTopLeftY = Camera_gameCenter.y - obj_Camera.gameHeight / 2.0;
+        return {
+            x: (gamePosition.x - cameraTopLeftX),// * obj_Camera.scale,
+            y: (gamePosition.y - cameraTopLeftY),// * obj_Camera.scale,
+        };
+    }
+
+    return obj_Camera;
 })();
 
 export const ANIMATION_DIRECTION = Object.freeze({
@@ -333,21 +362,23 @@ export const LevelGridResource = (function build_LevelGrid() {
         name: "levelgrid",
     };
 
-    let LevelGrid_initOptions, LevelGrid_cellWidth, LevelGrid_cellHeight;
+    let LevelGrid_initOptions;
 
     obj_LevelGrid.prepareInit = function LevelGrid_prepareInit(initOptions) {
         LevelGrid_initOptions = initOptions || {};
     };
 
     obj_LevelGrid.init = function LevelGrid_init() {
-        LevelGrid_cellWidth = LevelGrid_initOptions.gridCellWidth;
-        LevelGrid_cellHeight = LevelGrid_initOptions.gridCellHeight;
+        obj_LevelGrid.cellWidth = LevelGrid_initOptions.gridCellWidth;
+        obj_LevelGrid.cellHeight = LevelGrid_initOptions.gridCellHeight;
         return utils.Http.Request({
             url: LevelGrid_initOptions.url,
         })
             .then(function gotBackgroundFile(data) {
                 let json_obj = JSON.parse(data.responseText);
                 obj_LevelGrid.data = json_obj.map;
+                obj_LevelGrid.height = obj_LevelGrid.data.length;
+                obj_LevelGrid.width = obj_LevelGrid.data[0].length;
             });
     };
 
@@ -371,18 +402,18 @@ export const LevelGridResource = (function build_LevelGrid() {
     * update the pixel position of a `position` based on its grid position
     */
     obj_LevelGrid.updatePixelPosition = function LevelGrid_updatePixelPosition(position) {
-        position.x = (position.gridX + position.xRatio) * LevelGrid_cellWidth;
-        position.y = (position.gridY + position.yRatio) * LevelGrid_cellHeight;
+        position.x = (position.gridX + position.xRatio) * obj_LevelGrid.cellWidth;
+        position.y = (position.gridY + position.yRatio) * obj_LevelGrid.cellHeight;
     };
 
     /*
     * update the grid position of a `position` based on its pixel position
     */
     obj_LevelGrid.updateGridPosition = function LevelGrid_updateGridPosition(position) {
-        position.gridX = Math.floor(position.x / LevelGrid_cellWidth);
-        position.xRatio = position.x / LevelGrid_cellWidth - position.gridX;
-        position.gridY = Math.floor(position.y / LevelGrid_cellHeight);
-        position.yRatio = position.y / LevelGrid_cellHeight - position.gridY;
+        position.gridX = Math.floor(position.x / obj_LevelGrid.cellWidth);
+        position.xRatio = position.x / obj_LevelGrid.cellWidth - position.gridX;
+        position.gridY = Math.floor(position.y / obj_LevelGrid.cellHeight);
+        position.yRatio = position.y / obj_LevelGrid.cellHeight - position.gridY;
     };
 
     return obj_LevelGrid;
@@ -518,9 +549,11 @@ export const LevelSpriteResource = (function build_LevelSprite() {
     * Generate the background image from the level map data
     */
     function generateBackgroundImage(levelGrid, pixelCanvas) {
+        let levelWidth = levelGrid.width * levelGrid.cellWidth;
+        let levelHeight = levelGrid.height * levelGrid.cellHeight;
         // create a new canvas for compositing the image
-        let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
-        // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
+        let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
+        // easy debug //document.getElementById("hiddenloading").appendChild(canvas);
         const levelData = levelGrid.data;
         /// iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
@@ -614,21 +647,23 @@ export const BackdropResource = (function build_Backdrop() {
         obj_Backdrop.initQueryResources = initOptions.initQueryResources;
     }
 
-    obj_Backdrop.init = function Backdrop_init(pixelCanvas) {
+    obj_Backdrop.init = function Backdrop_init(levelGrid, pixelCanvas) {
         obj_Backdrop.theme = Backdrop_initOptions.theme;
         return ImageLoader.get(Backdrop_initOptions.sheetSrc)
             .then(function sheetImageLoaded(image) {
                 Backdrop_sheet = image;
                 // finally we have map data and a sprite sheet
-                generateBackdropImage(pixelCanvas);
+                generateBackdropImage(levelGrid, pixelCanvas);
             });
     };
     /*
     * Generate the background image from individual tile
     */
-    function generateBackdropImage(pixelCanvas) {
+    function generateBackdropImage(levelGrid, pixelCanvas) {
+        let levelWidth = levelGrid.width * levelGrid.cellWidth;
+        let levelHeight = levelGrid.height * levelGrid.cellHeight;
         // create a new canvas for compositing the image
-        let [canvas, context] = pixelCanvas.new(View.screenWidth, View.screenHeight);
+        let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
         // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
         /// Draw
         let backdropPattern = context.createPattern(Backdrop_sheet, "repeat");
@@ -662,14 +697,14 @@ export function init(ecs) {
         {
             scale: 4.0,
         },
-        0, // higher priority than View
+        0, // higher priority than Camera
     );
 
-    ecs.Data.addResource(View,
+    ecs.Data.addResource(Camera,
         {
             initQueryResources: ["pixelCanvas"],
-            width: 1280,
-            height: 768,
+            screenWidth: 1280,
+            screenHeight: 768,
         },
         1, // higher priority than LevelSprite, lower than PixelCanvas
     );
@@ -694,7 +729,7 @@ export function init(ecs) {
 
     ecs.Data.addResource(BackdropResource,
         {
-            initQueryResources: ["pixelCanvas"],
+            initQueryResources: ["levelgrid", "pixelCanvas"],
             sheetSrc: "assets/backdrop.png",
             theme: "hellplatform",
         },
@@ -705,12 +740,14 @@ export function init(ecs) {
     //#region graphics Systems running always
     ecs.Controller.addSystem(
         {
-            resourceQuery: ["backdrop", "levelsprite"],
+            resourceQuery: ["camera", "backdrop", "levelsprite"],
             run: function clearBackground(queryResults) {
+                let camera = queryResults.resources.camera;
+                camera.clear();
                 const backdrop = queryResults.resources.backdrop;
-                View.render(backdrop, { x: 0, y: 0 });
+                camera.render(backdrop, { x: 0, y: 0 });
                 const levelsprite = queryResults.resources.levelsprite;
-                View.render(levelsprite, { x: 0, y: 0 });
+                camera.render(levelsprite, { x: 0, y: 0 });
             },
         },
         ecs.SYSTEM_STAGE.END
@@ -732,12 +769,14 @@ export function init(ecs) {
     );
     ecs.Controller.addSystem(
         {
+            resourceQuery: ["camera"],
             componentQueries: {
                 sprites: ["sprite", "position"],
             },
             run: function renderSprites(queryResults) {
+                let camera = queryResults.resources.camera;
                 for (let e of queryResults.components.sprites) {
-                    View.render(e.sprite, e.position);
+                    camera.render(e.sprite, e.position);
                 }
             }
         },
