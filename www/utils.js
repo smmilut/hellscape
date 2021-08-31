@@ -173,7 +173,7 @@ export const Rng = (function build_RngUtils() {
     *  selected randomly but weighted according to item.weight
     */
     obj_Rng.selectWeighted = function Rng_selectWeighted(array) {
-        
+
         let selectedItem;
         let selectedScore = 0;
         array.forEach(function iterateArray(v, _i, _a) {
@@ -213,3 +213,9 @@ export const Rng = (function build_RngUtils() {
     return obj_Rng;
 })();
 
+/*
+*   Linear interpolation between value0 and value1, for parameter t between 0 and 1
+*/
+export function lerp(value0, value1, t) {
+    return (1 - t) * value0 + t * value1;
+}

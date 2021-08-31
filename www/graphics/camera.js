@@ -1,3 +1,4 @@
+import * as Utils from "../utils.js";
 
 /*
 * a canvas correctly scaled for pixel art
@@ -51,7 +52,8 @@ const Resource_Camera = (function build_Camera() {
         name: "camera",
     };
     let Camera_canvas, Camera_context, Camera_initOptions;
-    let Camera_gameCenter;
+    let Camera_gameCenter, Camera_offset;
+    let Camera_isAnimating, Camera_target, Camera_animationStart, Camera_animationDuration, Camera_animationTime, Camera_targetTolerance;
 
     obj_Camera.prepareInit = function Camera_prepareInit(initOptions) {
         Camera_initOptions = initOptions || {};
@@ -70,8 +72,13 @@ const Resource_Camera = (function build_Camera() {
 
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
+            obj_Camera.deadzoneSize = Camera_initOptions.deadzoneSize;
             Camera_gameCenter = Camera_initOptions.gameCenter || { x: 0, y: 0 };
-
+            Camera_offset = Camera_initOptions.offset || { x: 0, y: 0 };
+            Camera_target = Camera_initOptions.target || { x: 0, y: 0 };
+            Camera_animationDuration = Camera_initOptions.animationDuration || 0.500;
+            Camera_isAnimating = false;
+            Camera_targetTolerance = 1;  // number of pixels of error accepted to consider we reached the target
             resolve();
         });
     };
@@ -92,16 +99,97 @@ const Resource_Camera = (function build_Camera() {
     };
 
     obj_Camera.setTarget = function Camera_setTarget(gamePosition) {
-        Camera_gameCenter.x = gamePosition.x;
-        Camera_gameCenter.y = gamePosition.y;
+        Camera_target.x = gamePosition.x + Camera_offset.x;
+        Camera_target.y = gamePosition.y + Camera_offset.y;
+        /*if (isTargetOutsideView()) {
+            /// target too far, force view without animation
+            obj_Camera.forceMove();
+        } else */
+        if (isTargetOutsideDeadzone()) {
+            Camera_isAnimating = true;
+            Camera_animationTime = 0;
+            Camera_animationStart = {
+                x: Camera_gameCenter.x,
+                y: Camera_gameCenter.y,
+            };
+        }
     };
+
+    obj_Camera.forceMove = function Camera_forceMove() {
+        console.log("FORCE MOVE");
+        Camera_gameCenter.x = Camera_target.x;
+        Camera_gameCenter.y = Camera_target.y;
+    }
+
+    /*
+    * update animation for Camera movement
+    */
+    obj_Camera.updateAnimation = function Camera_updateAnimation(timePassed) {
+        if (Camera_isAnimating) {
+            if (isAnimationCompleted()) {
+                /// we reached target
+                Camera_isAnimating = false;
+            } else {
+                Camera_animationTime += timePassed;
+                let animationParameter = Camera_animationTime * 1.0 / Camera_animationDuration;
+                Camera_gameCenter.x = Utils.lerp(Camera_animationStart.x, Camera_target.x, animationParameter);
+                Camera_gameCenter.y = Utils.lerp(Camera_animationStart.y, Camera_target.y, animationParameter);
+            }
+        }
+    };
+
+    function isTargetOutsideDeadzone() {
+        if (Camera_target.x >= Camera_gameCenter.x + obj_Camera.deadzoneSize.width / 2
+            || Camera_target.x <= Camera_gameCenter.x - obj_Camera.deadzoneSize.width / 2
+            || Camera_target.y >= Camera_gameCenter.y + obj_Camera.deadzoneSize.height / 2
+            || Camera_target.y <= Camera_gameCenter.y - obj_Camera.deadzoneSize.height / 2) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /*
+    * doesn't work ???
+    */
+    function isTargetOutsideView() {
+        let targetScreenPosition = gameToScreenPosition(Camera_target);
+        console.log("checking if target is too far", Camera_target, targetScreenPosition, obj_Camera.screenWidth, obj_Camera.screenHeight);
+        if (targetScreenPosition.x >= obj_Camera.screenWidth) {
+            console.log("> target too far right");
+            return true;
+        } else if (targetScreenPosition.x <= 0) {
+            console.log("> target too far left");
+            return true;
+        } else if (targetScreenPosition.y >= obj_Camera.screenHeight) {
+            console.log("> target too far down");
+            return true;
+        } else if (targetScreenPosition.y <= 0) {
+            console.log("> target too far up");
+        } else {
+            return false;
+        }
+    }
+
+    function isAnimationCompleted() {
+        if (Camera_animationTime >= Camera_animationDuration) {
+            /// animation time completed
+            return true;
+        } else if (Math.abs(Camera_target.x - Camera_gameCenter.x) <= Camera_targetTolerance
+            && Math.abs(Camera_target.y - Camera_gameCenter.y) <= Camera_targetTolerance) {
+            /// target reached
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     function gameToScreenPosition(gamePosition) {
         let cameraTopLeftX = Camera_gameCenter.x - obj_Camera.gameWidth / 2.0;
         let cameraTopLeftY = Camera_gameCenter.y - obj_Camera.gameHeight / 2.0;
         return {
-            x: (gamePosition.x - cameraTopLeftX),// * obj_Camera.scale,
-            y: (gamePosition.y - cameraTopLeftY),// * obj_Camera.scale,
+            x: (gamePosition.x - cameraTopLeftX),
+            y: (gamePosition.y - cameraTopLeftY),
         };
     }
 
@@ -109,14 +197,16 @@ const Resource_Camera = (function build_Camera() {
 })();
 
 const System_moveCamera = {
-    resourceQuery: ["camera"],
+    resourceQuery: ["camera", "time"],
     componentQueries: {
         player: ["position", "tagPlayer"],
     },
     run: function moveCamera(queryResults) {
         let camera = queryResults.resources.camera;
+        const time = queryResults.resources.time;
         for (let e of queryResults.components.player) {
             camera.setTarget(e.position);
+            camera.updateAnimation(time.dt);
         }
     },
 };
@@ -134,9 +224,18 @@ export function init(ecs) {
             initQueryResources: ["pixelCanvas"],
             screenWidth: 1280,
             screenHeight: 768,
+            deadzoneSize: {
+                width: 100,
+                height: 100,
+            },
+            offset: {
+                x: 0,
+                y: -30,
+            },
+            animationDuration: 0.500,
         },
         1, // higher priority than LevelSprite, lower than PixelCanvas
     );
-    
+
     ecs.Controller.addSystem(System_moveCamera);
 }
