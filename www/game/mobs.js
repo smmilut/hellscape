@@ -184,26 +184,43 @@ const System_mobBehave = {
         let levelgrid = queryResults.resources.levelgrid;
         for (let e of queryResults.components.mobs) {
             let actionName = Actions.ACTION_POSE.NONE;
-            if (e.mobState.state == MOB_STATES.FLEEING) {
-                // console.log("mob fleeing");
-                e.speed.incrementRight();
-                e.facing.direction = Actions.FACING.RIGHT;
-                actionName = Actions.ACTION_POSE.WALKPANIC;
-            } else if (e.mobState.state == MOB_STATES.DYING) {
-                // console.log("mob dying", e, e.position);
-                e.speed.x = 0;
-                if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.UP)
-                    && e.position.yRatio <= 0.3
-                ) {
-                    // console.log("mob pinning up");
-                    e.speed.y = 0;
-                    e.mobState.state == MOB_STATES.DYING;
-                    actionName = Actions.ACTION_POSE.PINNED;
-                } else {
-                    // console.log("mob dying up");
-                    e.speed.y = -20;
-                    actionName = Actions.ACTION_POSE.JUMP;
-                }
+            switch (e.mobState.state) {
+                case MOB_STATES.FLEEING:
+                    actionName = Actions.ACTION_POSE.WALKPANIC;
+                    switch (e.facing.direction) {
+                        case Actions.FACING.RIGHT:
+                            if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.RIGHT)
+                                && e.position.xRatio >= 0.7) {
+                                /// met a wall, flip left
+                                e.facing.direction = Actions.FACING.LEFT;
+                            } else {
+                                e.speed.incrementRight();
+                            }
+                            break;
+                        case Actions.FACING.LEFT:
+                            if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.LEFT)
+                                && e.position.xRatio <= 0.3) {
+                                /// met a wall, flip right
+                                e.facing.direction = Actions.FACING.RIGHT;
+                            } else {
+                                e.speed.incrementLeft();
+                            }
+                            break;
+                    }
+                    break;
+                case MOB_STATES.DYING:
+                    e.speed.x = 0;
+                    if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.UP)
+                        && e.position.yRatio <= 0.3
+                    ) {
+                        e.speed.y = 0;
+                        e.mobState.state == MOB_STATES.DYING;
+                        actionName = Actions.ACTION_POSE.PINNED;
+                    } else {
+                        e.speed.y = -20;
+                        actionName = Actions.ACTION_POSE.JUMP;
+                    }
+                    break;
             }
             e.sprite.setPose({
                 action: actionName,
@@ -226,7 +243,9 @@ function spawnNewMob(ecs, x, y) {
             y: 0,
             increment: 1.0,
         }))
-        .addComponent(Actions.newComponent_Facing())
+        .addComponent(Actions.newComponent_Facing({
+            direction: Actions.FACING.RIGHT,
+        }))
         .addComponent(Actions.newComponent_Jump({
             speedIncrement: 40.0,
         }))
