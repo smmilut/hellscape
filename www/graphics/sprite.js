@@ -17,7 +17,7 @@ export const ANIMATION_TYPE = Object.freeze({
 /*
 * a Sprite with animation from a sprite sheet
 */
-export const newSprite = function newSprite(initOptions) {
+export const newComponent_Sprite = function newSprite(initOptions) {
     const obj_Sprite = {
         name: "sprite",
         isInitialized: false,
@@ -199,20 +199,19 @@ export const newSprite = function newSprite(initOptions) {
     return obj_Sprite;
 };
 
+const System_updateAnimation = {
+    resourceQuery: ["time"],
+    componentQueries: {
+        sprites: ["sprite"],
+    },
+    run: function updateAnimation(queryResults) {
+        const time = queryResults.resources.time;
+        for (let e of queryResults.components.sprites) {
+            e.sprite.updateAnimation(time.dt);
+        }
+    },
+};
+
 export function init(ecs) {
-    ecs.Controller.addSystem(
-        {
-            resourceQuery: ["time"],
-            componentQueries: {
-                sprites: ["sprite"],
-            },
-            run: function updateAnimation(queryResults) {
-                const time = queryResults.resources.time;
-                for (let e of queryResults.components.sprites) {
-                    e.sprite.updateAnimation(time.dt);
-                }
-            },
-        },
-        ecs.SYSTEM_STAGE.END
-    );
+    ecs.Controller.addSystem(System_updateAnimation, ecs.SYSTEM_STAGE.END);
 }

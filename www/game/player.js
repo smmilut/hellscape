@@ -112,73 +112,75 @@ const playerSpriteSheetOptions = {
     defaultPose: "StandLeft",
 };
 
+const System_handleInput = {
+    resourceQuery: ["input"],
+    componentQueries: {
+        player: ["speed", "facing", "jump", "sprite", "attack", "tagPlayer"],
+    },
+    run: function handleInput(queryResults) {
+        let input = queryResults.resources.input;
+        for (let e of queryResults.components.player) {
+            let actionName = Actions.ACTION_POSE.NONE;
+            if (input.isKeyDown(Input.USER_ACTION.LEFT)) {
+                e.speed.incrementLeft();
+                actionName = Actions.ACTION_POSE.WALK;
+                e.facing.direction = Actions.FACING.LEFT;
+            } else if (input.isKeyDown(Input.USER_ACTION.RIGHT)) {
+                e.speed.incrementRight();
+                actionName = Actions.ACTION_POSE.WALK;
+                e.facing.direction = Actions.FACING.RIGHT;
+            } else {
+                actionName = Actions.ACTION_POSE.STAND;
+            }
+            if (input.isKeyDown(Input.USER_ACTION.JUMP)) {
+                if (e.jump.apply(e.speed)) {
+                    actionName = Actions.ACTION_POSE.JUMP;
+                };
+            }
+            if (input.isKeyDown(Input.USER_ACTION.ATTACK)) {
+                actionName = Actions.ACTION_POSE.ATTACK;
+                e.attack.isAttacking = true;
+            }
+            if (input.isKeyUp(Input.USER_ACTION.ATTACK)) {
+                e.attack.isAttacking = false;
+            }
+            if (input.isKeyUp(Input.USER_ACTION.JUMP)) {
+                e.jump.rearm();
+            }
+            e.sprite.setPose({
+                action: actionName,
+                facing: e.facing.direction
+            });
+        }
+    },
+};
+
 function spawnNewPlayer(ecs) {
     return ecs.Data.newEntity()
         .addComponent(newTagPlayer())
-        .addComponent(Physics.newPosition({
+        .addComponent(Physics.newComponent_Position({
             x: 2,
             y: 2,
         }))
-        .addComponent(Physics.newSpeed({
+        .addComponent(Physics.newComponent_Speed({
             x: 0,
             y: 0,
             increment: 1.0,
         }))
-        .addComponent(Actions.newFacing())
-        .addComponent(Actions.newJump({
+        .addComponent(Actions.newComponent_Facing())
+        .addComponent(Actions.newComponent_Jump({
             speedIncrement: 40.0,
         }))
-        .addComponent(Actions.newCollider({
+        .addComponent(Actions.newComponent_Collider({
             width: 10,
             height: 15,
         }))
-        .addComponent(Actions.newAttack())
-        .addComponent(Sprites.newSprite(playerSpriteSheetOptions));
+        .addComponent(Actions.newComponent_Attack())
+        .addComponent(Sprites.newComponent_Sprite(playerSpriteSheetOptions));
 }
 
 export function init(ecs) {
     spawnNewPlayer(ecs);
 
-    ecs.Controller.addSystem({
-        resourceQuery: ["input"],
-        componentQueries: {
-            player: ["speed", "facing", "jump", "sprite", "attack", "tagPlayer"],
-        },
-        run: function handleInput(queryResults) {
-            let input = queryResults.resources.input;
-            for (let e of queryResults.components.player) {
-                let actionName = Actions.ACTION_POSE.NONE;
-                if (input.isKeyDown(Input.USER_ACTION.LEFT)) {
-                    e.speed.incrementLeft();
-                    actionName = Actions.ACTION_POSE.WALK;
-                    e.facing.direction = Actions.FACING.LEFT;
-                } else if (input.isKeyDown(Input.USER_ACTION.RIGHT)) {
-                    e.speed.incrementRight();
-                    actionName = Actions.ACTION_POSE.WALK;
-                    e.facing.direction = Actions.FACING.RIGHT;
-                } else {
-                    actionName = Actions.ACTION_POSE.STAND;
-                }
-                if (input.isKeyDown(Input.USER_ACTION.JUMP)) {
-                    if (e.jump.apply(e.speed)) {
-                        actionName = Actions.ACTION_POSE.JUMP;
-                    };
-                }
-                if (input.isKeyDown(Input.USER_ACTION.ATTACK)) {
-                    actionName = Actions.ACTION_POSE.ATTACK;
-                    e.attack.isAttacking = true;
-                }
-                if (input.isKeyUp(Input.USER_ACTION.ATTACK)) {
-                    e.attack.isAttacking = false;
-                }
-                if (input.isKeyUp(Input.USER_ACTION.JUMP)) {
-                    e.jump.rearm();
-                }
-                e.sprite.setPose({
-                    action: actionName,
-                    facing: e.facing.direction
-                });
-            }
-        },
-    });
+    ecs.Controller.addSystem(System_handleInput);
 }

@@ -3,20 +3,24 @@ import * as GFX from "./graphics.js";
 import * as Input from "./userInput.js";
 import * as Game from "./game.js";
 
+function initSubModules(ecs) {
+    /// Always init ECS first
+    ecs.init();
+    /// init other modules
+    GFX.init(ecs);
+    Input.init(ecs);
+    Game.init(ecs);
+}
+
+function startGame(ecs) {
+    ecs.Controller.start();
+}
+
 /*
 * Main program entry point
 *   when loading this script, all starts
 */
 (function onLoadPage() {
-    //#region initialize modules
-    /// Always init ECS first
-    ECS.init();
-    /// init other modules
-    GFX.init(ECS);
-    Input.init(ECS);
-    Game.init(ECS);
-    //#endregion
-    
-    /// Start the game
-    ECS.Controller.start();
+    initSubModules(ECS);
+    startGame(ECS);
 })()

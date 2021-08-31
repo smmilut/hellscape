@@ -1,4 +1,4 @@
-const PhysicsResource = {
+const Resource_Physics = {
     name: "physics",
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
@@ -13,7 +13,7 @@ const PhysicsResource = {
 };
 
 
-export const newPosition = function newPosition(initOptions) {
+export const newComponent_Position = function newPosition(initOptions) {
     initOptions = initOptions || {};
     const obj_Position = {
         name: "position",
@@ -25,7 +25,7 @@ export const newPosition = function newPosition(initOptions) {
     return obj_Position;
 };
 
-export const newSpeed = function newSpeed(initOptions) {
+export const newComponent_Speed = function newSpeed(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "speed",
@@ -43,7 +43,7 @@ export const newSpeed = function newSpeed(initOptions) {
 };
 
 export function init(ecs) {
-    ecs.Data.addResource(PhysicsResource,
+    ecs.Data.addResource(Resource_Physics,
         {
             friction: 0.9,
             gravity: 2.5,

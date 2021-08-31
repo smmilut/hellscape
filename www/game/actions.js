@@ -14,7 +14,7 @@ export const FACING = Object.freeze({
     RIGHT: "Right",
 });
 
-export const newFacing = function newFacing(initOptions) {
+export const newComponent_Facing = function newFacing(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "facing",
@@ -22,7 +22,7 @@ export const newFacing = function newFacing(initOptions) {
     };
 };
 
-export const newJump = function newJump(initOptions) {
+export const newComponent_Jump = function newJump(initOptions) {
     initOptions = initOptions || {};
     let Jump_expended = false;
     const obj_Jump = {
@@ -43,14 +43,14 @@ export const newJump = function newJump(initOptions) {
     return obj_Jump;
 };
 
-export const newAttack = function newAttack(_initOptions) {
+export const newComponent_Attack = function newAttack(_initOptions) {
     return {
         name: "attack",
         isAttacking: false,
     };
 };
 
-export const newCollider = function newCollider(initOptions) {
+export const newComponent_Collider = function newCollider(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "collider",

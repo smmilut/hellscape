@@ -3,7 +3,7 @@ import * as Actions from "./actions.js";
 import * as LevelGrid from "./levelGrid.js";
 import * as Sprites from "../graphics/sprite.js";
 
-const newTagMob = function newTagMob(_initOptions) {
+const newComponent_TagMob = function newTagMob(_initOptions) {
     return {
         name: "tagMob",
     };
@@ -16,7 +16,7 @@ export const MOB_STATES = Object.freeze({
     DEAD: 3,
 });
 
-const newMobState = function newMobState(initOptions) {
+const newComponent_MobState = function newMobState(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "mobState",
@@ -175,72 +175,74 @@ const enemySpriteSheetOptions = {
     defaultPose: "WalkPanicLeft",
 };
 
+const System_mobBehave = {
+    resourceQuery: ["levelgrid"],
+    componentQueries: {
+        mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
+    },
+    run: function mobBehave(queryResults) {
+        let levelgrid = queryResults.resources.levelgrid;
+        for (let e of queryResults.components.mobs) {
+            let actionName = Actions.ACTION_POSE.NONE;
+            if (e.mobState.state == MOB_STATES.FLEEING) {
+                // console.log("mob fleeing");
+                e.speed.incrementRight();
+                e.facing.direction = Actions.FACING.RIGHT;
+                actionName = Actions.ACTION_POSE.WALKPANIC;
+            } else if (e.mobState.state == MOB_STATES.DYING) {
+                // console.log("mob dying", e, e.position);
+                e.speed.x = 0;
+                if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.UP)
+                    && e.position.yRatio <= 0.3
+                ) {
+                    // console.log("mob pinning up");
+                    e.speed.y = 0;
+                    e.mobState.state == MOB_STATES.DYING;
+                    actionName = Actions.ACTION_POSE.PINNED;
+                } else {
+                    // console.log("mob dying up");
+                    e.speed.y = -20;
+                    actionName = Actions.ACTION_POSE.JUMP;
+                }
+            }
+            e.sprite.setPose({
+                action: actionName,
+                facing: e.facing.direction
+            });
+        }
+    },
+};
+
 function spawnNewMob(ecs, x, y) {
     /// X, Y position manually for now, random later
     return ecs.Data.newEntity()
-        .addComponent(newTagMob())
-        .addComponent(Physics.newPosition({
+        .addComponent(newComponent_TagMob())
+        .addComponent(Physics.newComponent_Position({
             x: x,
             y: y,
         }))
-        .addComponent(Physics.newSpeed({
+        .addComponent(Physics.newComponent_Speed({
             x: 5,
             y: 0,
             increment: 1.0,
         }))
-        .addComponent(Actions.newFacing())
-        .addComponent(Actions.newJump({
+        .addComponent(Actions.newComponent_Facing())
+        .addComponent(Actions.newComponent_Jump({
             speedIncrement: 40.0,
         }))
-        .addComponent(Actions.newCollider({
+        .addComponent(Actions.newComponent_Collider({
             width: 10,
             height: 15,
         }))
-        .addComponent(newMobState({
+        .addComponent(newComponent_MobState({
             state: MOB_STATES.FLEEING,
         }))
-        .addComponent(Sprites.newSprite(enemySpriteSheetOptions));
+        .addComponent(Sprites.newComponent_Sprite(enemySpriteSheetOptions));
 }
 
 export function init(ecs) {
     let _mob1 = spawnNewMob(ecs, 4, 7);
     let _mob2 = spawnNewMob(ecs, 10, 2);
 
-    ecs.Controller.addSystem({
-        resourceQuery: ["levelgrid"],
-        componentQueries: {
-            mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
-        },
-        run: function mobBehave(queryResults) {
-            let levelgrid = queryResults.resources.levelgrid;
-            for (let e of queryResults.components.mobs) {
-                let actionName = Actions.ACTION_POSE.NONE;
-                if (e.mobState.state == MOB_STATES.FLEEING) {
-                    // console.log("mob fleeing");
-                    e.speed.incrementRight();
-                    e.facing.direction = Actions.FACING.RIGHT;
-                    actionName = Actions.ACTION_POSE.WALKPANIC;
-                } else if (e.mobState.state == MOB_STATES.DYING) {
-                    // console.log("mob dying", e, e.position);
-                    e.speed.x = 0;
-                    if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.UP)
-                        && e.position.yRatio <= 0.3
-                    ) {
-                        // console.log("mob pinning up");
-                        e.speed.y = 0;
-                        e.mobState.state == MOB_STATES.DYING;
-                        actionName = Actions.ACTION_POSE.PINNED;
-                    } else {
-                        // console.log("mob dying up");
-                        e.speed.y = -20;
-                        actionName = Actions.ACTION_POSE.JUMP;
-                    }
-                }
-                e.sprite.setPose({
-                    action: actionName,
-                    facing: e.facing.direction
-                });
-            }
-        },
-    });
+    ecs.Controller.addSystem(System_mobBehave);
 }

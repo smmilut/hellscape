@@ -2,7 +2,7 @@
 /*
 * a canvas correctly scaled for pixel art
 */
-const PixelCanvas = (function build_PixelCanvas() {
+const Resource_PixelCanvas = (function build_PixelCanvas() {
     const obj_PixelCanvas = {
         name: "pixelCanvas",
     };
@@ -46,7 +46,7 @@ const PixelCanvas = (function build_PixelCanvas() {
 })();
 
 
-const Camera = (function build_Camera() {
+const Resource_Camera = (function build_Camera() {
     const obj_Camera = {
         name: "camera",
     };
@@ -108,15 +108,28 @@ const Camera = (function build_Camera() {
     return obj_Camera;
 })();
 
+const System_moveCamera = {
+    resourceQuery: ["camera"],
+    componentQueries: {
+        player: ["position", "tagPlayer"],
+    },
+    run: function moveCamera(queryResults) {
+        let camera = queryResults.resources.camera;
+        for (let e of queryResults.components.player) {
+            camera.setTarget(e.position);
+        }
+    },
+};
+
 export function init(ecs) {
-    ecs.Data.addResource(PixelCanvas,
+    ecs.Data.addResource(Resource_PixelCanvas,
         {
             scale: 4.0,
         },
         0, // higher priority than Camera
     );
 
-    ecs.Data.addResource(Camera,
+    ecs.Data.addResource(Resource_Camera,
         {
             initQueryResources: ["pixelCanvas"],
             screenWidth: 1280,
@@ -125,16 +138,5 @@ export function init(ecs) {
         1, // higher priority than LevelSprite, lower than PixelCanvas
     );
     
-    ecs.Controller.addSystem({
-        resourceQuery: ["camera"],
-        componentQueries: {
-            player: ["position", "tagPlayer"],
-        },
-        run: function moveCamera(queryResults) {
-            let camera = queryResults.resources.camera;
-            for (let e of queryResults.components.player) {
-                camera.setTarget(e.position);
-            }
-        },
-    });
+    ecs.Controller.addSystem(System_moveCamera);
 }

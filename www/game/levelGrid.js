@@ -10,7 +10,7 @@ export const COLLISION_DIRECTION = Object.freeze({
 /*
 * the Level grid data
 */
-const LevelGridResource = (function build_LevelGrid() {
+const Resource_LevelGrid = (function build_LevelGrid() {
     const obj_LevelGrid = {
         name: "levelgrid",
     };
@@ -74,7 +74,7 @@ const LevelGridResource = (function build_LevelGrid() {
 
 
 export function init(ecs) {
-    ecs.Data.addResource(LevelGridResource,
+    ecs.Data.addResource(Resource_LevelGrid,
         {
             url: "www/levelmap.json",
             gridCellWidth: 16,

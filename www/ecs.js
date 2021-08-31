@@ -51,7 +51,7 @@
     ## Resource API
 
     ```
-    Resource = {
+    Resource_Something = {
         name: "thisResourceName",
         initQueryResources: ["otherResource1", "otherResource2", ...],  // will be passed as argument to init()
         prepareInit: function(initOptions),  // return a Promise if you need order
@@ -69,7 +69,7 @@
     Add a new Resource to the program flow with :
     
     ```
-    Data.addResource(Resource, initOptions, priority)
+    Data.addResource(Resource_Something, initOptions, priority)
     ```
 
     # Systems
@@ -97,7 +97,7 @@
     ## System API
 
     ```
-    System = {
+    System_Something = {
         resourceQuery: ["resource1", "resource2", ...],
         componentQueries: {
             queryName1: ["componentA", "componentB", ...],
@@ -148,7 +148,7 @@
     Add a new System with :
     ```
     Controller.addSystem(
-        someSystem,
+        System_Something,
         SYSTEM_STAGE,  // optional, default to MAIN
     );
     ```
@@ -158,7 +158,7 @@
     ## Components API
 
     ```
-    Component = {
+    Component_Something = {
         name,
     }
     ```
@@ -184,7 +184,7 @@
 /*
 *   A Timer Resource or Component that can be derived with Object.create()
 */
-const Timer = {
+const Resource_Timer = {
     name: "timer",
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
@@ -204,8 +204,8 @@ const Timer = {
 /*
 * The main Time Resource that tracks the frame duration
 */
-export const TimeResource = Object.create(Timer);
-TimeResource.name = "time";
+const Resource_Time = Object.create(Resource_Timer);
+Resource_Time.name = "time";
 
 /*
 * System stages : priorities for running Systems each frame
@@ -443,5 +443,5 @@ export const Data = (function build_Data() {
 *   Initialize system : make user system Resources available
 */
 export function init() {
-    Data.addResource(TimeResource);
+    Data.addResource(Resource_Time);
 }

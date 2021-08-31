@@ -3,7 +3,7 @@ import * as Utils from "../utils.js";
 /*
 * A level map background
 */
-const LevelSpriteResource = (function build_LevelSprite() {
+const Resource_LevelSprite = (function build_LevelSprite() {
     // the object we are building
     const obj_LevelSprite = {
         name: "levelsprite",
@@ -215,7 +215,7 @@ const LevelSpriteResource = (function build_LevelSprite() {
 /*
 * A level background image
 */
-const BackdropResource = (function build_Backdrop() {
+const Resource_Backdrop = (function build_Backdrop() {
     // the object we are building
     const obj_Backdrop = {
         name: "backdrop",
@@ -270,7 +270,7 @@ const BackdropResource = (function build_Backdrop() {
 })();
 
 export function init(ecs) {
-    ecs.Data.addResource(LevelSpriteResource,
+    ecs.Data.addResource(Resource_LevelSprite,
         {
             initQueryResources: ["levelgrid", "pixelCanvas"],
             sheetSrc: "assets/terrain_tilemap.png",
@@ -279,7 +279,7 @@ export function init(ecs) {
         3, // lower priority than LevelGrid
     );
 
-    ecs.Data.addResource(BackdropResource,
+    ecs.Data.addResource(Resource_Backdrop,
         {
             initQueryResources: ["levelgrid", "pixelCanvas"],
             sheetSrc: "assets/backdrop.png",

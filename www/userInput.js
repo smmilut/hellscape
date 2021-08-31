@@ -14,7 +14,7 @@ export const USER_ACTION = Object.freeze({
 * Keyboard management
 * Could be used as a Resource individually
 */
-export const KeyboardResource = (function build_Keyboard() {
+const KeyboardResource = (function build_Keyboard() {
     const obj_Keyboard = {
         name: "keyboard",
     };
@@ -117,7 +117,7 @@ export const GAMEPAD_AXIS = Object.freeze({
 * Gamepad management
 * Could be used as a Resource individually
 */
-export const GamepadResource = (function build_Gamepad() {
+const GamepadResource = (function build_Gamepad() {
     const obj_Gamepad = {
         name: "gamepad",
     };
@@ -240,7 +240,7 @@ export const GamepadResource = (function build_Gamepad() {
 /*
 * User input of Keyboard and Gamepad combined
 */
-export const InputResource = (function build_Input() {
+const InputResource = (function build_Input() {
     const obj_Input = {
         name: "input",
     };
