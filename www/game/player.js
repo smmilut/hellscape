@@ -133,9 +133,8 @@ const System_handleInput = {
                 actionName = Actions.ACTION_POSE.STAND;
             }
             if (input.isKeyDown(Input.USER_ACTION.JUMP)) {
-                if (e.jump.apply(e.speed)) {
-                    actionName = Actions.ACTION_POSE.JUMP;
-                };
+                e.jump.apply(e.speed);
+                actionName = Actions.ACTION_POSE.JUMP;
             }
             if (input.isKeyDown(Input.USER_ACTION.ATTACK)) {
                 actionName = Actions.ACTION_POSE.ATTACK;

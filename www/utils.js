@@ -2,6 +2,9 @@
  * Utilities module
  */
 
+/*
+*   Make Http requests
+*/
 export const Http = (function build_HttpUtils() {
     /* Http utils module */
     const HttpRequest = function createHttpRequestPromise(options) {
@@ -134,3 +137,79 @@ export const Number = (function build_Number() {
         },
     }
 })();
+
+/*
+*   Utilities for random numbers
+*/
+export const Rng = (function build_RngUtils() {
+    const obj_Rng = {};
+
+    obj_Rng.random = Math.random;
+
+    /*
+    * Return random number betwen min and max. If only 1 argument, then it's a max.
+    */
+    obj_Rng.range = function Rng_range(boundary1, boundary2) {
+        let min, max;
+        if (boundary2 == undefined) {
+            min = 0;
+            max = boundary1;
+        } else {
+            min = boundary1;
+            max = boundary2;
+        }
+        return obj_Rng.random() * (max - min) + min;
+    }
+
+    /*
+    * return a random element from array
+    */
+    obj_Rng.select = function Rng_select(array) {
+        return array[Math.floor(obj_Rng.random() * array.length)];
+    }
+
+    /* 
+    * return a random item.value from array
+    *  selected randomly but weighted according to item.weight
+    */
+    obj_Rng.selectWeighted = function Rng_selectWeighted(array) {
+        
+        let selectedItem;
+        let selectedScore = 0;
+        array.forEach(function iterateArray(v, _i, _a) {
+            let score = obj_Rng.random() * v.weight;
+            if (score > selectedScore) {
+                selectedItem = v.value;
+                selectedScore = score;
+            }
+        });
+        return selectedItem;
+    }
+
+    function Rng_selectMany(array, n) {
+        // select n times a random element in the array, not necessarily uniques
+        // return the array of selected n elements
+        let selected = [];
+        n = n || 1;
+        for (let i = 0; i < n; i++) {
+            selected.push(select(array));
+        }
+        return selected;
+    }
+
+    function Rng_selectWeightedMany(array, n) {
+        // select n times a random element in the array
+        // selected randomly but weighted according to item.weight
+        // not necessarily uniques
+        // return the array of selected n elements
+        let selected = [];
+        n = n || 1;
+        for (let i = 0; i < n; i++) {
+            selected.push(selectWeighted(array));
+        }
+        return selected;
+    }
+
+    return obj_Rng;
+})();
+

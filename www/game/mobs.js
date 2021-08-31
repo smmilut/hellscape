@@ -2,6 +2,7 @@ import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
 import * as LevelGrid from "./levelGrid.js";
 import * as Sprites from "../graphics/sprite.js";
+import * as Utils from "../utils.js";
 
 const newComponent_TagMob = function newTagMob(_initOptions) {
     return {
@@ -12,8 +13,9 @@ const newComponent_TagMob = function newTagMob(_initOptions) {
 export const MOB_STATES = Object.freeze({
     STANDING: 0,
     FLEEING: 1,
-    DYING: 2,
-    DEAD: 3,
+    JUMPING: 2,
+    DYING: 3,
+    DEAD: 4,
 });
 
 const newComponent_MobState = function newMobState(initOptions) {
@@ -194,6 +196,7 @@ const System_mobBehave = {
                                 /// met a wall, flip left
                                 e.facing.direction = Actions.FACING.LEFT;
                             } else {
+                                /// continue running
                                 e.speed.incrementRight();
                             }
                             break;
@@ -203,9 +206,30 @@ const System_mobBehave = {
                                 /// met a wall, flip right
                                 e.facing.direction = Actions.FACING.RIGHT;
                             } else {
+                                /// continue running
                                 e.speed.incrementLeft();
                             }
                             break;
+                    }
+                    /// Randomly switch to jumping
+                    e.mobState.state = Utils.Rng.selectWeighted([
+                        {
+                            value: MOB_STATES.FLEEING,
+                            weight: 10,
+                        },
+                        {
+                            value: MOB_STATES.JUMPING,
+                            weight: 1,
+                        },
+                    ])
+                    break;
+                case MOB_STATES.JUMPING:
+                    if (e.jump.apply(e.speed)) {
+                        actionName = Actions.ACTION_POSE.JUMP;
+                    } else {
+                        /// couldn't jump
+                        e.jump.rearm();
+                        e.mobState.state = MOB_STATES.FLEEING;
                     }
                     break;
                 case MOB_STATES.DYING:
@@ -222,6 +246,7 @@ const System_mobBehave = {
                     }
                     break;
             }
+
             e.sprite.setPose({
                 action: actionName,
                 facing: e.facing.direction
