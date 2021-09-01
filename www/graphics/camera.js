@@ -52,8 +52,8 @@ const Resource_Camera = (function build_Camera() {
         name: "camera",
     };
     let Camera_canvas, Camera_context, Camera_initOptions;
-    let Camera_gameCenter, Camera_offset;
-    let Camera_isAnimating, Camera_target, Camera_animationStart, Camera_animationDuration, Camera_animationTime, Camera_targetTolerance;
+    let Camera_gameCenter;
+    let Camera_isAnimating, Camera_target, Camera_animationSmoothness;
 
     obj_Camera.prepareInit = function Camera_prepareInit(initOptions) {
         Camera_initOptions = initOptions || {};
@@ -73,12 +73,10 @@ const Resource_Camera = (function build_Camera() {
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
             obj_Camera.deadzoneSize = Camera_initOptions.deadzoneSize;
-            Camera_gameCenter = Camera_initOptions.gameCenter || { x: 0, y: 0 };
-            Camera_offset = Camera_initOptions.offset || { x: 0, y: 0 };
+            Camera_gameCenter = Camera_initOptions.gameCenter || { x: obj_Camera.gameWidth / 2, y: obj_Camera.gameHeight / 2 };
             Camera_target = Camera_initOptions.target || { x: 0, y: 0 };
-            Camera_animationDuration = Camera_initOptions.animationDuration || 0.500;
+            Camera_animationSmoothness = Camera_initOptions.animationSmoothness || 20;
             Camera_isAnimating = false;
-            Camera_targetTolerance = 1;  // number of pixels of error accepted to consider we reached the target
             resolve();
         });
     };
@@ -99,19 +97,12 @@ const Resource_Camera = (function build_Camera() {
     };
 
     obj_Camera.setTarget = function Camera_setTarget(gamePosition) {
-        Camera_target.x = gamePosition.x + Camera_offset.x;
-        Camera_target.y = gamePosition.y + Camera_offset.y;
-        /*if (isTargetOutsideView()) {
-            /// target too far, force view without animation
-            obj_Camera.forceMove();
-        } else */
+        /// target the average position between the target and the vertical middle of the map
+        Camera_target.x = gamePosition.x;
+        Camera_target.y = (gamePosition.y + obj_Camera.gameHeight / 2) / 2;
         if (isTargetOutsideDeadzone()) {
+            /// trigger animation
             Camera_isAnimating = true;
-            Camera_animationTime = 0;
-            Camera_animationStart = {
-                x: Camera_gameCenter.x,
-                y: Camera_gameCenter.y,
-            };
         }
     };
 
@@ -130,10 +121,8 @@ const Resource_Camera = (function build_Camera() {
                 /// we reached target
                 Camera_isAnimating = false;
             } else {
-                Camera_animationTime += timePassed;
-                let animationParameter = Camera_animationTime * 1.0 / Camera_animationDuration;
-                Camera_gameCenter.x = Utils.lerp(Camera_animationStart.x, Camera_target.x, animationParameter);
-                Camera_gameCenter.y = Utils.lerp(Camera_animationStart.y, Camera_target.y, animationParameter);
+                Camera_gameCenter.x = (Camera_gameCenter.x * Camera_animationSmoothness + Camera_target.x) / (Camera_animationSmoothness + 1);
+                Camera_gameCenter.y = (Camera_gameCenter.y * Camera_animationSmoothness + Camera_target.y) / (Camera_animationSmoothness + 1);
             }
         }
     };
@@ -149,39 +138,8 @@ const Resource_Camera = (function build_Camera() {
         }
     }
 
-    /*
-    * doesn't work ???
-    */
-    function isTargetOutsideView() {
-        let targetScreenPosition = gameToScreenPosition(Camera_target);
-        console.log("checking if target is too far", Camera_target, targetScreenPosition, obj_Camera.screenWidth, obj_Camera.screenHeight);
-        if (targetScreenPosition.x >= obj_Camera.screenWidth) {
-            console.log("> target too far right");
-            return true;
-        } else if (targetScreenPosition.x <= 0) {
-            console.log("> target too far left");
-            return true;
-        } else if (targetScreenPosition.y >= obj_Camera.screenHeight) {
-            console.log("> target too far down");
-            return true;
-        } else if (targetScreenPosition.y <= 0) {
-            console.log("> target too far up");
-        } else {
-            return false;
-        }
-    }
-
     function isAnimationCompleted() {
-        if (Camera_animationTime >= Camera_animationDuration) {
-            /// animation time completed
-            return true;
-        } else if (Math.abs(Camera_target.x - Camera_gameCenter.x) <= Camera_targetTolerance
-            && Math.abs(Camera_target.y - Camera_gameCenter.y) <= Camera_targetTolerance) {
-            /// target reached
-            return true;
-        } else {
-            return false;
-        }
+        return !isTargetOutsideDeadzone();
     }
 
     function gameToScreenPosition(gamePosition) {
@@ -225,14 +183,10 @@ export function init(ecs) {
             screenWidth: 1280,
             screenHeight: 768,
             deadzoneSize: {
-                width: 100,
-                height: 100,
+                width: 10,
+                height: 10,
             },
-            offset: {
-                x: 0,
-                y: -30,
-            },
-            animationDuration: 0.500,
+            animationSmoothness: 10,
         },
         1, // higher priority than LevelSprite, lower than PixelCanvas
     );

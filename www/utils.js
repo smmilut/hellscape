@@ -216,6 +216,40 @@ export const Rng = (function build_RngUtils() {
 /*
 *   Linear interpolation between value0 and value1, for parameter t between 0 and 1
 */
-export function lerp(value0, value1, t) {
+export function lerp(value0, value1, t, edge0, edge1) {
+    if (edge0 == undefined) {
+        edge0 = 0.0;
+    }
+    if (edge1 == undefined) {
+        edge1 = 1.0;
+    }
+    // Scale, bias and saturate x to 0..1 range
+    t = clamp((t - edge0) / (edge1 - edge0), 0.0, 1.0);
     return (1 - t) * value0 + t * value1;
+}
+
+/*
+*   Smooth interpolation between value0 and value1, for parameter t between edge0 and edge1
+*/
+export function smoothstep(value0, value1, t, edge0, edge1) {
+    if (edge0 == undefined) {
+        edge0 = 0.0;
+    }
+    if (edge1 == undefined) {
+        edge1 = 1.0;
+    }
+    // Scale, bias and saturate x to 0..1 range
+    t = clamp((t - edge0) / (edge1 - edge0), 0.0, 1.0);
+    // Evaluate polynomial
+    return value0 + (value1 - value0) * t * t * (3 - 2 * t);
+}
+
+export function clamp(x, lowerLimit, upperLimit) {
+    if (x < lowerLimit) {
+        return lowerLimit;
+    } else if (x > upperLimit) {
+        return upperLimit;
+    } else {
+        return x;
+    }
 }
