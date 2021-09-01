@@ -13,6 +13,7 @@ export const COLLISION_DIRECTION = Object.freeze({
 const Resource_LevelGrid = (function build_LevelGrid() {
     const obj_LevelGrid = {
         name: "levelgrid",
+        COLLISION_DIRECTION : COLLISION_DIRECTION,
     };
 
     let LevelGrid_initOptions;

@@ -134,7 +134,10 @@ const System_handleInput = {
             }
             if (input.isKeyDown(Input.USER_ACTION.JUMP)) {
                 e.jump.apply(e.speed);
-                actionName = Actions.ACTION_POSE.JUMP;
+                if (e.jump.qtyLeft > 0.0) {
+                    /// still doing the jump
+                    actionName = Actions.ACTION_POSE.JUMP;
+                }
             }
             if (input.isKeyDown(Input.USER_ACTION.ATTACK)) {
                 actionName = Actions.ACTION_POSE.ATTACK;
@@ -164,11 +167,12 @@ function spawnNewPlayer(ecs) {
         .addComponent(Physics.newComponent_Speed({
             x: 0,
             y: 0,
-            increment: 1.0,
+            increment: 1.5,
         }))
         .addComponent(Actions.newComponent_Facing())
         .addComponent(Actions.newComponent_Jump({
-            speedIncrement: 40.0,
+            speedIncrement: 10.0,
+            maxCharges: 2,
         }))
         .addComponent(Actions.newComponent_Collider({
             width: 10,

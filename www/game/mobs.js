@@ -185,37 +185,40 @@ const System_mobBehave = {
     run: function mobBehave(queryResults) {
         let levelgrid = queryResults.resources.levelgrid;
         for (let e of queryResults.components.mobs) {
+            if (e.mobState.state == MOB_STATES.FLEEING || e.mobState.state == MOB_STATES.JUMPING) {
+                /// collisionning
+                switch (e.facing.direction) {
+                    case Actions.FACING.RIGHT:
+                        if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.RIGHT)
+                            && e.position.xRatio >= 0.7) {
+                            /// met a wall, flip left
+                            e.facing.direction = Actions.FACING.LEFT;
+                        } else {
+                            /// continue running
+                            e.speed.incrementRight();
+                        }
+                        break;
+                    case Actions.FACING.LEFT:
+                        if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.LEFT)
+                            && e.position.xRatio <= 0.3) {
+                            /// met a wall, flip right
+                            e.facing.direction = Actions.FACING.RIGHT;
+                        } else {
+                            /// continue running
+                            e.speed.incrementLeft();
+                        }
+                        break;
+                }
+            }
             let actionName = Actions.ACTION_POSE.NONE;
             switch (e.mobState.state) {
                 case MOB_STATES.FLEEING:
                     actionName = Actions.ACTION_POSE.WALKPANIC;
-                    switch (e.facing.direction) {
-                        case Actions.FACING.RIGHT:
-                            if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.RIGHT)
-                                && e.position.xRatio >= 0.7) {
-                                /// met a wall, flip left
-                                e.facing.direction = Actions.FACING.LEFT;
-                            } else {
-                                /// continue running
-                                e.speed.incrementRight();
-                            }
-                            break;
-                        case Actions.FACING.LEFT:
-                            if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.LEFT)
-                                && e.position.xRatio <= 0.3) {
-                                /// met a wall, flip right
-                                e.facing.direction = Actions.FACING.RIGHT;
-                            } else {
-                                /// continue running
-                                e.speed.incrementLeft();
-                            }
-                            break;
-                    }
                     /// Randomly switch to jumping
                     e.mobState.state = Utils.Rng.selectWeighted([
                         {
                             value: MOB_STATES.FLEEING,
-                            weight: 10,
+                            weight: 15,
                         },
                         {
                             value: MOB_STATES.JUMPING,
@@ -224,17 +227,17 @@ const System_mobBehave = {
                     ])
                     break;
                 case MOB_STATES.JUMPING:
-                    if (e.jump.apply(e.speed)) {
-                        actionName = Actions.ACTION_POSE.JUMP;
-                    } else {
-                        /// couldn't jump
+                    e.jump.apply(e.speed)
+                    actionName = Actions.ACTION_POSE.JUMP;
+                    if (e.jump.qtyLeft <= 0.0) {
+                        /// next, switch to flee
                         e.jump.rearm();
                         e.mobState.state = MOB_STATES.FLEEING;
                     }
                     break;
                 case MOB_STATES.DYING:
                     e.speed.x = 0;
-                    if (levelgrid.hasCollisionAtDirection(e.position, LevelGrid.COLLISION_DIRECTION.UP)
+                    if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.UP)
                         && e.position.yRatio <= 0.3
                     ) {
                         e.speed.y = 0;
@@ -266,13 +269,13 @@ function spawnNewMob(ecs, x, y) {
         .addComponent(Physics.newComponent_Speed({
             x: 5,
             y: 0,
-            increment: 1.0,
+            increment: 1.5,
         }))
         .addComponent(Actions.newComponent_Facing({
             direction: Actions.FACING.RIGHT,
         }))
         .addComponent(Actions.newComponent_Jump({
-            speedIncrement: 40.0,
+            speedIncrement: 10.0,
         }))
         .addComponent(Actions.newComponent_Collider({
             width: 10,

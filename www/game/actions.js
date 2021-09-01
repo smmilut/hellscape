@@ -24,22 +24,50 @@ export const newComponent_Facing = function newFacing(initOptions) {
 
 export const newComponent_Jump = function newJump(initOptions) {
     initOptions = initOptions || {};
-    let Jump_expended = false;
+    let Jump_chargesLeft;
+    let Jump_isready;
+
     const obj_Jump = {
         name: "jump",
         speedIncrement: initOptions.speedIncrement || 1.0,
+        qtyLeft: 1.0,
+        qtyDecrement: initOptions.qtyDecrement || 0.1,
+        maxCharges: initOptions.maxCharges || 1,
         apply: function Jump_apply(speed) {
-            if (!Jump_expended && Math.abs(speed.y) < 0.1) {
-                // not currently moving vertically (falling or already jumping)
-                // assume collision down (feet on ground)
-                speed.y = -this.speedIncrement;
-                Jump_expended = true;
+            if (Jump_isready) {
+                /// jump was rearmed, we can jump
+                if (Math.abs(speed.y) < 0.1) {
+                    /// not currently moving vertically (falling or already jumping)
+                    /// assume collision down (feet on ground)
+                    this.resetCharges();
+                    /// consume a charge and initiate a new jump
+                    Jump_chargesLeft -= 1;
+                } else if (Jump_chargesLeft > 0) {
+                    /// consume a charge and initiate a new jump
+                    Jump_chargesLeft -= 1;
+                    this.qtyLeft = 1.0;
+                }
             }
+            if (this.qtyLeft > 0.0) {
+                /// continue jump
+                speed.y -= this.speedIncrement;
+                this.qtyLeft -= this.qtyDecrement;
+            }
+            /// in any case, trying to jump, so un-arming it
+            Jump_isready = false;
         },
         rearm: function Jump_rearm() {
-            Jump_expended = false;
+            this.qtyLeft = 0.0;
+            Jump_isready = true;
+        },
+        resetCharges: function Jump_resetCharges() {
+            this.qtyLeft = 1.0;
+            Jump_chargesLeft = this.maxCharges;
         },
     };
+
+    obj_Jump.resetCharges();
+    obj_Jump.rearm();
     return obj_Jump;
 };
 
