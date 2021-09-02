@@ -38,14 +38,28 @@ const Resource_LevelGrid = (function build_LevelGrid() {
             });
     };
 
+    /*
+    *   Check if coordinates xy are inside the Level Grid
+    */
+    obj_LevelGrid.isCellInside = function LevelGrid_isCellInside(x, y) {
+        if (x >= 0 && x < obj_LevelGrid.gridWidth && y >= 0 && y < obj_LevelGrid.gridHeight) {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    /*
+    *   Check if coordinates xy are free and inside the Level Grid
+    */
     obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
-        if (x < 0 || x >= obj_LevelGrid.gridWidth || y < 0 || y >= obj_LevelGrid.gridHeight) {
+        if (!obj_LevelGrid.isCellInside(x, y)) {
             Utils.debug("outside of map at cell", x, y);
             return true;
         } else {
             return obj_LevelGrid.data[y][x] != 0;
         }
-    }
+    };
 
     obj_LevelGrid.hasCollisionAtCell = function LevelGrid_hasCollisionAtCell(cellX, cellY) {
         return obj_LevelGrid.isTileBusy(cellX, cellY);
