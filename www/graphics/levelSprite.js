@@ -1,6 +1,157 @@
 import * as Utils from "../utils.js";
 
 /*
+*   Separate logic for parsing the configuration of a tilemap
+*   because it's a bit complicated, and clogs the Resource_LevelSprite where it was hard to read.
+*   It's more a "group of functions" than an actual object.
+*/
+const newTilemapLayoutParser = function newTilemapLayoutParser() {
+    const obj_Parser = {};
+    let Parser_sheetConfig, Parser_result;
+
+    obj_Parser.init = function Parser_init(sheetConfig) {
+        Parser_sheetConfig = sheetConfig;
+        Parser_result = {};
+        return obj_Parser;
+    };
+
+    function initTheme(themeName) {
+        if (!(themeName in Parser_result)) {
+            Parser_result[themeName] = {};
+        }
+    }
+
+    /*
+    *   Get the known connection bits
+    *   For arrays of neighbors in numpad notation
+    */
+    function getKnownNeighborBits(neighborConnect, neighborNoconnect) {
+        let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 1];  // little endian
+        /// bits we know are connecting
+        for (const numpadConnect of neighborConnect) {
+            let bitIndex = indexOfNumpad(numpadConnect);
+            neighborBits[bitIndex] = 1;
+        }
+        /// bits we know are not connecting
+        for (const numpadNoconnect of neighborNoconnect) {
+            let bitIndex = indexOfNumpad(numpadNoconnect);
+            neighborBits[bitIndex] = 0;
+        }
+        return neighborBits;
+    }
+
+    /*
+    *   Get the bit indices of the connection bits that are unknown because they were not considered by the sprite author.
+    *   For arrays of neighbors in numpad notation
+    */
+    function getNeighborIgnoredIndices(neighborConnect, neighborNoconnect) {
+        let ignoredIndices = [1, 2, 3, 4, 6, 7, 8, 9].map(indexOfNumpad);
+        let neighborKnownIndices = [...neighborConnect.map(indexOfNumpad), ...neighborNoconnect.map(indexOfNumpad)];
+        for (const bitIndex of neighborKnownIndices) {
+            let removeIndex = ignoredIndices.indexOf(bitIndex);
+            ignoredIndices.splice(removeIndex, 1);
+        }
+        return ignoredIndices;
+    }
+
+    /*
+    *   Take a combination (decimal representation of MISSING neighbor bits), a list of known neighbor bits, a list of unknown bits indices,
+    *   Then set all the known bits to their known values, and all the unknown bits to a bit in the combination
+    *   Finally, return the neighbor code (decimal representation of ALL neighbor bits) for this combination.
+    */
+    function getNeighborCodeForCombination(ignoredCombination, ignoredIndices, neighborBits) {
+        let ignoredCombinationBits = Utils.Number.numToBitArray(ignoredCombination, ignoredIndices.length);
+        let neighborCodeBits = [...neighborBits];
+        /// for this combination, set all the relevant bits
+        for (let bitIndex = 0, combinationIndex = 0; bitIndex < neighborCodeBits.length; bitIndex++) {
+            if (ignoredIndices.includes(bitIndex)) {
+                /// that bit in the final array if an ignored neighbor,
+                /// so it must be set by the combination generation
+                neighborCodeBits[bitIndex] = ignoredCombinationBits[combinationIndex];
+                // iterating the bits in the generated combination
+                combinationIndex++;
+            }
+        }
+        return Utils.Number.bitArrayToNum(neighborCodeBits);
+    }
+
+    /*
+    *   Add this Cell to the final parsed result
+    */
+    function addCellInfoCode(cellInfo, neighborCode, neighborAwareness) {
+        if (!(neighborCode in Parser_result[cellInfo.theme])) {
+            /// initialize the list of variations
+            Parser_result[cellInfo.theme][neighborCode] = [];
+        }
+        Parser_result[cellInfo.theme][neighborCode].push({
+            sourceX: cellInfo.cellPosition[0],
+            sourceY: cellInfo.cellPosition[1],
+            neighborAwareness: neighborAwareness,  // how many neighbors were not ignored
+        });
+        /// Variations now include tiles that are specifically made for this neighbor situation,
+        /// and tiles that are here only because they ignored many neighbors.
+        /// So now we must sort them to put the most aware first (and later draw the most aware).
+        Parser_result[cellInfo.theme][neighborCode].sort(function sortAwareness(a, b) {
+            return b.neighborAwareness - a.neighborAwareness;
+        });
+    }
+
+    /*
+    *   Parse the tilemap config and return a computed config in the form of :
+    *   {
+    *       "theme0": {
+    *           "neighborcode0": [  // variations
+    *               {  // variation 0
+    *                   sourceX: x,
+    *                   sourceY: y,
+    *               },
+    *           ],
+    *       },
+    *   }
+    * 
+    *   This computation is necessary, because I want to generate all "neighbor codes" (that represent a tile neighborhood)
+    *   even if the tilemap author didn't implement all possible values.
+    */
+    obj_Parser.parse = function Parser_parse() {
+        for (const cellInfo of Parser_sheetConfig) {
+            initTheme(cellInfo.theme)
+            let neighborBits = getKnownNeighborBits(cellInfo.neighborConnect, cellInfo.neighborNoconnect);
+            /// find all bits that were not considered by the sprite author
+            let ignoredIndices = getNeighborIgnoredIndices(cellInfo.neighborConnect, cellInfo.neighborNoconnect);
+            /// now generate all combinations of neighbor codes that exist for all the ignored neighbors (connecting and not connecting)
+            ignoredIndices.length;
+            for (let ignoredCombination = 0; ignoredCombination < (2 ** ignoredIndices.length); ignoredCombination++) {
+                let neighborCode = getNeighborCodeForCombination(ignoredCombination, ignoredIndices, neighborBits);
+                addCellInfoCode(cellInfo, neighborCode, neighborBits.length - ignoredIndices.length);
+            }
+        }
+        return Parser_result;
+    };
+
+
+    /*
+    *   numpad notation : visualize a computer keyboard numpad, the main tile is at the center (number 5),
+    *       789
+    *       456
+    *       123
+    *   neighbor code: bits presence(1)/absence(0) of neighbor connection at that neighboring location, in the following order :
+    *       low bit at left (numpad 4), increasing counter-clockwise, high bit at topleft (7),
+    *       finishing eventually with highest bit at center (5) but considered granted to be 1 for now
+    */
+    function indexOfNumpad(numpadNotation) {
+        const numpads = [4, 1, 2, 3, 6, 9, 8, 7, 5]
+        for (let numpadIndex = 0; numpadIndex < numpads.length; numpadIndex++) {
+            const numpadValue = numpads[numpadIndex];
+            if (numpadNotation == numpadValue) {
+                return numpadIndex;
+            }
+        }
+    }
+
+    return obj_Parser;
+};
+
+/*
 * A level map background
 */
 const Resource_LevelSprite = (function build_LevelSprite() {
@@ -37,93 +188,7 @@ const Resource_LevelSprite = (function build_LevelSprite() {
     };
 
     function parseSheetLayout(sheetLayout) {
-        /*
-        {
-            "theme0": {
-                "neighborcode0": [  // variations
-                    {  // variation 0
-                        sourceX: x,
-                        sourceY: y,
-                    },
-                ],
-            },
-        }
-        */
-        LevelSprite_sheetLayout = {};
-        for (const cellInfo of sheetLayout) {
-            if (!(cellInfo.theme in LevelSprite_sheetLayout)) {
-                LevelSprite_sheetLayout[cellInfo.theme] = {};
-            }
-            let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 1];  // little endian
-            /// bits we know are connecting
-            for (const numpadConnect of cellInfo.neighborConnect) {
-                let bitIndex = indexOfNumpad(numpadConnect);
-                neighborBits[bitIndex] = 1;
-            }
-            /// bits we know are not connecting
-            for (const numpadNoconnect of cellInfo.neighborNoconnect) {
-                let bitIndex = indexOfNumpad(numpadNoconnect);
-                neighborBits[bitIndex] = 0;
-            }
-            /// find all bits that were not considered by the sprite author
-            let ignoredIndices = [1, 2, 3, 4, 6, 7, 8, 9].map(indexOfNumpad);
-            let neighborKnownIndices = [...cellInfo.neighborConnect.map(indexOfNumpad), ...cellInfo.neighborNoconnect.map(indexOfNumpad)];
-            for (const bitIndex of neighborKnownIndices) {
-                let removeIndex = ignoredIndices.indexOf(bitIndex);
-                ignoredIndices.splice(removeIndex, 1);
-            }
-            /// now generate all combinations of neighbor codes that exist for all the ignored neighbors (connecting and not connecting)
-            const ignoredLength = ignoredIndices.length;
-            for (let ignoredCombination = 0; ignoredCombination < (2 ** ignoredLength); ignoredCombination++) {
-                let ignoredCombinationBits = Utils.Number.numToBitArray(ignoredCombination, ignoredLength);
-                let neighborCodeBits = [...neighborBits];
-                /// for this combination, set all the relavant bits
-                for (let bitIndex = 0, combinationIndex = 0; bitIndex < neighborCodeBits.length; bitIndex++) {
-                    if (ignoredIndices.includes(bitIndex)) {
-                        /// that bit in the final array if an ignored neighbor,
-                        /// so it must be set by the combination generation
-                        neighborCodeBits[bitIndex] = ignoredCombinationBits[combinationIndex];
-                        // iterating the bits in the generated combination
-                        combinationIndex++;
-                    }
-                }
-                let neighborCode = Utils.Number.bitArrayToNum(neighborCodeBits);
-                if (!(neighborCode in LevelSprite_sheetLayout[cellInfo.theme])) {
-                    /// initialize the list of variations
-                    LevelSprite_sheetLayout[cellInfo.theme][neighborCode] = [];
-                }
-                LevelSprite_sheetLayout[cellInfo.theme][neighborCode].push({
-                    sourceX: cellInfo.cellPosition[0],
-                    sourceY: cellInfo.cellPosition[1],
-                    neighborAwareness: neighborBits.length - ignoredLength,  // how many neighbors were not ignored
-                });
-                /// Variations now include tiles that are specifically made for this neighbor situation,
-                /// and tiles that are here only because they ignored many neighbors.
-                /// So now we must sort them to put the most aware first (and later draw the most aware).
-                LevelSprite_sheetLayout[cellInfo.theme][neighborCode].sort(function sortAwareness(a, b) {
-                    return b.neighborAwareness - a.neighborAwareness;
-                });
-            }
-        }
-    }
-
-    /*
-    *   numpad notation : visualize a computer keyboard numpad, the main tile is at the center (number 5),
-    *       789
-    *       456
-    *       123
-    *   neighbor code: bits presence(1)/absence(0) of neighbor connection at that neighboring location, in the following order :
-    *       low bit at left (numpad 4), increasing counter-clockwise, high bit at topleft (7),
-    *       finishing eventually with highest bit at center (5) but considered granted to be 1 for now
-    */
-    function indexOfNumpad(numpadNotation) {
-        const numpads = [4, 1, 2, 3, 6, 9, 8, 7, 5]
-        for (let numpadIndex = 0; numpadIndex < numpads.length; numpadIndex++) {
-            const numpadValue = numpads[numpadIndex];
-            if (numpadNotation == numpadValue) {
-                return numpadIndex;
-            }
-        }
+        LevelSprite_sheetLayout = newTilemapLayoutParser().init(sheetLayout).parse();
     }
 
     /*
