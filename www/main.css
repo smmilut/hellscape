@@ -7,6 +7,7 @@ body {
 
 canvas {
     background: black;
+    border: 10px solid grey;
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-crisp-edges;
     image-rendering: -webkit-optimize-contrast;
