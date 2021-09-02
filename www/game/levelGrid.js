@@ -31,17 +31,20 @@ const Resource_LevelGrid = (function build_LevelGrid() {
             .then(function gotBackgroundFile(data) {
                 let json_obj = JSON.parse(data.responseText);
                 obj_LevelGrid.data = json_obj.map;
-                obj_LevelGrid.height = obj_LevelGrid.data.length;
-                obj_LevelGrid.width = obj_LevelGrid.data[0].length;
+                obj_LevelGrid.gridHeight = obj_LevelGrid.data.length;
+                obj_LevelGrid.gridWidth = obj_LevelGrid.data[0].length;
+                obj_LevelGrid.height = obj_LevelGrid.gridHeight * obj_LevelGrid.cellHeight;
+                obj_LevelGrid.width = obj_LevelGrid.gridWidth * obj_LevelGrid.cellWidth;
             });
     };
 
-    obj_LevelGrid.update = function LevelGrid_update() {
-        // nothing for now, but has to exist for a Resource
-    };
-
     obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
-        return obj_LevelGrid.data[y][x] != 0;
+        if (x < 0 || x >= obj_LevelGrid.gridWidth || y < 0 || y >= obj_LevelGrid.gridHeight) {
+            Utils.debug("outside of map at cell", x, y);
+            return true;
+        } else {
+            return obj_LevelGrid.data[y][x] != 0;
+        }
     }
 
     obj_LevelGrid.hasCollisionAtCell = function LevelGrid_hasCollisionAtCell(cellX, cellY) {

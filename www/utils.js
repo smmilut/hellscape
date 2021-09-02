@@ -2,6 +2,16 @@
  * Utilities module
  */
 
+export const debug = (function build_Debug(isDebugOn) {
+    if (isDebugOn) {
+        return function debug() {
+            console.log("DEBUG", ...arguments);
+        };
+    } else {
+        return function nonce() {};
+    }
+})(true);
+
 /*
 *   Make Http requests
 */

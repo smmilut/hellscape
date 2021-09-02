@@ -195,8 +195,8 @@ const Resource_LevelSprite = (function build_LevelSprite() {
     * Generate the background image from the level map data
     */
     function generateBackgroundImage(levelGrid, pixelCanvas) {
-        let levelWidth = levelGrid.width * levelGrid.cellWidth;
-        let levelHeight = levelGrid.height * levelGrid.cellHeight;
+        let levelWidth = levelGrid.width;
+        let levelHeight = levelGrid.height;
         // create a new canvas for compositing the image
         let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
         // easy debug //document.getElementById("hiddenloading").appendChild(canvas);
@@ -306,8 +306,8 @@ const Resource_Backdrop = (function build_Backdrop() {
     * Generate the background image from individual tile
     */
     function generateBackdropImage(levelGrid, pixelCanvas) {
-        let levelWidth = levelGrid.width * levelGrid.cellWidth;
-        let levelHeight = levelGrid.height * levelGrid.cellHeight;
+        let levelWidth = levelGrid.width;
+        let levelHeight = levelGrid.height;
         // create a new canvas for compositing the image
         let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
         // easy debug // document.getElementById("hiddenloading").appendChild(canvas);
