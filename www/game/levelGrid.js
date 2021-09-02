@@ -98,6 +98,6 @@ export function init(ecs) {
             gridCellWidth: 16,
             gridCellHeight: 16,
         },
-        2, // higher priority than LevelSprite
+        1, // higher priority than LevelSprite
     );
 }

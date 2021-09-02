@@ -341,7 +341,7 @@ export function init(ecs) {
             sheetSrc: "assets/terrain_tilemap.png",
             sheetConfigUrl: "assets/terrain_tilemap.json",
         },
-        3, // lower priority than LevelGrid
+        4, // lower priority than LevelGrid
     );
 
     ecs.Data.addResource(Resource_Backdrop,
@@ -350,6 +350,6 @@ export function init(ecs) {
             sheetSrc: "assets/backdrop.png",
             theme: "hellplatform",
         },
-        3, // lower priority than LevelGrid
+        4, // lower priority than LevelGrid
     );
 }

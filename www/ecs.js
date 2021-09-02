@@ -183,6 +183,9 @@ import * as Utils from "./utils.js";
     ```
 */
 
+/*
+*   Get the current time in seconds
+*/
 function getBrowserTime() {
     return performance.now() / 1000.0;
 }
@@ -211,7 +214,6 @@ const Resource_Timer = {
         }
     },
     pause: function Time_pause() {
-        Utils.debug("pausing a threat");
         this._isRunning = false;
         /// time stops moving, so no `dt`
         this.dt = 0;
@@ -221,7 +223,6 @@ const Resource_Timer = {
         /// get on with the times !
         this.t = getBrowserTime();
         this.old_t = this.t;
-        Utils.debug("unpausing a threat");
     },
     isRunning: function Time_isRunning() {
         return this._isRunning;
@@ -305,6 +306,10 @@ export const Controller = (function build_Controller() {
         return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
             for (let priority = 0; priority < Data.resources.length; priority++) {
                 const resourceList = Data.resources[priority];
+                if (resourceList == undefined) {
+                    Utils.debug("no resources at level", priority);
+                    continue;
+                }
                 let resourcePromises = [];
                 for (let resource of resourceList) {
                     // Resources may query for other resources during initialization
@@ -333,6 +338,10 @@ export const Controller = (function build_Controller() {
     function runResourceSystems() {
         for (let resourceList of Data.resources) {
             // for each priority level
+            if (resourceList == undefined) {
+                Utils.debug("no resources at current level");
+                continue;
+            }
             for (let resource of resourceList) {
                 if (resource.update) {
                     resource.update();

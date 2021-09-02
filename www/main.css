@@ -6,7 +6,7 @@ body {
 }
 
 canvas {
-    background: black;
+    background-color: black;
     border: 10px solid grey;
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-crisp-edges;
