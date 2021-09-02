@@ -473,5 +473,5 @@ export const Data = (function build_Data() {
 *   Initialize system : make user system Resources available
 */
 export function init() {
-    Data.addResource(Resource_Time);
+    Data.addResource(Resource_Time, 99);
 }
