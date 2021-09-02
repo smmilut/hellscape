@@ -54,7 +54,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
     */
     obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
         if (!obj_LevelGrid.isCellInside(x, y)) {
-            Utils.debug("outside of map at cell", x, y);
+            //Utils.debug("outside of map at cell", x, y);
             return true;
         } else {
             return obj_LevelGrid.data[y][x] != 0;

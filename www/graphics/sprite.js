@@ -158,7 +158,7 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     */
     obj_Sprite.updateAnimation = function Sprite_updateAnimation(timePassed) {
         if (!obj_Sprite.isInitialized) {
-            console.log("sprite not loaded yet");
+            Utils.debug("sprite not loaded yet");
             return;
         }
         if (Sprite_animationDirection != ANIMATION_DIRECTION.STOPPED) {

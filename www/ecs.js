@@ -1,3 +1,5 @@
+import * as Utils from "./utils.js";
+
 /*
     "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
 
@@ -181,11 +183,16 @@
     ```
 */
 
+function getBrowserTime() {
+    return performance.now() / 1000.0;
+}
+
 /*
 *   A Timer Resource or Component that can be derived with Object.create()
 */
 const Resource_Timer = {
     name: "timer",
+    _isRunning: true,
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
     },
@@ -193,11 +200,34 @@ const Resource_Timer = {
         this.t = 0.0;
         this.old_t = 0.0;
         this.dt = 0.0;
+        window.addEventListener("blur", this.pause.bind(this));
+        window.addEventListener("focus", this.unPause.bind(this));
     },
-    update: function updateTime() {
+    update: function Time_update() {
+        if (this._isRunning) {
+            this.old_t = this.t;
+            this.t = getBrowserTime();
+            this.dt = (this.t - this.old_t);
+        }
+    },
+    pause: function Time_pause() {
+        Utils.debug("pausing a threat");
+        this._isRunning = false;
+        /// time stops moving, so no `dt`
+        this.dt = 0;
+    },
+    unPause: function Time_unpause() {
+        this._isRunning = true;
+        /// get on with the times !
+        this.t = getBrowserTime();
         this.old_t = this.t;
-        this.t = performance.now() / 1000.0;
-        this.dt = (this.t - this.old_t);
+        Utils.debug("unpausing a threat");
+    },
+    isRunning: function Time_isRunning() {
+        return this._isRunning;
+    },
+    isPaused: function Time_isPaused() {
+        return !this._isRunning;
     },
 };
 

@@ -1,3 +1,5 @@
+import * as Utils from "../utils.js";
+
 const Resource_Physics = {
     name: "physics",
     prepareInit: function Physics_prepareInit(initOptions) {
@@ -48,8 +50,11 @@ const System_moveMobiles = {
         mobiles: ["position", "speed"],
     },
     run: function moveSprite(queryResults) {
-        let levelgrid = queryResults.resources.levelgrid;
         let time = queryResults.resources.time;
+        if (time.isPaused()) {
+            return;
+        }
+        let levelgrid = queryResults.resources.levelgrid;
         let physics = queryResults.resources.physics;
 
         for (let e of queryResults.components.mobiles) {

@@ -1,6 +1,5 @@
 import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
-import * as LevelGrid from "./levelGrid.js";
 import * as Sprites from "../graphics/sprite.js";
 import * as Utils from "../utils.js";
 
@@ -178,11 +177,15 @@ const enemySpriteSheetOptions = {
 };
 
 const System_mobBehave = {
-    resourceQuery: ["levelgrid"],
+    resourceQuery: ["levelgrid", "time"],
     componentQueries: {
         mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
     },
     run: function mobBehave(queryResults) {
+        let time = queryResults.resources.time;
+        if (time.isPaused()) {
+            return;
+        }
         let levelgrid = queryResults.resources.levelgrid;
         for (let e of queryResults.components.mobs) {
             if (e.mobState.state == MOB_STATES.FLEEING || e.mobState.state == MOB_STATES.JUMPING) {
@@ -249,7 +252,6 @@ const System_mobBehave = {
                     }
                     break;
             }
-
             e.sprite.setPose({
                 action: actionName,
                 facing: e.facing.direction
