@@ -307,7 +307,7 @@ export const Controller = (function build_Controller() {
             for (let priority = 0; priority < Data.resources.length; priority++) {
                 const resourceList = Data.resources[priority];
                 if (resourceList == undefined) {
-                    Utils.debug("no resources at level", priority);
+                    /// no Resources at current priority level
                     continue;
                 }
                 let resourcePromises = [];
@@ -339,7 +339,7 @@ export const Controller = (function build_Controller() {
         for (let resourceList of Data.resources) {
             // for each priority level
             if (resourceList == undefined) {
-                Utils.debug("no resources at current level");
+                /// no Resources at current priority level
                 continue;
             }
             for (let resource of resourceList) {

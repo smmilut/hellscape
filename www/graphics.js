@@ -14,7 +14,7 @@ const System_clearBackground = {
         let camera = queryResults.resources.camera;
         camera.clear();
         const backdrop = queryResults.resources.backdrop;
-        camera.render(backdrop, { x: 0, y: 0 });
+        camera.render(backdrop, { x: 0, y: 0, z: 4 });
         const levelsprite = queryResults.resources.levelsprite;
         camera.render(levelsprite, { x: 0, y: 0 });
     },

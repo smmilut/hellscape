@@ -77,14 +77,13 @@ const Resource_Camera = (function build_Camera() {
                 obj_Camera.gameHeight = levelgrid.height;
                 obj_Camera.screenHeight = obj_Camera.gameHeight * obj_Camera.scale;
             }
-            Utils.debug("camera height", obj_Camera.screenHeight);
-            
+
             [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);
             let parentId = Camera_initOptions.parentId || "game";
             const elParent = document.getElementById(parentId);
             elParent.appendChild(Camera_canvas);
 
-            
+
             obj_Camera.deadzoneSize = Camera_initOptions.deadzoneSize;
             Camera_gameCenter = Camera_initOptions.gameCenter || { x: obj_Camera.gameWidth / 2, y: obj_Camera.gameHeight / 2 };
             Camera_target = Camera_initOptions.target || { x: 0, y: 0 };
@@ -104,8 +103,8 @@ const Resource_Camera = (function build_Camera() {
     * Render all this sprite now
     */
     obj_Camera.render = function Camera_render(sprite, gamePosition) {
-        let screenPosition = gameToScreenPosition(gamePosition);
-        sprite.draw(Camera_context, screenPosition);
+        let cameraPosition = gameToCameraPosition(gamePosition);
+        sprite.draw(Camera_context, cameraPosition);
     };
 
     obj_Camera.setTarget = function Camera_setTarget(gamePosition) {
@@ -153,6 +152,8 @@ const Resource_Camera = (function build_Camera() {
     */
     obj_Camera.updateAnimation = function Camera_updateAnimation(timePassed) {
         if (isTargetOutsideDeadzone()) {
+            /// Weighted average between current Camera position at `Camera_gameCenter` and target position at `Camera_target`.
+            /// The weight of the current position is the smoothness `Camera_animationSmoothness`.
             Camera_gameCenter.x = (Camera_gameCenter.x * Camera_animationSmoothness + Camera_target.x) / (Camera_animationSmoothness + 1);
             Camera_gameCenter.y = (Camera_gameCenter.y * Camera_animationSmoothness + Camera_target.y) / (Camera_animationSmoothness + 1);
         }
@@ -169,12 +170,26 @@ const Resource_Camera = (function build_Camera() {
         }
     }
 
-    function gameToScreenPosition(gamePosition) {
+    /*
+    *   Convert from pixels in the world coordinates `gamePosition` to pixels in the camera coordinates.
+    *   Dealing with unscaled pixels (original pixel art pixels).
+    */
+    function gameToCameraPosition(gamePosition) {
         let cameraTopLeftX = Camera_gameCenter.x - obj_Camera.gameWidth / 2.0;
         let cameraTopLeftY = Camera_gameCenter.y - obj_Camera.gameHeight / 2.0;
+        /// Use Z position to calculate parallax
+        /// Assume that at {x:0,y:0} all Z depth are aligned
+        let parallax;
+        if (gamePosition.z == undefined || gamePosition.z < 0.0) {
+            parallax = 1.0;
+        } else {
+            parallax = 1.0 / (1.0 + gamePosition.z);
+        }
+        let convertedPositionX = parallax * (gamePosition.x - cameraTopLeftX);
+        let convertedPositionY = parallax * (gamePosition.y - cameraTopLeftY);
         return {
-            x: (gamePosition.x - cameraTopLeftX),
-            y: (gamePosition.y - cameraTopLeftY),
+            x: convertedPositionX,
+            y: convertedPositionY,
         };
     }
 
@@ -206,7 +221,7 @@ export function init(ecs) {
         0, // higher priority than Camera
     );
 
-    let windowWidth = window.innerWidth - 50;
+    let windowWidth = window.innerWidth - 16;  // some border
     ecs.Data.addResource(Resource_Camera,
         {
             initQueryResources: ["pixelCanvas", "levelgrid"],
