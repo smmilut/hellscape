@@ -200,6 +200,7 @@ function getBrowserTime() {
 const Resource_Timer = {
     name: "timer",
     _isRunning: true,
+    _fpsThreshold: 40,  // minimum acceptable FPS, below that we panic
     prepareInit: function Physics_prepareInit(initOptions) {
         this.initOptions = initOptions || {};
     },
@@ -215,6 +216,10 @@ const Resource_Timer = {
             this.old_t = this.t;
             this.t = getBrowserTime();
             this.dt = (this.t - this.old_t);
+            if (this.dt > 1.0 / this._fpsThreshold) {
+                Utils.debug("frame too slow, discarding time : ", this.dt);
+                this.dt = 0;
+            }
         }
     },
     pause: function Time_pause() {
