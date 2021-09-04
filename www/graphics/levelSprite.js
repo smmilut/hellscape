@@ -347,22 +347,7 @@ const newComponent_Backdrop = function newComponent_Backdrop(initOptions) {
 };
 
 const layersSheetOptions = [
-    {
-        sheetOptions: {
-            sheetSrc: "assets/backdrop_sheet.png",
-            theme: "hellplatform",
-            sourceX: 0,
-            sourceY: 0,
-            sourceWidth: 64,
-            sourceHeight: 71,
-        },
-        gamePosition: {
-            x: 0,
-            y: 0,
-            z: 1,
-        },
-    },
-    {
+    {  // back 1
         sheetOptions: {
             sheetSrc: "assets/backdrop_sheet.png",
             theme: "hellplatform",
@@ -377,7 +362,7 @@ const layersSheetOptions = [
             z: 5,
         },
     },
-    {
+    {  // back 2
         sheetOptions: {
             sheetSrc: "assets/backdrop_sheet.png",
             theme: "hellplatform",
@@ -392,7 +377,22 @@ const layersSheetOptions = [
             z: 2,
         },
     },
-    {
+    {  // top
+        sheetOptions: {
+            sheetSrc: "assets/backdrop_sheet.png",
+            theme: "hellplatform",
+            sourceX: 0,
+            sourceY: 0,
+            sourceWidth: 64,
+            sourceHeight: 71,
+        },
+        gamePosition: {
+            x: 0,
+            y: 0,
+            z: 1,
+        },
+    },
+    {  // bottom
         sheetOptions: {
             sheetSrc: "assets/backdrop_sheet.png",
             theme: "hellplatform",
