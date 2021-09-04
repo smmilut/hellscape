@@ -18,7 +18,9 @@ const KeyboardResource = (function build_Keyboard() {
     const obj_Keyboard = {
         name: "keyboard",
     };
+    /// Mapping a key to a key state, where value : `true` means pressed, `false` means not pressed
     const KeysState = new Map();
+    /// Mapping a key to an action
     const KeyMap = new Map();
     let Keyboard_initOptions;
 
@@ -29,6 +31,10 @@ const KeyboardResource = (function build_Keyboard() {
     obj_Keyboard.init = function Keyboard_init() {
         window.addEventListener("keydown", function keyPressed(event) {
             KeysState.set(event.key, true);
+            if (KeyMap.has(event.key)) {
+                /// Those keys are bound to game function, disable their default browser behaviour
+                event.preventDefault();
+            }
         });
         window.addEventListener("keyup", function keyUnpressed(event) {
             KeysState.set(event.key, false);
@@ -121,7 +127,9 @@ const GamepadResource = (function build_Gamepad() {
     const obj_Gamepad = {
         name: "gamepad",
     };
+    /// Mapping a button to a button state, where value is an object { isPressed, buttonValue, isAnalog }
     const Gamepad_buttonState = new Map();
+    /// Mapping a button to an action
     const Gamepad_buttonMap = new Map();
     let Gamepad_initOptions, Gamepad_haveEvents;
     let Gamepad_controllers = [];
