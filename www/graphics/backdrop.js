@@ -118,8 +118,8 @@ const layersSheetOptions = [
         },
         gamePosition: {
             x: 0,
-            y: 300,
-            z: 1,
+            y: 250,
+            z: 0.3,
         },
     },
 ];
