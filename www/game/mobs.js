@@ -261,7 +261,6 @@ const System_mobBehave = {
 };
 
 function spawnNewMob(ecs, x, y) {
-    /// X, Y position manually for now, random later
     return ecs.Data.newEntity()
         .addComponent(newComponent_TagMob())
         .addComponent(Physics.newComponent_Position({
@@ -289,9 +288,26 @@ function spawnNewMob(ecs, x, y) {
         .addComponent(Sprites.newComponent_Sprite(enemySpriteSheetOptions));
 }
 
+const System_spawnMob = {
+    resourceQuery: ["levelgrid"],
+    run: function spawnMob(queryResults) {
+        const ecs = queryResults.ecs;
+        const levelgrid = queryResults.resources.levelgrid;
+        const levelData = levelgrid.data;
+        /// iterate the level map data
+        for (let rowIndex = 0; rowIndex < levelData.length; rowIndex++) {
+            const row = levelData[rowIndex];
+            for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
+                if (row[columnIndex] == levelgrid.TILE_TYPE.MOB) {
+                    spawnNewMob(ecs, columnIndex, rowIndex);
+                }
+            }
+        }
+    },
+};
+
 export function init(ecs) {
-    let _mob1 = spawnNewMob(ecs, 4, 7);
-    let _mob2 = spawnNewMob(ecs, 10, 2);
+    ecs.Controller.addSystem(System_spawnMob, ecs.SYSTEM_STAGE.INIT);
 
     ecs.Controller.addSystem(System_mobBehave);
 }

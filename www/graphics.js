@@ -41,7 +41,7 @@ const System_renderSprites = {
 export function init(ecs) {
     initSubModules(ecs);
     //#region graphics Systems running always, and in this order
-    ecs.Controller.addSystem(System_clearBackground, ecs.SYSTEM_STAGE.END);
-    ecs.Controller.addSystem(System_renderSprites, ecs.SYSTEM_STAGE.END);
+    ecs.Controller.addSystem(System_clearBackground, ecs.SYSTEM_STAGE.FRAME_END);
+    ecs.Controller.addSystem(System_renderSprites, ecs.SYSTEM_STAGE.FRAME_END);
     //#endregion
 }

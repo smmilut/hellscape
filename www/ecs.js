@@ -33,13 +33,13 @@ import * as Utils from "./utils.js";
     ## Program flow
 
     1. Initialize Resource systems in order of their priority. Wait for completion of each priority.
-    2. Run "init"-type Systems. Wait for completion.
+    2. Run "init"-type Systems from SYSTEM_STAGE.FRAME_INIT (TODO actually wait for completion ?).
     3. Start the main loop :
         1. Run Resource systems `Resource.update()`. TODO Wait for completion ?
         2. Run "normal" Systems in "order" (TODO actually wait to make it really ordered ?) :
-            1. SYSTEM_STAGE.INIT
-            2. SYSTEM_STAGE.MAIN
-            3. SYSTEM_STAGE.END
+            1. SYSTEM_STAGE.FRAME_INIT
+            2. SYSTEM_STAGE.FRAME_MAIN
+            3. SYSTEM_STAGE.FRAME_END
 
 
     # Resources
@@ -63,7 +63,7 @@ import * as Utils from "./utils.js";
     ```
     
     It is referred by its `.name` property.
-    It can query other Resources during initilaization, through its `.initQueryResources` property.
+    It can query other Resources during initialization, through its `.initQueryResources` property.
     If it has an `.update()` function, then it will be called at every frame.
 
     ## Add a new Resource
@@ -108,6 +108,10 @@ import * as Utils from "./utils.js";
         run: function(queryResults) {
             // queryResults will contain the following :
             queryResults == {
+                ecs: {
+                    Data,
+                    Controller,
+                },
                 resources: {
                     resource1: {},
                     resource2: {},
@@ -151,7 +155,7 @@ import * as Utils from "./utils.js";
     ```
     Controller.addSystem(
         System_Something,
-        SYSTEM_STAGE,  // optional, default to MAIN
+        SYSTEM_STAGE,  // optional, default to FRAME_MAIN
     );
     ```
 
@@ -243,8 +247,9 @@ Resource_Time.name = "time";
 */
 export const SYSTEM_STAGE = Object.freeze({
     INIT: 0,
-    MAIN: 1,
-    END: 2,
+    FRAME_INIT: 10,
+    FRAME_MAIN: 11,
+    FRAME_END: 12,
 });
 
 /*
@@ -254,11 +259,11 @@ export const Controller = (function build_Controller() {
     const obj_Controller = {};
 
     let Controller_animationRequestId;
-    let Controller_initSystemQueue = [];
     let Controller_systemQueue = new Map([
         [SYSTEM_STAGE.INIT, []],
-        [SYSTEM_STAGE.MAIN, []],
-        [SYSTEM_STAGE.END, []],
+        [SYSTEM_STAGE.FRAME_INIT, []],
+        [SYSTEM_STAGE.FRAME_MAIN, []],
+        [SYSTEM_STAGE.FRAME_END, []],
     ]);
 
     /*
@@ -266,7 +271,7 @@ export const Controller = (function build_Controller() {
     */
     obj_Controller.start = function Controller_start() {
         initResourceSystems().then(function promiseRunInitSystems(resolve, reject) {
-            runInitSystems();
+            runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
         }).then(function promiseStartAnimationFrame(resolve, reject) {
             Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
@@ -277,29 +282,10 @@ export const Controller = (function build_Controller() {
     */
     function animateFrame(_timeNow) {
         runResourceSystems();
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.MAIN));
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.END));
+        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
+        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
+        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_END));
         Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
-    }
-
-    /*
-    * Add System to the init stage, in order
-    */
-    obj_Controller.addInitSystem = function Controller_addInitSystem(run, ...args) {
-        Controller_initSystemQueue.push({
-            run: run,
-            args: args,
-        });
-    };
-
-    /*
-    * Run Systems from the init stage, in order
-    */
-    function runInitSystems() {
-        for (let system of Controller_initSystemQueue) {
-            system.run(...system.args);
-        }
     }
 
     function initResourceSystems() {
@@ -354,7 +340,9 @@ export const Controller = (function build_Controller() {
     * Add System to the main loop, in order
     */
     obj_Controller.addSystem = function Controller_addSystem(system, stage) {
-        stage = stage || SYSTEM_STAGE.MAIN;
+        if (stage == undefined) {
+            stage = SYSTEM_STAGE.FRAME_MAIN;
+        }
         Controller_systemQueue.get(stage).push(system);
     };
 
@@ -363,7 +351,12 @@ export const Controller = (function build_Controller() {
     */
     function runSystems(systemQueue) {
         for (let system of systemQueue) {
-            const queryResults = {};
+            const queryResults = {
+                ecs: {
+                    Data: Data,
+                    Controller: Controller,
+                },
+            };
             //#region prepare requested Resources
             if (system.resourceQuery) {
                 queryResults.resources = Data.getAllResourcesNamed(system.resourceQuery);

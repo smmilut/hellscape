@@ -2,6 +2,7 @@ import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
 import * as Sprites from "../graphics/sprite.js";
 import * as Input from "../userInput.js";
+import * as Utils from "../utils.js";
 
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
@@ -157,12 +158,12 @@ const System_handleInput = {
     },
 };
 
-function spawnNewPlayer(ecs) {
+function spawnNewPlayer(ecs, x, y) {
     return ecs.Data.newEntity()
         .addComponent(newTagPlayer())
         .addComponent(Physics.newComponent_Position({
-            x: 2,
-            y: 2,
+            x: x,
+            y: y,
         }))
         .addComponent(Physics.newComponent_Speed({
             x: 0,
@@ -182,8 +183,25 @@ function spawnNewPlayer(ecs) {
         .addComponent(Sprites.newComponent_Sprite(playerSpriteSheetOptions));
 }
 
-export function init(ecs) {
-    spawnNewPlayer(ecs);
+const System_spawnPlayer = {
+    resourceQuery: ["levelgrid"],
+    run: function spawnPlayer(queryResults) {
+        const ecs = queryResults.ecs;
+        const levelgrid = queryResults.resources.levelgrid;
+        const levelData = levelgrid.data;
+        /// iterate the level map data
+        for (let rowIndex = 0; rowIndex < levelData.length; rowIndex++) {
+            const row = levelData[rowIndex];
+            for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
+                if (row[columnIndex] == levelgrid.TILE_TYPE.PLAYER) {
+                    spawnNewPlayer(ecs, columnIndex, rowIndex);
+                }
+            }
+        }
+    },
+};
 
+export function init(ecs) {
+    ecs.Controller.addSystem(System_spawnPlayer, ecs.SYSTEM_STAGE.INIT);
     ecs.Controller.addSystem(System_handleInput);
 }

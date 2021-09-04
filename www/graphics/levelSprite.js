@@ -201,6 +201,14 @@ const Resource_LevelSprite = (function build_LevelSprite() {
         let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
         // easy debug //document.getElementById("hiddenloading").appendChild(canvas);
         const levelData = levelGrid.data;
+        function bitIsBlock(value) {
+            /// TODO : reform with upcoming generic tileset management
+            if (value == levelGrid.TILE_TYPE.BLOCK || value == undefined) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
         /// iterate the level map data
         for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
             const row = levelData[rowIndex];
@@ -214,9 +222,9 @@ const Resource_LevelSprite = (function build_LevelSprite() {
                     neighborBits[6] = undefined;
                     neighborBits[7] = undefined;
                 } else {
-                    neighborBits[5] = upRow[columnIndex + 1];
-                    neighborBits[6] = upRow[columnIndex];
-                    neighborBits[7] = upRow[columnIndex - 1];
+                    neighborBits[5] = bitIsBlock(upRow[columnIndex + 1]);
+                    neighborBits[6] = bitIsBlock(upRow[columnIndex]);
+                    neighborBits[7] = bitIsBlock(upRow[columnIndex - 1]);
                 }
                 if (downRow == undefined) {
                     /// bottom edge of the map
@@ -224,14 +232,14 @@ const Resource_LevelSprite = (function build_LevelSprite() {
                     neighborBits[2] = undefined;
                     neighborBits[3] = undefined;
                 } else {
-                    neighborBits[1] = downRow[columnIndex - 1];
-                    neighborBits[2] = downRow[columnIndex];
-                    neighborBits[3] = downRow[columnIndex + 1];
+                    neighborBits[1] = bitIsBlock(downRow[columnIndex - 1]);
+                    neighborBits[2] = bitIsBlock(downRow[columnIndex]);
+                    neighborBits[3] = bitIsBlock(downRow[columnIndex + 1]);
                 }
                 /// current row
-                neighborBits[0] = row[columnIndex - 1];  // left cell may be undefined if left edge
-                neighborBits[8] = row[columnIndex];
-                neighborBits[4] = row[columnIndex + 1];  // right cell may be undefined if right edge
+                neighborBits[0] = bitIsBlock(row[columnIndex - 1]);  // left cell may be undefined if left edge
+                neighborBits[8] = bitIsBlock(row[columnIndex]);
+                neighborBits[4] = bitIsBlock(row[columnIndex + 1]);  // right cell may be undefined if right edge
                 for (let neighborIndex = 0; neighborIndex < neighborBits.length; neighborIndex++) {
                     const neighborBit = neighborBits[neighborIndex];
                     if (neighborBit == undefined) {

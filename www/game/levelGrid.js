@@ -7,6 +7,13 @@ export const COLLISION_DIRECTION = Object.freeze({
     DOWN: [0, 1],
 });
 
+export const TILE_TYPE = Object.freeze({
+    NONE: 0,
+    BLOCK: 1,
+    MOB: 8,
+    PLAYER: 9,
+});
+
 /*
 * the Level grid data
 */
@@ -14,6 +21,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
     const obj_LevelGrid = {
         name: "levelgrid",
         COLLISION_DIRECTION : COLLISION_DIRECTION,
+        TILE_TYPE: TILE_TYPE,
     };
 
     let LevelGrid_initOptions;
@@ -57,7 +65,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
             //Utils.debug("outside of map at cell", x, y);
             return true;
         } else {
-            return obj_LevelGrid.data[y][x] != 0;
+            return obj_LevelGrid.data[y][x] == TILE_TYPE.BLOCK;
         }
     };
 

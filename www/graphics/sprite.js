@@ -105,7 +105,7 @@ export const newComponent_Sprite = function newSprite(initOptions) {
             );
         } else {
             // sprite not loaded yet
-            console.log("sprite not loaded yet");
+            Utils.debug("sprite not loaded yet");
         }
     };
 
@@ -124,6 +124,10 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     *   }
     */
     obj_Sprite.setPose = function Sprite_setPose(poseInfo) {
+        if (!obj_Sprite.isInitialized) {
+            Utils.debug("sprite not loaded yet");
+            return;
+        }
         let poseName = poseInfo.name;
         if (poseInfo.action && poseInfo.facing) {
             poseName = poseInfo.action + poseInfo.facing;
@@ -213,5 +217,5 @@ const System_updateAnimation = {
 };
 
 export function init(ecs) {
-    ecs.Controller.addSystem(System_updateAnimation, ecs.SYSTEM_STAGE.END);
+    ecs.Controller.addSystem(System_updateAnimation, ecs.SYSTEM_STAGE.FRAME_END);
 }
