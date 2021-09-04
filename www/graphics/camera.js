@@ -62,8 +62,16 @@ const Resource_Camera = (function build_Camera() {
 
     obj_Camera.init = function Camera_init(pixelCanvas, levelgrid) {
         return new Promise(function promise_Camera_init(resolve, reject) {
+            /// Calculate viewport height based on screen width
             obj_Camera.screenWidth = Camera_initOptions.screenWidth;
             obj_Camera.screenHeight = obj_Camera.screenWidth * 1.0 / Camera_initOptions.aspectRatio;
+            if (obj_Camera.screenHeight > Camera_initOptions.screenHeight) {
+                /// Because of fixed ratio, viewport is now too high and will require a scrollbar
+                /// Instead, Calculate viewport width based on screen height
+                obj_Camera.screenHeight = Camera_initOptions.screenHeight;
+                obj_Camera.screenWidth = obj_Camera.screenHeight * Camera_initOptions.aspectRatio;
+            }
+            // The scaling factor between original images and how they are displayed on screen to show off pixel art
             obj_Camera.scale = pixelCanvas.scale;
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
@@ -220,12 +228,15 @@ export function init(ecs) {
         },
         0, // higher priority than Camera
     );
-
-    let windowWidth = window.innerWidth - 16;  // some border
+    
+    let border = 16;
+    let windowWidth = window.innerWidth - border;
+    let windowHeight = window.innerHeight - border;
     ecs.Data.addResource(Resource_Camera,
         {
             initQueryResources: ["pixelCanvas", "levelgrid"],
             screenWidth: windowWidth,
+            screenHeight: windowHeight,
             aspectRatio: 4.0 / 3.0,
             deadzoneSize: {
                 width: 10,
