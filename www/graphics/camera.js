@@ -62,6 +62,7 @@ const Resource_Camera = (function build_Camera() {
 
     obj_Camera.init = function Camera_init(pixelCanvas, levelgrid) {
         return new Promise(function promise_Camera_init(resolve, reject) {
+            obj_Camera.backgroundColor = Camera_initOptions.backgroundColor;
             /// Calculate viewport height based on screen width
             obj_Camera.screenWidth = Camera_initOptions.screenWidth;
             obj_Camera.screenHeight = obj_Camera.screenWidth * 1.0 / Camera_initOptions.aspectRatio;
@@ -104,7 +105,8 @@ const Resource_Camera = (function build_Camera() {
     * Clear screen for drawing next
     */
     obj_Camera.clear = function Camera_clear() {
-        Camera_context.clearRect(0, 0, Camera_canvas.width, Camera_canvas.height);
+        Camera_context.fillStyle = obj_Camera.backgroundColor;
+        Camera_context.fillRect(0, 0, Camera_canvas.width, Camera_canvas.height);
     };
 
     /*
@@ -133,19 +135,19 @@ const Resource_Camera = (function build_Camera() {
         let levelTopEdge = 0;
         let levelBottomEdge = levelgrid.height;
         if (targetLeftEdge < levelLeftEdge) {
-            //Utils.debug("snap Camera LEFT");
+            /// snap Camera LEFT
             Camera_target.x = levelLeftEdge + obj_Camera.gameWidth / 2.0;
         }
         if (targetRightEdge > levelRightEdge) {
-            //Utils.debug("snap Camera RIGHT");
+            /// snap Camera RIGHT
             Camera_target.x = levelRightEdge - obj_Camera.gameWidth / 2.0;
         }
         if (targetTopEdge < levelTopEdge) {
-            //Utils.debug("snap Camera UP");
+            /// snap Camera UP
             Camera_target.y = levelTopEdge + obj_Camera.gameHeight / 2.0;
         }
         if (targetBottomEdge > levelBottomEdge) {
-            //Utils.debug("snap Camera BOTTOM");
+            /// snap Camera BOTTOM
             Camera_target.y = levelBottomEdge - obj_Camera.gameHeight / 2.0;
         }
     }
@@ -229,15 +231,18 @@ export function init(ecs) {
         0, // higher priority than Camera
     );
     
-    let border = 16;
-    let windowWidth = window.innerWidth - border;
-    let windowHeight = window.innerHeight - border;
+    // let border = 16;
+    // let windowWidth = window.innerWidth - border;
+    // let windowHeight = window.innerHeight - border;
+    let windowWidth = 640;
+    let windowHeight = 480;
     ecs.Data.addResource(Resource_Camera,
         {
             initQueryResources: ["pixelCanvas", "levelgrid"],
             screenWidth: windowWidth,
             screenHeight: windowHeight,
             aspectRatio: 4.0 / 3.0,
+            backgroundColor: "#595652",
             deadzoneSize: {
                 width: 10,
                 height: 10,

@@ -158,12 +158,12 @@ const System_handleInput = {
     },
 };
 
-function spawnNewPlayer(ecs, x, y) {
+function spawnNewPlayer(ecs, gridX, gridY) {
     return ecs.Data.newEntity()
         .addComponent(newTagPlayer())
         .addComponent(Physics.newComponent_Position({
-            x: x,
-            y: y,
+            gridX: gridX,
+            gridY: gridY,
         }))
         .addComponent(Physics.newComponent_Speed({
             x: 0,

@@ -18,10 +18,14 @@ export const newComponent_Position = function newPosition(initOptions) {
     initOptions = initOptions || {};
     const obj_Position = {
         name: "position",
-        gridX: initOptions.x || 0,
-        gridY: initOptions.y || 0,
+        gridX: initOptions.gridX || 0,
+        gridY: initOptions.gridY || 0,
         xRatio: 0.0,
         yRatio: 0.0,
+        /// .x and .y calculated later by LevelGrid.updatePixelPosition because it depends on cell size in pixels
+        x: initOptions.x || 0,
+        y: initOptions.y || 0,
+        z: initOptions.z || 0,
     };
     return obj_Position;
 };

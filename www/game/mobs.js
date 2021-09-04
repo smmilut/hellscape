@@ -260,12 +260,12 @@ const System_mobBehave = {
     },
 };
 
-function spawnNewMob(ecs, x, y) {
+function spawnNewMob(ecs, gridX, gridY) {
     return ecs.Data.newEntity()
         .addComponent(newComponent_TagMob())
         .addComponent(Physics.newComponent_Position({
-            x: x,
-            y: y,
+            gridX: gridX,
+            gridY: gridY,
         }))
         .addComponent(Physics.newComponent_Speed({
             x: 5,

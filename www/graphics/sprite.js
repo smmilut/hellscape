@@ -82,7 +82,7 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     * From a requested drawing `position`, get where the sprite should be drawn.
     * Return the upper left corner of the sprite, when the `position` indicates the position of the bottom-middle.
     * */
-    function convertPositionToSprite(position) {
+    function convertCenterPositionToSprite(position) {
         let x = position.x - obj_Sprite.sheetCellWidth * 0.5;
         // a bit off-center downwards, so that feet appear to walk on top of the lower map tile
         let y = position.y - obj_Sprite.sheetCellHeight * 0.4;
@@ -91,7 +91,7 @@ export const newComponent_Sprite = function newSprite(initOptions) {
 
     obj_Sprite.draw = function Sprite_draw(context, position) {
         if (obj_Sprite.isInitialized) {
-            let screenPosition = convertPositionToSprite(position);
+            let screenPosition = convertCenterPositionToSprite(position);
             context.drawImage(
                 Sprite_sheetImage,
                 Sprite_frameInfo.sourceX,
