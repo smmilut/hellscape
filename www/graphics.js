@@ -1,11 +1,13 @@
 import * as Utils from "./utils.js";
 import * as Camera from "./graphics/camera.js";
 import * as LevelSprite from "./graphics/levelSprite.js";
+import * as Backdrop from "./graphics/backdrop.js";
 import * as Sprites from "./graphics/sprite.js";
 
 function initSubModules(ecs) {
     Camera.init(ecs);
     LevelSprite.init(ecs);
+    Backdrop.init(ecs);
     Sprites.init(ecs);
 }
 
