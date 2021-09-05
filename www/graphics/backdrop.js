@@ -18,8 +18,8 @@ const newComponent_Backdrop = function newComponent_Backdrop(initOptions) {
     * Generate the background image from individual tile
     */
     function generateBackdropImage(levelGrid, pixelCanvas, spriteSheet) {
-        return new Promise(function promiseBackdropImage(resolve, reject) {
-            let levelWidth = levelGrid.width;
+        let levelWidth = levelGrid.width;
+        return new Promise(function promiseSingleBackdropImage(resolve, reject) {
             // create a new canvas for getting the base image of the backdrop
             let [singleCanvas, singleContext] = pixelCanvas.newUnscaled(obj_Backdrop.sourceWidth, obj_Backdrop.sourceHeight);
             singleContext.drawImage(spriteSheet,
@@ -35,23 +35,40 @@ const newComponent_Backdrop = function newComponent_Backdrop(initOptions) {
             /// Export the single image to a separate image
             let imageSingleUri = singleCanvas.toDataURL();
             obj_Backdrop.imageSingle = new Image();
+            obj_Backdrop.imageSingle.addEventListener("load", function onloadImage() {
+                resolve(this);
+            });
+            obj_Backdrop.imageSingle.addEventListener("error", function onerrorImage() {
+                console.warn("image load error");
+                reject();
+            });
             obj_Backdrop.imageSingle.src = imageSingleUri;
-
-            /// TODO : wait later to draw the repeating pattern only with the requested camera width and position
-            /// create a new canvas for compositing a repeating layer based on the single image
-            let [repeatCanvas, repeatContext] = pixelCanvas.newUnscaled(levelWidth, obj_Backdrop.sourceHeight);
-            // easy debug // document.getElementById("hiddenloading").appendChild(repeatCanvas);
-            /// Draw
-            let pattern = repeatContext.createPattern(obj_Backdrop.imageSingle, "repeat-x");
-            repeatContext.rect(0, 0, repeatCanvas.width, repeatCanvas.height);
-            repeatContext.fillStyle = pattern;
-            repeatContext.fill();
-            /// Export to image
-            let imageRepeatUri = repeatCanvas.toDataURL();
-            obj_Backdrop.imageRepeat = new Image();
-            obj_Backdrop.imageRepeat.src = imageRepeatUri;
-            resolve(obj_Backdrop);
+        }).then(function gotSingleBackdropImage(_imageSingle) {
+            return new Promise(function promiseRepeatBackdropImage(resolve, reject) {
+                /// TODO : wait later to draw the repeating pattern only with the requested camera width and position
+                /// create a new canvas for compositing a repeating layer based on the single image
+                let [repeatCanvas, repeatContext] = pixelCanvas.newUnscaled(levelWidth, obj_Backdrop.sourceHeight);
+                // easy debug // document.getElementById("hiddenloading").appendChild(repeatCanvas);
+                /// Draw
+                let pattern = repeatContext.createPattern(obj_Backdrop.imageSingle, "repeat-x");
+                repeatContext.rect(0, 0, repeatCanvas.width, repeatCanvas.height);
+                repeatContext.fillStyle = pattern;
+                repeatContext.fill();
+                /// Export to image
+                let imageRepeatUri = repeatCanvas.toDataURL();
+                obj_Backdrop.imageRepeat = new Image();
+                obj_Backdrop.imageRepeat.addEventListener("load", function onloadImage() {
+                    resolve(this);
+                });
+                obj_Backdrop.imageRepeat.addEventListener("error", function onerrorImage() {
+                    console.warn("image load error");
+                    reject();
+                });
+                obj_Backdrop.imageRepeat.src = imageRepeatUri;
+                resolve(obj_Backdrop);
+            })
         });
+
     };
 
     obj_Backdrop.draw = function LevelSprite_draw(context, position) {

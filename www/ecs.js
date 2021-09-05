@@ -221,7 +221,7 @@ const Resource_Timer = {
             this.t = getBrowserTime();
             this.dt = (this.t - this.old_t);
             if (this.dt > 1.0 / this._fpsThreshold) {
-                console.log("frame too slow, discarding time : ", (this.dt * 1000).toFixed(0), "ms =", (1.0 / this.dt).toFixed(0), "FPS");
+                console.warn("frame too slow, discarding time : ", (this.dt * 1000).toFixed(0), "ms =", (1.0 / this.dt).toFixed(0), "FPS");
                 this.dt = 0;
             }
         }

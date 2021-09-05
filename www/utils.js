@@ -99,7 +99,7 @@ export const File = (function build_File() {
                     resolve(image);
                 });
                 image.addEventListener("error", function onerrorImage() {
-                    console.log("image load error", src);
+                    console.warn("image load error", src);
                     reject();
                 });
                 image.src = src;
