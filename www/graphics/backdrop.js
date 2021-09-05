@@ -9,49 +9,49 @@ const newComponent_Backdrop = function newComponent_Backdrop(initOptions) {
     const obj_Backdrop = initOptions;
     obj_Backdrop.name = "backdrop";
 
-    obj_Backdrop.init = function Backdrop_init(levelGrid, pixelCanvas) {
-        return Utils.File.ImageLoader.get(obj_Backdrop.sheetSrc)
-            .then(function sheetImageLoaded(image) {
-                // finally we have map data and a sprite sheet
-                generateBackdropImage(levelGrid, pixelCanvas, image);
-                return obj_Backdrop;
-            });
+    obj_Backdrop.init = async function Backdrop_init(levelGrid, pixelCanvas) {
+        const image = await Utils.File.ImageLoader.get(obj_Backdrop.sheetSrc);
+        // finally we have map data and a sprite sheet
+        return await generateBackdropImage(levelGrid, pixelCanvas, image);
     };
     /*
     * Generate the background image from individual tile
     */
     function generateBackdropImage(levelGrid, pixelCanvas, spriteSheet) {
-        let levelWidth = levelGrid.width;
-        // create a new canvas for getting the base image of the backdrop
-        let [singleCanvas, singleContext] = pixelCanvas.newUnscaled(obj_Backdrop.sourceWidth, obj_Backdrop.sourceHeight);
-        singleContext.drawImage(spriteSheet,
-            obj_Backdrop.sourceX,
-            obj_Backdrop.sourceY,
-            obj_Backdrop.sourceWidth,
-            obj_Backdrop.sourceHeight,
-            0,
-            0,
-            obj_Backdrop.sourceWidth,
-            obj_Backdrop.sourceHeight
-        );
-        /// Export the single image to a separate image
-        let imageSingleUri = singleCanvas.toDataURL();
-        obj_Backdrop.imageSingle = new Image();
-        obj_Backdrop.imageSingle.src = imageSingleUri;
+        return new Promise(function promiseBackdropImage(resolve, reject) {
+            let levelWidth = levelGrid.width;
+            // create a new canvas for getting the base image of the backdrop
+            let [singleCanvas, singleContext] = pixelCanvas.newUnscaled(obj_Backdrop.sourceWidth, obj_Backdrop.sourceHeight);
+            singleContext.drawImage(spriteSheet,
+                obj_Backdrop.sourceX,
+                obj_Backdrop.sourceY,
+                obj_Backdrop.sourceWidth,
+                obj_Backdrop.sourceHeight,
+                0,
+                0,
+                obj_Backdrop.sourceWidth,
+                obj_Backdrop.sourceHeight
+            );
+            /// Export the single image to a separate image
+            let imageSingleUri = singleCanvas.toDataURL();
+            obj_Backdrop.imageSingle = new Image();
+            obj_Backdrop.imageSingle.src = imageSingleUri;
 
-        /// TODO : wait later to draw the repeating pattern only with the requested camera width and position
-        /// create a new canvas for compositing a repeating layer based on the single image
-        let [repeatCanvas, repeatContext] = pixelCanvas.newUnscaled(levelWidth, obj_Backdrop.sourceHeight);
-        // easy debug // document.getElementById("hiddenloading").appendChild(repeatCanvas);
-        /// Draw
-        let pattern = repeatContext.createPattern(obj_Backdrop.imageSingle, "repeat-x");
-        repeatContext.rect(0, 0, repeatCanvas.width, repeatCanvas.height);
-        repeatContext.fillStyle = pattern;
-        repeatContext.fill();
-        /// Export to image
-        let imageRepeatUri = repeatCanvas.toDataURL();
-        obj_Backdrop.imageRepeat = new Image();
-        obj_Backdrop.imageRepeat.src = imageRepeatUri;
+            /// TODO : wait later to draw the repeating pattern only with the requested camera width and position
+            /// create a new canvas for compositing a repeating layer based on the single image
+            let [repeatCanvas, repeatContext] = pixelCanvas.newUnscaled(levelWidth, obj_Backdrop.sourceHeight);
+            // easy debug // document.getElementById("hiddenloading").appendChild(repeatCanvas);
+            /// Draw
+            let pattern = repeatContext.createPattern(obj_Backdrop.imageSingle, "repeat-x");
+            repeatContext.rect(0, 0, repeatCanvas.width, repeatCanvas.height);
+            repeatContext.fillStyle = pattern;
+            repeatContext.fill();
+            /// Export to image
+            let imageRepeatUri = repeatCanvas.toDataURL();
+            obj_Backdrop.imageRepeat = new Image();
+            obj_Backdrop.imageRepeat.src = imageRepeatUri;
+            resolve(obj_Backdrop);
+        });
     };
 
     obj_Backdrop.draw = function LevelSprite_draw(context, position) {
@@ -127,11 +127,11 @@ const layersSheetOptions = [
 function spawnNewBackdrop(ecs, layerOptions, levelgrid, pixelCanvas) {
     const backdrop = newComponent_Backdrop(layerOptions.sheetOptions);
     return backdrop.init(levelgrid, pixelCanvas)
-    .then(function backdropInitialized() {
-        return ecs.Data.newEntity()
-        .addComponent(backdrop)
-        .addComponent(Physics.newComponent_Position(layerOptions.gamePosition));
-    })
+        .then(function backdropInitialized() {
+            return ecs.Data.newEntity()
+                .addComponent(backdrop)
+                .addComponent(Physics.newComponent_Position(layerOptions.gamePosition));
+        })
 }
 
 const System_initBackdrops = {

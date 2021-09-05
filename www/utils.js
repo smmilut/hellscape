@@ -2,16 +2,6 @@
  * Utilities module
  */
 
-export const debug = (function build_Debug(isDebugOn) {
-    if (isDebugOn) {
-        return function debug() {
-            console.log("DEBUG", ...arguments);
-        };
-    } else {
-        return function nonce() {};
-    }
-})(true);
-
 /*
 *   Make Http requests
 */
@@ -81,35 +71,38 @@ export const File = (function build_File() {
 
     obj_File.ImageLoader = (function build_ImageLoader() {
         const obj_ImageLoader = {};
-        const ImageLoader_registry = new Set();
+        const ImageLoader_cache = new Map();
 
         /*
         * Get image from cache or load it if not found
         */
-        obj_ImageLoader.get = function ImageLoader_get(src) {
-            for (let image of ImageLoader_registry) {
-                if (image.src == src) {
-                    // get from cache
-                    return new Promise(function promiseImageFromCache(resolve, reject) {
-                        resolve(image);
-                    });
-                }
+        obj_ImageLoader.get = async function ImageLoader_get(src) {
+            if (ImageLoader_cache.has(src)) {
+                /// getting Promise from cache
+                return ImageLoader_cache.get(src);
+            } else {
+                /// loading image and returning Promise
+                let imagePromise = loadImage(src);
+                /// adding Promise to cache
+                ImageLoader_cache.set(src, imagePromise);
+                return imagePromise;
             }
-            // not found in cache
-            return loadImage(src);
         };
 
         /*
         * Actually load image file (not from cache)
         */
         function loadImage(src) {
-            const image = new Image();
-            image.src = src;
             return new Promise(function promiseImageLoading(resolve, reject) {
-                image.onload = function onloadImage() {
-                    ImageLoader_registry.add(image);
+                const image = new Image();
+                image.addEventListener("load", function onloadImage() {
                     resolve(image);
-                };
+                });
+                image.addEventListener("error", function onerrorImage() {
+                    console.log("image load error", src);
+                    reject();
+                });
+                image.src = src;
             });
         }
 

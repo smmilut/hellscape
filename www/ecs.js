@@ -1,5 +1,3 @@
-import * as Utils from "./utils.js";
-
 /*
     "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
 
@@ -33,10 +31,10 @@ import * as Utils from "./utils.js";
     ## Program flow
 
     1. Initialize Resource systems in order of their priority. Wait for completion of each priority.
-    2. Run "init"-type Systems from SYSTEM_STAGE.FRAME_INIT (TODO actually wait for completion ?).
+    2. Run "init"-type Systems from SYSTEM_STAGE.FRAME_INIT and wait for completion
     3. Start the main loop :
-        1. Run Resource systems `Resource.update()`. TODO Wait for completion ?
-        2. Run "normal" Systems in "order" (TODO actually wait to make it really ordered ?) :
+        1. Run Resource systems `Resource.update()`, wait for completion
+        2. Run "normal" Systems in parallel, but wait for each stage to complete :
             1. SYSTEM_STAGE.FRAME_INIT
             2. SYSTEM_STAGE.FRAME_MAIN
             3. SYSTEM_STAGE.FRAME_END
@@ -159,6 +157,12 @@ import * as Utils from "./utils.js";
     );
     ```
 
+    ## Note on System run() completion
+
+    Automatically, when adding a new System, a `promiseRun()` function is created, turning the `run()` function into a Promise returned by the `promiseRun()` function.
+    If the desired behavior of this Promise needs to be customized, you can provide the `promiseRun()` function yourself to the System (instead of the `run()` function).
+    
+
     # Components
 
     ## Components API
@@ -217,7 +221,7 @@ const Resource_Timer = {
             this.t = getBrowserTime();
             this.dt = (this.t - this.old_t);
             if (this.dt > 1.0 / this._fpsThreshold) {
-                Utils.debug("frame too slow, discarding time : ", this.dt);
+                console.log("frame too slow, discarding time : ", (this.dt * 1000).toFixed(0), "ms =", (1.0 / this.dt).toFixed(0), "FPS");
                 this.dt = 0;
             }
         }
@@ -274,10 +278,10 @@ export const Controller = (function build_Controller() {
     /*
     * Run systems
     */
-    obj_Controller.start = function Controller_start() {
-        initResourceSystems().then(function promiseRunInitSystems(resolve, reject) {
-            runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
-        }).then(function promiseStartAnimationFrame(resolve, reject) {
+    obj_Controller.start = async function Controller_start() {
+        await initResourceSystems();
+        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
+        return new Promise(function requestFirstFrame(resolve, reject) {
             Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
     };
@@ -285,15 +289,17 @@ export const Controller = (function build_Controller() {
     /*
     * main loop
     */
-    function animateFrame(_timeNow) {
-        runResourceSystems();
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
-        runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_END));
-        Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+    async function animateFrame(_timeNow) {
+        await runResourceSystems();
+        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
+        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
+        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_END));
+        return new Promise(function requestNewFrame(resolve, reject) {
+            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+        });
     }
 
-    function initResourceSystems() {
+    async function initResourceSystems() {
         return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
             for (let priority = 0; priority < Data.resources.length; priority++) {
                 const resourceList = Data.resources[priority];
@@ -326,18 +332,24 @@ export const Controller = (function build_Controller() {
         });
     }
 
-    function runResourceSystems() {
+    async function runResourceSystems() {
         for (let resourceList of Data.resources) {
             // for each priority level
+            let resourceUpdatePromises = [];
             if (resourceList == undefined) {
                 /// no Resources at current priority level
                 continue;
             }
             for (let resource of resourceList) {
                 if (resource.update) {
-                    resource.update();
+                    let updateResult = resource.update();
+                    if (updateResult && updateResult.then != undefined) {
+                        // add to wait list
+                        resourceUpdatePromises.push(updateResult);
+                    }
                 }
             }
+            await Promise.all(resourceUpdatePromises);
         }
     }
 
@@ -348,13 +360,22 @@ export const Controller = (function build_Controller() {
         if (stage == undefined) {
             stage = SYSTEM_STAGE.FRAME_MAIN;
         }
+        if (system.promiseRun == undefined) {
+            system.promiseRun = function promiseRun_constructed() {
+                const args = arguments;
+                return new Promise(function promiseRunSystem(resolve, reject) {
+                    resolve(system.run(...args));
+                })
+            };
+        }
         Controller_systemQueue.get(stage).push(system);
     };
 
     /*
     * Run Systems for the main loop, in order
     */
-    function runSystems(systemQueue) {
+    async function runSystems(systemQueue) {
+        let systemRunPromises = [];
         for (let system of systemQueue) {
             const queryResults = {
                 ecs: {
@@ -391,8 +412,9 @@ export const Controller = (function build_Controller() {
                 }
                 //#endregion
             }
-            system.run(queryResults);
+            systemRunPromises.push(system.promiseRun(queryResults));
         }
+        await Promise.all(systemRunPromises);
     }
 
     return obj_Controller;

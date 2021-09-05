@@ -17,10 +17,9 @@ export const ANIMATION_TYPE = Object.freeze({
 /*
 * a Sprite with animation from a sprite sheet
 */
-export const newComponent_Sprite = function newSprite(initOptions) {
+export const newComponent_Sprite = async function newSprite(initOptions) {
     const obj_Sprite = {
         name: "sprite",
-        isInitialized: false,
     };
     let Sprite_sheetImage;
     let Sprite_pose, Sprite_frame, Sprite_frameTime, Sprite_animationDirection;
@@ -42,15 +41,20 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     */
     const Sprite_sheetLayout = {};
 
-    obj_Sprite.init = function Sprite_init(initOptions) {
+    obj_Sprite.init = async function Sprite_init(initOptions) {
         //#region init animation
         let sheetLayout = initOptions.sheetLayout;
         //#endregion
         //#region init sprite sheet
         obj_Sprite.sheetCellWidth = initOptions.sheetCellWidth;
         obj_Sprite.sheetCellHeight = initOptions.sheetCellHeight;
-        return Utils.File.ImageLoader.get(initOptions.src).then(function spriteImageLoaded(image) {
-            Sprite_sheetImage = image;
+        Sprite_sheetImage = await Utils.File.ImageLoader.get(initOptions.src);
+        return await parseSpriteSheet(sheetLayout);
+        //#endregion
+    };
+
+    function parseSpriteSheet(sheetLayout) {
+        return new Promise(function parsingSpriteSheet(resolve, reject) {
             // Run through all cells in the sprite sheet to define separate animation frames
             for (let sourceY = 0, poseIndex = 0; sourceY < Sprite_sheetImage.height; sourceY += obj_Sprite.sheetCellHeight, poseIndex++) {
                 // Y position in the sprite sheet is the animation pose
@@ -72,11 +76,9 @@ export const newComponent_Sprite = function newSprite(initOptions) {
                 }
             }
             obj_Sprite.setPose({ name: initOptions.defaultPose });
-            obj_Sprite.isInitialized = true;
-            return obj_Sprite;
+            resolve();
         });
-        //#endregion
-    };
+    }
 
     /*
     * From a requested drawing `position`, get where the sprite should be drawn.
@@ -90,23 +92,18 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     }
 
     obj_Sprite.draw = function Sprite_draw(context, position) {
-        if (obj_Sprite.isInitialized) {
-            let screenPosition = convertCenterPositionToSprite(position);
-            context.drawImage(
-                Sprite_sheetImage,
-                Sprite_frameInfo.sourceX,
-                Sprite_frameInfo.sourceY,
-                obj_Sprite.sheetCellWidth,
-                obj_Sprite.sheetCellHeight,
-                screenPosition.x,
-                screenPosition.y,
-                obj_Sprite.sheetCellHeight,
-                obj_Sprite.sheetCellHeight
-            );
-        } else {
-            // sprite not loaded yet
-            Utils.debug("sprite not loaded yet");
-        }
+        let screenPosition = convertCenterPositionToSprite(position);
+        context.drawImage(
+            Sprite_sheetImage,
+            Sprite_frameInfo.sourceX,
+            Sprite_frameInfo.sourceY,
+            obj_Sprite.sheetCellWidth,
+            obj_Sprite.sheetCellHeight,
+            screenPosition.x,
+            screenPosition.y,
+            obj_Sprite.sheetCellHeight,
+            obj_Sprite.sheetCellHeight
+        );
     };
 
     /*
@@ -124,10 +121,6 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     *   }
     */
     obj_Sprite.setPose = function Sprite_setPose(poseInfo) {
-        if (!obj_Sprite.isInitialized) {
-            Utils.debug("sprite not loaded yet");
-            return;
-        }
         let poseName = poseInfo.name;
         if (poseInfo.action && poseInfo.facing) {
             poseName = poseInfo.action + poseInfo.facing;
@@ -161,10 +154,6 @@ export const newComponent_Sprite = function newSprite(initOptions) {
     * update animation frame time, change frame, change animation direction if necessary
     */
     obj_Sprite.updateAnimation = function Sprite_updateAnimation(timePassed) {
-        if (!obj_Sprite.isInitialized) {
-            Utils.debug("sprite not loaded yet");
-            return;
-        }
         if (Sprite_animationDirection != ANIMATION_DIRECTION.STOPPED) {
             Sprite_frameTime += timePassed;
             while (Sprite_frameTime > Sprite_poseInfo.animation.frameDuration) {
@@ -198,8 +187,7 @@ export const newComponent_Sprite = function newSprite(initOptions) {
         Sprite_frameInfo = Sprite_poseInfo.frames[Sprite_frame];
     };
 
-    obj_Sprite.init(initOptions);
-
+    await obj_Sprite.init(initOptions);
     return obj_Sprite;
 };
 

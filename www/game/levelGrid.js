@@ -30,20 +30,18 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         LevelGrid_initOptions = initOptions || {};
     };
 
-    obj_LevelGrid.init = function LevelGrid_init() {
+    obj_LevelGrid.init = async function LevelGrid_init() {
         obj_LevelGrid.cellWidth = LevelGrid_initOptions.gridCellWidth;
         obj_LevelGrid.cellHeight = LevelGrid_initOptions.gridCellHeight;
-        return Utils.Http.Request({
+        const data = await Utils.Http.Request({
             url: LevelGrid_initOptions.url,
-        })
-            .then(function gotBackgroundFile(data) {
-                let json_obj = JSON.parse(data.responseText);
-                obj_LevelGrid.data = json_obj.map;
-                obj_LevelGrid.gridHeight = obj_LevelGrid.data.length;
-                obj_LevelGrid.gridWidth = obj_LevelGrid.data[0].length;
-                obj_LevelGrid.height = obj_LevelGrid.gridHeight * obj_LevelGrid.cellHeight;
-                obj_LevelGrid.width = obj_LevelGrid.gridWidth * obj_LevelGrid.cellWidth;
-            });
+        });
+        let json_obj = JSON.parse(data.responseText);
+        obj_LevelGrid.data = json_obj.map;
+        obj_LevelGrid.gridHeight = obj_LevelGrid.data.length;
+        obj_LevelGrid.gridWidth = obj_LevelGrid.data[0].length;
+        obj_LevelGrid.height = obj_LevelGrid.gridHeight * obj_LevelGrid.cellHeight;
+        obj_LevelGrid.width = obj_LevelGrid.gridWidth * obj_LevelGrid.cellWidth;
     };
 
     /*
@@ -62,7 +60,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
     */
     obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
         if (!obj_LevelGrid.isCellInside(x, y)) {
-            //Utils.debug("outside of map at cell", x, y);
+            /// outside of map
             return true;
         } else {
             return obj_LevelGrid.data[y][x] == TILE_TYPE.BLOCK;

@@ -158,7 +158,7 @@ const System_handleInput = {
     },
 };
 
-function spawnNewPlayer(ecs, gridX, gridY) {
+async function spawnNewPlayer(ecs, gridX, gridY) {
     return ecs.Data.newEntity()
         .addComponent(newTagPlayer())
         .addComponent(Physics.newComponent_Position({
@@ -180,7 +180,7 @@ function spawnNewPlayer(ecs, gridX, gridY) {
             height: 15,
         }))
         .addComponent(Actions.newComponent_Attack())
-        .addComponent(Sprites.newComponent_Sprite(playerSpriteSheetOptions));
+        .addComponent(await Sprites.newComponent_Sprite(playerSpriteSheetOptions));
 }
 
 const System_spawnPlayer = {

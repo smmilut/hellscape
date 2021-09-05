@@ -260,7 +260,7 @@ const System_mobBehave = {
     },
 };
 
-function spawnNewMob(ecs, gridX, gridY) {
+async function spawnNewMob(ecs, gridX, gridY) {
     return ecs.Data.newEntity()
         .addComponent(newComponent_TagMob())
         .addComponent(Physics.newComponent_Position({
@@ -285,7 +285,7 @@ function spawnNewMob(ecs, gridX, gridY) {
         .addComponent(newComponent_MobState({
             state: MOB_STATES.FLEEING,
         }))
-        .addComponent(Sprites.newComponent_Sprite(enemySpriteSheetOptions));
+        .addComponent(await Sprites.newComponent_Sprite(enemySpriteSheetOptions));
 }
 
 const System_spawnMob = {
