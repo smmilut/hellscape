@@ -11,6 +11,7 @@ function initSubModules(ecs) {
 }
 
 const System_checkCollisions = {
+    name: "checkCollisions",
     componentQueries: {
         player: ["position", "collider", "attack", "tagPlayer"],
         mobs: ["position", "collider", "mobState", "tagMob"],
@@ -33,6 +34,6 @@ const System_checkCollisions = {
 export function init(ecs) {
     initSubModules(ecs);
     //#region game Systems running always, and in this order
-    ecs.Controller.addSystem(System_checkCollisions);
+    ecs.Data.registerSystem(System_checkCollisions);
     //#endregion
 }

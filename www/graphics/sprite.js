@@ -192,6 +192,7 @@ export const newComponent_Sprite = async function newSprite(initOptions) {
 };
 
 const System_updateAnimation = {
+    name: "updateAnimation",
     resourceQuery: ["time"],
     componentQueries: {
         sprites: ["sprite"],
@@ -205,5 +206,5 @@ const System_updateAnimation = {
 };
 
 export function init(ecs) {
-    ecs.Controller.addSystem(System_updateAnimation, ecs.SYSTEM_STAGE.FRAME_END);
+    ecs.Data.registerSystem(System_updateAnimation);
 }

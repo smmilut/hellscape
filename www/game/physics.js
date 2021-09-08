@@ -49,11 +49,12 @@ export const newComponent_Speed = function newSpeed(initOptions) {
 
 
 const System_moveMobiles = {
+    name: "moveMobiles",
     resourceQuery: ["levelGrid", "time", "physics"],
     componentQueries: {
         mobiles: ["position", "speed"],
     },
-    run: function moveSprite(queryResults) {
+    run: function moveMobiles(queryResults) {
         let time = queryResults.resources.time;
         if (time.isPaused()) {
             return;
@@ -81,6 +82,7 @@ const System_moveMobiles = {
 };
 
 const System_mobilesCollideLevel = {
+    name: "mobilesCollideLevel",
     resourceQuery: ["levelGrid"],
     componentQueries: {
         mobiles: ["position", "speed"],
@@ -122,6 +124,6 @@ export function init(ecs) {
             gravity: 350,
         }
     );
-    ecs.Controller.addSystem(System_moveMobiles);
-    ecs.Controller.addSystem(System_mobilesCollideLevel);
+    ecs.Data.registerSystem(System_moveMobiles);
+    ecs.Data.registerSystem(System_mobilesCollideLevel);
 }

@@ -177,6 +177,7 @@ const enemySpriteSheetOptions = {
 };
 
 const System_mobBehave = {
+    name: "mobBehave",
     resourceQuery: ["levelGrid", "time"],
     componentQueries: {
         mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
@@ -288,9 +289,10 @@ async function spawnNewMob(ecs, gridX, gridY) {
         .addComponent(await Sprites.newComponent_Sprite(enemySpriteSheetOptions));
 }
 
-const System_spawnMob = {
+const System_spawnMobs = {
+    name: "spawnMobs",
     resourceQuery: ["levelGrid"],
-    run: function spawnMob(queryResults) {
+    run: function spawnMobs(queryResults) {
         const ecs = queryResults.ecs;
         const levelGrid = queryResults.resources.levelGrid;
         const levelData = levelGrid.data;
@@ -307,7 +309,6 @@ const System_spawnMob = {
 };
 
 export function init(ecs) {
-    ecs.Controller.addSystem(System_spawnMob, ecs.SYSTEM_STAGE.INIT);
-
-    ecs.Controller.addSystem(System_mobBehave);
+    ecs.Data.registerSystem(System_spawnMobs);
+    ecs.Data.registerSystem(System_mobBehave);
 }

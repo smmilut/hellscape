@@ -1,3 +1,4 @@
+import * as Utils from "./utils.js";
 /*
     "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
 
@@ -104,6 +105,7 @@
 
     ```
     System_Something = {
+        name: "systemName",
         resourceQuery: ["resource1", "resource2", ...],
         componentQueries: {
             queryName1: ["componentA", "componentB", ...],
@@ -155,19 +157,31 @@
 
     ## Add a new System
 
-    Add a new System with :
+    Register a new System with :
     ```
-    Controller.addSystem(
-        System_Something,
-        SYSTEM_STAGE,  // optional, default to FRAME_MAIN
-    );
+    Data.registerSystem(System_Something);
     ```
 
-    ## Note on System run() completion
+    This makes the System available by its name.
+
+    ### Note on System run() completion
 
     Automatically, when adding a new System, a `promiseRun()` function is created, turning the `run()` function into a Promise returned by the `promiseRun()` function.
     If the desired behavior of this Promise needs to be customized, you can provide the `promiseRun()` function yourself to the System (instead of the `run()` function).
     
+    ## Scene : Systems scheduling
+
+    `schedulingConfig.json` describes Scenes which contain the configuration of Systems for each game level
+    The format is :
+    {
+        "levelX": {
+            "init": ["list of system names"],
+            "frameMain": ["list of system names"],
+            "frameEnd": ["list of system names"],
+            "next": "levelY"
+        },
+        "levelY" : {}, // etc...
+    }
 
     # Components
 
@@ -208,10 +222,9 @@ function getBrowserTime() {
 *   A Timer Resource or Component that can be derived with Object.create()
 */
 const Resource_Timer = {
-    name: "timer",
-    _isRunning: true,
-    _fpsThreshold: 40,  // minimum acceptable FPS, below that we panic
     prepareInit: function Physics_prepareInit(initOptions) {
+        this._isRunning = true;
+        this._fpsThreshold = 40;  // minimum acceptable FPS, below that we panic
         this.initOptions = initOptions || {};
     },
     init: function Time_init() {
@@ -254,17 +267,20 @@ const Resource_Timer = {
 /*
 * The main Time Resource that tracks the frame duration
 */
-const Resource_Time = Object.create(Resource_Timer);
-Resource_Time.name = "time";
+const Resource_Time = (function build_Time() {
+    const obj_Time = Object.create(Resource_Timer);
+    obj_Time.name = "time";
+    return obj_Time;
+})();
 
 /*
 * System stages : priorities for running Systems each frame
 */
 export const SYSTEM_STAGE = Object.freeze({
-    INIT: 0,
-    FRAME_INIT: 10,
-    FRAME_MAIN: 11,
-    FRAME_END: 12,
+    INIT: "init",
+    FRAME_INIT: "frameInit",
+    FRAME_MAIN: "frameMain",
+    FRAME_END: "frameEnd",
 });
 
 /*
@@ -273,22 +289,16 @@ export const SYSTEM_STAGE = Object.freeze({
 export const Controller = (function build_Controller() {
     const obj_Controller = {};
 
-    let Controller_animationRequestId;
-    let Controller_systemQueue = new Map([
-        [SYSTEM_STAGE.INIT, []],
-        [SYSTEM_STAGE.FRAME_INIT, []],
-        [SYSTEM_STAGE.FRAME_MAIN, []],
-        [SYSTEM_STAGE.FRAME_END, []],
-    ]);
+    let _Controller_animationRequestId;
 
     /*
     * Run systems
     */
     obj_Controller.start = async function Controller_start() {
         await Data.initAllResources();
-        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
+        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.INIT));
         return new Promise(function requestFirstFrame(resolve, reject) {
-            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+            _Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
     };
 
@@ -297,11 +307,11 @@ export const Controller = (function build_Controller() {
     */
     async function animateFrame(_timeNow) {
         await Data.updateAllResources();
-        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
-        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
-        await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_END));
+        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
+        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
+        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_END));
         return new Promise(function requestNewFrame(resolve, reject) {
-            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+            _Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
     }
 
@@ -320,7 +330,7 @@ export const Controller = (function build_Controller() {
                 })
             };
         }
-        Controller_systemQueue.get(stage).push(system);
+        Scene.systemQueue.get(stage).push(system);
     };
 
     /*
@@ -495,6 +505,7 @@ const ResourceStore = {
 export const Data = (function build_Data() {
     const obj_Data = {};
 
+    //#region Entities
     obj_Data.entities = [];
     obj_Data.newEntity = function newEntity() {
         const obj_Entity = {};
@@ -527,7 +538,8 @@ export const Data = (function build_Data() {
 
         return obj_Entity;
     };
-
+    //#endregion
+    //#region Resources
     obj_Data.gameResources = Object.create(ResourceStore);
     obj_Data.gameResources.init();
     obj_Data.levelResources = Object.create(ResourceStore);
@@ -551,12 +563,79 @@ export const Data = (function build_Data() {
         await obj_Data.gameResources.updateAll();
         await obj_Data.levelResources.updateAll();
     };
+    //#endregion
+    //#region Systems
+    /// { "systemName": system }
+    obj_Data.systemsRegistry = new Map();
+
+    obj_Data.registerSystem = function Data_registerSystem(system) {
+        if (system.promiseRun == undefined) {
+            system.promiseRun = function promiseRun_constructed() {
+                const args = arguments;
+                return new Promise(function promiseRunSystem(resolve, reject) {
+                    resolve(system.run(...args));
+                })
+            };
+        }
+        obj_Data.systemsRegistry.set(system.name, system);
+    };
+
+    obj_Data.getSystem = function Data_getSystem(systemName) {
+        return obj_Data.systemsRegistry.get(systemName);
+    };
+    //#endregion
     return obj_Data;
 })();
 
 /*
+*   Manage scheduling and content of all levels and screens
+*/
+export const Scene = (function build_Scene() {
+    const obj_Scene = {};
+
+    let Scene_schedulingConfig, Scene_currentName, Scene_currentConfig;
+    obj_Scene.systemQueue = new Map([
+        [SYSTEM_STAGE.INIT, []],
+        [SYSTEM_STAGE.FRAME_INIT, []],
+        [SYSTEM_STAGE.FRAME_MAIN, []],
+        [SYSTEM_STAGE.FRAME_END, []],
+    ]);
+
+    obj_Scene.init = async function Scene_init() {
+        const rawSchedulingFile = await Utils.Http.Request({
+            url: "www/schedulingConfig.json",
+        });
+        Scene_schedulingConfig = JSON.parse(rawSchedulingFile.responseText);
+    };
+
+    /*
+    *   construct the Systems queue for the current scene
+    */
+    obj_Scene.load = function Scene_load(sceneName) {
+        Scene_currentName = sceneName;
+        Scene_currentConfig = Scene_schedulingConfig[Scene_currentName];
+        for (const [stageName, systemQueue] of obj_Scene.systemQueue) {
+            const systemNames = Scene_currentConfig[stageName];
+            if (systemNames === undefined) {
+                /// no configuration for this stage
+                continue;
+            }
+            for (const systemName of systemNames) {
+                const system = Data.getSystem(systemName);
+                systemQueue.push(system);
+            }
+        }
+    };
+
+
+    return obj_Scene;
+})();
+
+
+/*
 *   Initialize system : make user system Resources available
 */
-export function init() {
+export async function init() {
+    await Scene.init();
     Data.gameResources.add(Resource_Time);
 }

@@ -1,0 +1,25 @@
+{
+    "level1": {
+        "init": [
+            "initBackdrops",
+            "spawnPlayer",
+            "spawnMobs"
+        ],
+        "frameMain": [
+            "moveCamera",
+            "moveMobiles",
+            "mobilesCollideLevel",
+            "handleInput",
+            "mobBehave",
+            "checkCollisions"
+        ],
+        "frameEnd": [
+            "updateAnimation",
+            "clearBackground",
+            "renderBackdrop",
+            "renderLevel",
+            "renderSprites"
+        ],
+        "next": "level2"
+    }
+}

@@ -12,6 +12,7 @@ function initSubModules(ecs) {
 }
 
 const System_clearBackground = {
+    name: "clearBackground",
     resourceQuery: ["camera"],
     run: function clearBackground(queryResults) {
         let camera = queryResults.resources.camera;
@@ -20,6 +21,7 @@ const System_clearBackground = {
 };
 
 const System_renderBackdrop = {
+    name: "renderBackdrop",
     resourceQuery: ["camera"],
     componentQueries: {
         backdrops: ["backdrop", "position"],
@@ -33,6 +35,7 @@ const System_renderBackdrop = {
 };
 
 const System_renderLevel = {
+    name: "renderLevel",
     resourceQuery: ["camera", "levelsprite"],
     run: function renderLevel(queryResults) {
         let camera = queryResults.resources.camera;
@@ -42,6 +45,7 @@ const System_renderLevel = {
 };
 
 const System_renderSprites = {
+    name: "renderSprites",
     resourceQuery: ["camera"],
     componentQueries: {
         sprites: ["sprite", "position"],
@@ -63,9 +67,9 @@ export function init(ecs) {
     initSubModules(ecs);
     //#region graphics Systems running always, and in this order
     /// TODO : replace this ordering by a Z ordering
-    ecs.Controller.addSystem(System_clearBackground, ecs.SYSTEM_STAGE.FRAME_END);
-    ecs.Controller.addSystem(System_renderBackdrop, ecs.SYSTEM_STAGE.FRAME_END);
-    ecs.Controller.addSystem(System_renderLevel, ecs.SYSTEM_STAGE.FRAME_END);
-    ecs.Controller.addSystem(System_renderSprites, ecs.SYSTEM_STAGE.FRAME_END);
+    ecs.Data.registerSystem(System_clearBackground);
+    ecs.Data.registerSystem(System_renderBackdrop);
+    ecs.Data.registerSystem(System_renderLevel);
+    ecs.Data.registerSystem(System_renderSprites);
     //#endregion
 }

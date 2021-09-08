@@ -152,6 +152,7 @@ function spawnNewBackdrop(ecs, layerOptions, levelGrid, pixelCanvas) {
 }
 
 const System_initBackdrops = {
+    name: "initBackdrops",
     resourceQuery: ["levelGrid", "pixelCanvas"],
     run: function initBackdrops(queryResults) {
         const ecs = queryResults.ecs;
@@ -164,5 +165,5 @@ const System_initBackdrops = {
 };
 
 export function init(ecs) {
-    ecs.Controller.addSystem(System_initBackdrops, ecs.SYSTEM_STAGE.INIT);
+    ecs.Data.registerSystem(System_initBackdrops);
 }

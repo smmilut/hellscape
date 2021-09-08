@@ -114,6 +114,7 @@ const playerSpriteSheetOptions = {
 };
 
 const System_handleInput = {
+    name: "handleInput",
     resourceQuery: ["input"],
     componentQueries: {
         player: ["speed", "facing", "jump", "sprite", "attack", "tagPlayer"],
@@ -184,6 +185,7 @@ async function spawnNewPlayer(ecs, gridX, gridY) {
 }
 
 const System_spawnPlayer = {
+    name: "spawnPlayer",
     resourceQuery: ["levelGrid"],
     run: function spawnPlayer(queryResults) {
         const ecs = queryResults.ecs;
@@ -202,6 +204,6 @@ const System_spawnPlayer = {
 };
 
 export function init(ecs) {
-    ecs.Controller.addSystem(System_spawnPlayer, ecs.SYSTEM_STAGE.INIT);
-    ecs.Controller.addSystem(System_handleInput);
+    ecs.Data.registerSystem(System_spawnPlayer);
+    ecs.Data.registerSystem(System_handleInput);
 }

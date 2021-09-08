@@ -3,9 +3,9 @@ import * as GFX from "./graphics.js";
 import * as Input from "./userInput.js";
 import * as Game from "./game.js";
 
-function initSubModules(ecs) {
+async function initSubModules(ecs) {
     /// Always init ECS first
-    ecs.init();
+    await ecs.init();
     /// init other modules
     GFX.init(ecs);
     Input.init(ecs);
@@ -20,7 +20,8 @@ function startGame(ecs) {
 * Main program entry point
 *   when loading this script, all starts
 */
-(function onLoadPage() {
-    initSubModules(ECS);
+(async function onLoadPage() {
+    await initSubModules(ECS);
+    ECS.Scene.load("level1");
     startGame(ECS);
 })()

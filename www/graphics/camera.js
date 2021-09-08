@@ -209,6 +209,7 @@ const Resource_Camera = (function build_Camera() {
 })();
 
 const System_moveCamera = {
+    name: "moveCamera",
     resourceQuery: ["camera", "time", "levelGrid"],
     componentQueries: {
         player: ["position", "tagPlayer"],
@@ -232,7 +233,7 @@ export function init(ecs) {
         },
         0, // higher priority than Camera
     );
-    
+
     // let border = 16;
     // let windowWidth = window.innerWidth - border;
     // let windowHeight = window.innerHeight - border;
@@ -254,5 +255,5 @@ export function init(ecs) {
         2, // higher priority than LevelSprite, lower than PixelCanvas and LevelGrid
     );
 
-    ecs.Controller.addSystem(System_moveCamera);
+    ecs.Data.registerSystem(System_moveCamera);
 }
