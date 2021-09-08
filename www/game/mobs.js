@@ -177,7 +177,7 @@ const enemySpriteSheetOptions = {
 };
 
 const System_mobBehave = {
-    resourceQuery: ["levelgrid", "time"],
+    resourceQuery: ["levelGrid", "time"],
     componentQueries: {
         mobs: ["position", "speed", "facing", "jump", "sprite", "mobState", "tagMob"],
     },
@@ -186,13 +186,13 @@ const System_mobBehave = {
         if (time.isPaused()) {
             return;
         }
-        let levelgrid = queryResults.resources.levelgrid;
+        let levelGrid = queryResults.resources.levelGrid;
         for (let e of queryResults.components.mobs) {
             if (e.mobState.state == MOB_STATES.FLEEING || e.mobState.state == MOB_STATES.JUMPING) {
                 /// collisionning
                 switch (e.facing.direction) {
                     case Actions.FACING.RIGHT:
-                        if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.RIGHT)
+                        if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.RIGHT)
                             && e.position.xRatio >= 0.7) {
                             /// met a wall, flip left
                             e.facing.direction = Actions.FACING.LEFT;
@@ -202,7 +202,7 @@ const System_mobBehave = {
                         }
                         break;
                     case Actions.FACING.LEFT:
-                        if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.LEFT)
+                        if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.LEFT)
                             && e.position.xRatio <= 0.3) {
                             /// met a wall, flip right
                             e.facing.direction = Actions.FACING.RIGHT;
@@ -240,7 +240,7 @@ const System_mobBehave = {
                     break;
                 case MOB_STATES.DYING:
                     e.speed.x = 0;
-                    if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.UP)
+                    if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.UP)
                         && e.position.yRatio <= 0.3
                     ) {
                         e.speed.y = 0;
@@ -289,16 +289,16 @@ async function spawnNewMob(ecs, gridX, gridY) {
 }
 
 const System_spawnMob = {
-    resourceQuery: ["levelgrid"],
+    resourceQuery: ["levelGrid"],
     run: function spawnMob(queryResults) {
         const ecs = queryResults.ecs;
-        const levelgrid = queryResults.resources.levelgrid;
-        const levelData = levelgrid.data;
+        const levelGrid = queryResults.resources.levelGrid;
+        const levelData = levelGrid.data;
         /// iterate the level map data
         for (let rowIndex = 0; rowIndex < levelData.length; rowIndex++) {
             const row = levelData[rowIndex];
             for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
-                if (row[columnIndex] == levelgrid.TILE_TYPE.MOB) {
+                if (row[columnIndex] == levelGrid.TILE_TYPE.MOB) {
                     spawnNewMob(ecs, columnIndex, rowIndex);
                 }
             }

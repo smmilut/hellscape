@@ -168,23 +168,21 @@ const Resource_LevelSprite = (function build_LevelSprite() {
         obj_LevelSprite.initQueryResources = initOptions.initQueryResources;
     }
 
-    obj_LevelSprite.init = function LevelSprite_init(levelGrid, pixelCanvas) {
-        return Utils.Http.Request({
+    obj_LevelSprite.init = async function LevelSprite_init(queryResults) {
+        const pixelCanvas = queryResults.resources.pixelCanvas;
+        const levelGrid = queryResults.resources.levelGrid;
+        const data = await Utils.Http.Request({
             url: LevelSprite_initOptions.sheetConfigUrl,
-        })
-            .then(function gotConfigFile(data) {
-                LevelSprite_sheetConfig = JSON.parse(data.responseText);
-                obj_LevelSprite.sheetCellWidth = LevelSprite_sheetConfig.cellWidth;
-                obj_LevelSprite.sheetCellHeight = LevelSprite_sheetConfig.cellHeight;
-                obj_LevelSprite.theme = LevelSprite_sheetConfig.defaultTheme;
-                return Utils.File.ImageLoader.get(LevelSprite_initOptions.sheetSrc)
-            })
-            .then(function sheetImageLoaded(image) {
-                LevelSprite_sheet = image;
-                parseSheetLayout(LevelSprite_sheetConfig.layout)
-                // finally we have map data and a sprite sheet
-                generateBackgroundImage(levelGrid, pixelCanvas);
-            });
+        });
+        LevelSprite_sheetConfig = JSON.parse(data.responseText);
+        obj_LevelSprite.sheetCellWidth = LevelSprite_sheetConfig.cellWidth;
+        obj_LevelSprite.sheetCellHeight = LevelSprite_sheetConfig.cellHeight;
+        obj_LevelSprite.theme = LevelSprite_sheetConfig.defaultTheme;
+        const image = await Utils.File.ImageLoader.get(LevelSprite_initOptions.sheetSrc);
+        LevelSprite_sheet = image;
+        parseSheetLayout(LevelSprite_sheetConfig.layout);
+        // finally we have map data and a sprite sheet
+        generateBackgroundImage(levelGrid, pixelCanvas);
     };
 
     function parseSheetLayout(sheetLayout) {
@@ -285,9 +283,9 @@ const Resource_LevelSprite = (function build_LevelSprite() {
 })();
 
 export function init(ecs) {
-    ecs.Data.addResource(Resource_LevelSprite,
+    ecs.Data.levelResources.add(Resource_LevelSprite,
         {
-            initQueryResources: ["levelgrid", "pixelCanvas"],
+            initQueryResources: ["levelGrid", "pixelCanvas"],
             sheetSrc: "assets/terrain_tilemap.png",
             sheetConfigUrl: "assets/terrain_tilemap.json",
         },

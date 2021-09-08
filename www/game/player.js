@@ -184,16 +184,16 @@ async function spawnNewPlayer(ecs, gridX, gridY) {
 }
 
 const System_spawnPlayer = {
-    resourceQuery: ["levelgrid"],
+    resourceQuery: ["levelGrid"],
     run: function spawnPlayer(queryResults) {
         const ecs = queryResults.ecs;
-        const levelgrid = queryResults.resources.levelgrid;
-        const levelData = levelgrid.data;
+        const levelGrid = queryResults.resources.levelGrid;
+        const levelData = levelGrid.data;
         /// iterate the level map data
         for (let rowIndex = 0; rowIndex < levelData.length; rowIndex++) {
             const row = levelData[rowIndex];
             for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
-                if (row[columnIndex] == levelgrid.TILE_TYPE.PLAYER) {
+                if (row[columnIndex] == levelGrid.TILE_TYPE.PLAYER) {
                     spawnNewPlayer(ecs, columnIndex, rowIndex);
                 }
             }

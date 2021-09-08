@@ -49,7 +49,7 @@ export const newComponent_Speed = function newSpeed(initOptions) {
 
 
 const System_moveMobiles = {
-    resourceQuery: ["levelgrid", "time", "physics"],
+    resourceQuery: ["levelGrid", "time", "physics"],
     componentQueries: {
         mobiles: ["position", "speed"],
     },
@@ -58,11 +58,11 @@ const System_moveMobiles = {
         if (time.isPaused()) {
             return;
         }
-        let levelgrid = queryResults.resources.levelgrid;
+        let levelGrid = queryResults.resources.levelGrid;
         let physics = queryResults.resources.physics;
 
         for (let e of queryResults.components.mobiles) {
-            levelgrid.updatePixelPosition(e.position);
+            levelGrid.updatePixelPosition(e.position);
 
             e.position.xRatio += e.speed.x * time.dt;
             e.speed.x *= physics.friction;
@@ -81,31 +81,31 @@ const System_moveMobiles = {
 };
 
 const System_mobilesCollideLevel = {
-    resourceQuery: ["levelgrid"],
+    resourceQuery: ["levelGrid"],
     componentQueries: {
         mobiles: ["position", "speed"],
     },
     run: function mobilesCollideLevel(queryResults) {
-        let levelgrid = queryResults.resources.levelgrid;
+        let levelGrid = queryResults.resources.levelGrid;
 
         for (let e of queryResults.components.mobiles) {
-            levelgrid.updatePixelPosition(e.position);
-            if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.RIGHT)
+            levelGrid.updatePixelPosition(e.position);
+            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.RIGHT)
                 && e.position.xRatio >= 0.7) {
                 e.position.xRatio = 0.7;
                 e.speed.x = 0;
             };
-            if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.LEFT)
+            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.LEFT)
                 && e.position.xRatio <= 0.3) {
                 e.position.xRatio = 0.3;
                 e.speed.x = 0;
             };
-            if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.UP)
+            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.UP)
                 && e.position.yRatio <= 0.3) {
                 e.position.yRatio = 0.3;
                 e.speed.y = Math.max(e.speed.y, 0);
             };
-            if (levelgrid.hasCollisionAtDirection(e.position, levelgrid.COLLISION_DIRECTION.DOWN)
+            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.DOWN)
                 && e.position.yRatio >= 0.5) {
                 e.position.yRatio = 0.5;
                 e.speed.y = 0;
@@ -116,7 +116,7 @@ const System_mobilesCollideLevel = {
 
 
 export function init(ecs) {
-    ecs.Data.addResource(Resource_Physics,
+    ecs.Data.levelResources.add(Resource_Physics,
         {
             friction: 0.75,
             gravity: 350,

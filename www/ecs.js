@@ -13,7 +13,7 @@
 
     The global object `Data` holds all Entities and Resources.
     It can spawn Entities with `Data.newEntity()`
-    It can add a new Resource with `Data.addResource()`
+    It can add a new Resource with `Data.gameResources.add()` or `Data.levelResources.add()`
 
     ## Entity
 
@@ -66,10 +66,16 @@
 
     ## Add a new Resource
 
-    Add a new Resource to the program flow with :
+    Add a new Resource available to the global game with :
     
     ```
-    Data.addResource(Resource_Something, initOptions, priority)
+    Data.gameResources.add(Resource_Something, initOptions, priority)
+    ```
+
+    Add a new Resource available only to the current level with :
+    
+    ```
+    Data.levelResources.add(Resource_Something, initOptions, priority)
     ```
 
     # Systems
@@ -279,7 +285,7 @@ export const Controller = (function build_Controller() {
     * Run systems
     */
     obj_Controller.start = async function Controller_start() {
-        await initResourceSystems();
+        await Data.initAllResources();
         await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.INIT));
         return new Promise(function requestFirstFrame(resolve, reject) {
             Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
@@ -290,67 +296,13 @@ export const Controller = (function build_Controller() {
     * main loop
     */
     async function animateFrame(_timeNow) {
-        await runResourceSystems();
+        await Data.updateAllResources();
         await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
         await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
         await runSystems(Controller_systemQueue.get(SYSTEM_STAGE.FRAME_END));
         return new Promise(function requestNewFrame(resolve, reject) {
             Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
-    }
-
-    async function initResourceSystems() {
-        return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
-            for (let priority = 0; priority < Data.resources.length; priority++) {
-                const resourceList = Data.resources[priority];
-                if (resourceList == undefined) {
-                    /// no Resources at current priority level
-                    continue;
-                }
-                let resourcePromises = [];
-                for (let resource of resourceList) {
-                    // Resources may query for other resources during initialization
-                    let queryResourcesResult = [];
-                    if (resource.initQueryResources) {
-                        queryResourcesResult = resource.initQueryResources.map(function getQueryResource(queryName) {
-                            // take the 1st one only, don't expect several Resources with the same name
-                            let requiredResource = Data.getResources(queryName)[0];
-                            return requiredResource;
-                        });
-                    }
-                    // initiate initialization
-                    let initResult = resource.init(...queryResourcesResult);
-                    if (initResult && initResult.then != undefined) {
-                        // add to wait list
-                        resourcePromises.push(initResult);
-                    }
-                }
-                // wait for completion of all resources of this priority level
-                await Promise.all(resourcePromises);
-            }
-            resolve();
-        });
-    }
-
-    async function runResourceSystems() {
-        for (let resourceList of Data.resources) {
-            // for each priority level
-            let resourceUpdatePromises = [];
-            if (resourceList == undefined) {
-                /// no Resources at current priority level
-                continue;
-            }
-            for (let resource of resourceList) {
-                if (resource.update) {
-                    let updateResult = resource.update();
-                    if (updateResult && updateResult.then != undefined) {
-                        // add to wait list
-                        resourceUpdatePromises.push(updateResult);
-                    }
-                }
-            }
-            await Promise.all(resourceUpdatePromises);
-        }
     }
 
     /*
@@ -384,9 +336,7 @@ export const Controller = (function build_Controller() {
                 },
             };
             //#region prepare requested Resources
-            if (system.resourceQuery) {
-                queryResults.resources = Data.getAllResourcesNamed(system.resourceQuery);
-            }
+            queryResults.resources = Data.queryAllResources(system.resourceQuery);
             //#endregion
             if (system.componentQueries != undefined) {
                 //#region prepare requested Components
@@ -419,6 +369,125 @@ export const Controller = (function build_Controller() {
 
     return obj_Controller;
 })();
+
+/*
+*   Stores Resources ordered by priority level
+*/
+const ResourceStore = {
+    init: function ResourceStore_init() {
+        /// Lists of Resources, ordered by priority level
+        this.resources = [];
+    },
+
+    add: function ResourceStore_add(resource, initOptions, priority) {
+        if (priority == undefined) {
+            priority = 0;
+        }
+        if (this.resources[priority] == undefined) {
+            this.resources[priority] = [];
+        }
+        this.resources[priority].push(resource);
+        resource.prepareInit(initOptions);
+        return this;
+    },
+
+    /*
+    *   Get the first Resource that has the queried name
+    */
+    get: function ResourceStore_get(resourceName) {
+        for (let resourceList of this.resources) {
+            // for each priority level
+            if (resourceList == undefined) {
+                continue;
+            }
+            for (const resource of resourceList) {
+                if (resource.name == resourceName) {
+                    /// found it, return the first match
+                    return resource;
+                }
+            }
+        }
+        /// not found
+        return null;
+    },
+
+    /*
+    *   Given a list of Resource names, get a dictionary with the corresponding Resources
+    *   (or no key for Resources not found)
+    */
+    query: function ResourceStore_query(resourceQuery) {
+        const queryResult = {};
+        if (resourceQuery !== undefined) {
+            for (const queryName of resourceQuery) {
+                const singleResult = this.get(queryName);
+                if (singleResult !== null) {
+                    queryResult[queryName] = singleResult;
+                }
+            }
+        }
+        return queryResult;
+    },
+
+    /*
+    *   Initialize all Resources
+    */
+    initAll: async function ResourceStore_initAll() {
+        return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
+            for (let resourceList of this.resources) {
+                if (resourceList == undefined) {
+                    /// no Resources at current priority level
+                    continue;
+                }
+                let resourcePromises = [];
+                for (let resource of resourceList) {
+                    // Resources may query for other resources during initialization
+                    const queryResult = Data.queryAllResources(resource.initQueryResources);
+                    let queryResourcesResult =
+                    {
+                        ecs: {
+                            Data: Data,
+                            Controller: Controller,
+                        },
+                        resources: queryResult,
+                    };
+                    // initiate initialization
+                    let initResult = resource.init(queryResourcesResult);
+                    if (initResult && initResult.then != undefined) {
+                        // add to wait list
+                        resourcePromises.push(initResult);
+                    }
+                }
+                // wait for completion of all resources of this priority level
+                await Promise.all(resourcePromises);
+            }
+            resolve();
+        }.bind(this));
+    },
+
+    /*
+    *   Update all Resources
+    */
+    updateAll: async function ResourceStore_updateAll() {
+        for (let resourceList of this.resources) {
+            // for each priority level
+            let resourceUpdatePromises = [];
+            if (resourceList == undefined) {
+                /// no Resources at current priority level
+                continue;
+            }
+            for (let resource of resourceList) {
+                if (resource.update) {
+                    let updateResult = resource.update();
+                    if (updateResult && updateResult.then != undefined) {
+                        // add to wait list
+                        resourceUpdatePromises.push(updateResult);
+                    }
+                }
+            }
+            await Promise.all(resourceUpdatePromises);
+        }
+    },
+};
 
 /*
 * Program data, holds Entities and Resources
@@ -459,42 +528,29 @@ export const Data = (function build_Data() {
         return obj_Entity;
     };
 
-    obj_Data.resources = [];
+    obj_Data.gameResources = Object.create(ResourceStore);
+    obj_Data.gameResources.init();
+    obj_Data.levelResources = Object.create(ResourceStore);
+    obj_Data.levelResources.init();
 
-    obj_Data.addResource = function Data_addResource(resource, initOptions, priority) {
-        if (priority == undefined) {
-            priority = 0;
-        }
-        if (obj_Data.resources[priority] == undefined) {
-            obj_Data.resources[priority] = [];
-        }
-        obj_Data.resources[priority].push(resource);
-        resource.prepareInit(initOptions);
-        return obj_Data;
+    obj_Data.queryAllResources = function Data_queryAllResources(resourceQuery) {
+        const queryResults = {}
+        const gameResults = obj_Data.gameResources.query(resourceQuery);
+        Object.assign(queryResults, gameResults);
+        const levelResults = obj_Data.levelResources.query(resourceQuery);
+        Object.assign(queryResults, levelResults);
+        return queryResults;
     };
 
-    obj_Data.getResources = function Data_getResources(resourceName) {
-        let filteredResources = []
-        for (let resourceList of obj_Data.resources) {
-            // for each priority level
-            if (resourceList == undefined) {
-                continue;
-            }
-            filteredResources.push(...resourceList.filter(function filterResource(resource) {
-                return resource.name == resourceName;
-            }));
-        }
-        return filteredResources;
+    obj_Data.initAllResources = async function Data_initAllResources() {
+        await obj_Data.gameResources.initAll();
+        await obj_Data.levelResources.initAll();
     };
 
-    obj_Data.getAllResourcesNamed = function Data_getAllResourcesNamed(resourceQuery) {
-        const resourceResult = {};
-        for (const queryName of resourceQuery) {
-            resourceResult[queryName] = obj_Data.getResources(queryName)[0];
-        }
-        return resourceResult;
+    obj_Data.updateAllResources = async function Data_updateAllResources() {
+        await obj_Data.gameResources.updateAll();
+        await obj_Data.levelResources.updateAll();
     };
-
     return obj_Data;
 })();
 
@@ -502,5 +558,5 @@ export const Data = (function build_Data() {
 *   Initialize system : make user system Resources available
 */
 export function init() {
-    Data.addResource(Resource_Time, 99);
+    Data.gameResources.add(Resource_Time);
 }

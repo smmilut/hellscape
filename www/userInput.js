@@ -312,7 +312,7 @@ const InputResource = (function build_Input() {
 *   Initialize user input : make user input Resource available
 */
 export function init(ecs) {
-    ecs.Data.addResource(InputResource, {
+    ecs.Data.gameResources.add(InputResource, {
         defaultKeys: [
             {
                 type: KEYTYPE.BUTTON,

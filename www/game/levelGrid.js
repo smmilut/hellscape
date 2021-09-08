@@ -19,7 +19,7 @@ export const TILE_TYPE = Object.freeze({
 */
 const Resource_LevelGrid = (function build_LevelGrid() {
     const obj_LevelGrid = {
-        name: "levelgrid",
+        name: "levelGrid",
         COLLISION_DIRECTION : COLLISION_DIRECTION,
         TILE_TYPE: TILE_TYPE,
     };
@@ -98,7 +98,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
 
 
 export function init(ecs) {
-    ecs.Data.addResource(Resource_LevelGrid,
+    ecs.Data.levelResources.add(Resource_LevelGrid,
         {
             url: "www/levelmap.json",
             gridCellWidth: 16,

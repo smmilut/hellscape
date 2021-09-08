@@ -60,7 +60,9 @@ const Resource_Camera = (function build_Camera() {
         obj_Camera.initQueryResources = initOptions.initQueryResources;
     };
 
-    obj_Camera.init = function Camera_init(pixelCanvas, levelgrid) {
+    obj_Camera.init = function Camera_init(queryResults) {
+        const pixelCanvas = queryResults.resources.pixelCanvas;
+        const levelGrid = queryResults.resources.levelGrid;
         return new Promise(function promise_Camera_init(resolve, reject) {
             obj_Camera.backgroundColor = Camera_initOptions.backgroundColor;
             /// Calculate viewport height based on screen width
@@ -76,14 +78,14 @@ const Resource_Camera = (function build_Camera() {
             obj_Camera.scale = pixelCanvas.scale;
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
-            if (levelgrid.width < obj_Camera.gameWidth) {
+            if (levelGrid.width < obj_Camera.gameWidth) {
                 /// Level not wide enough to fill the Camera
-                obj_Camera.gameWidth = levelgrid.width;
+                obj_Camera.gameWidth = levelGrid.width;
                 obj_Camera.screenWidth = obj_Camera.gameWidth * obj_Camera.scale;
             }
-            if (levelgrid.height < obj_Camera.gameHeight) {
+            if (levelGrid.height < obj_Camera.gameHeight) {
                 /// Level not high enough to fill the Camera
-                obj_Camera.gameHeight = levelgrid.height;
+                obj_Camera.gameHeight = levelGrid.height;
                 obj_Camera.screenHeight = obj_Camera.gameHeight * obj_Camera.scale;
             }
 
@@ -125,15 +127,15 @@ const Resource_Camera = (function build_Camera() {
     /*
     *   Snap Camera to the edges of the level, so that we don't see outside the level map
     */
-    obj_Camera.snapTargetToEdges = function Camera_snapTargetToEdges(levelgrid) {
+    obj_Camera.snapTargetToEdges = function Camera_snapTargetToEdges(levelGrid) {
         let targetLeftEdge = Camera_target.x - obj_Camera.gameWidth / 2.0;
         let targetRightEdge = Camera_target.x + obj_Camera.gameWidth / 2.0;
         let targetTopEdge = Camera_target.y - obj_Camera.gameHeight / 2.0;
         let targetBottomEdge = Camera_target.y + obj_Camera.gameHeight / 2.0;
         let levelLeftEdge = 0;
-        let levelRightEdge = levelgrid.width;
+        let levelRightEdge = levelGrid.width;
         let levelTopEdge = 0;
-        let levelBottomEdge = levelgrid.height;
+        let levelBottomEdge = levelGrid.height;
         if (targetLeftEdge < levelLeftEdge) {
             /// snap Camera LEFT
             Camera_target.x = levelLeftEdge + obj_Camera.gameWidth / 2.0;
@@ -207,24 +209,24 @@ const Resource_Camera = (function build_Camera() {
 })();
 
 const System_moveCamera = {
-    resourceQuery: ["camera", "time", "levelgrid"],
+    resourceQuery: ["camera", "time", "levelGrid"],
     componentQueries: {
         player: ["position", "tagPlayer"],
     },
     run: function moveCamera(queryResults) {
         let camera = queryResults.resources.camera;
         let time = queryResults.resources.time;
-        let levelgrid = queryResults.resources.levelgrid;
+        let levelGrid = queryResults.resources.levelGrid;
         for (let e of queryResults.components.player) {
             camera.setTarget(e.position);
-            camera.snapTargetToEdges(levelgrid);
+            camera.snapTargetToEdges(levelGrid);
             camera.updateAnimation(time.dt);
         }
     },
 };
 
 export function init(ecs) {
-    ecs.Data.addResource(Resource_PixelCanvas,
+    ecs.Data.gameResources.add(Resource_PixelCanvas,
         {
             scale: 4.0,
         },
@@ -236,9 +238,9 @@ export function init(ecs) {
     // let windowHeight = window.innerHeight - border;
     let windowWidth = 640;
     let windowHeight = 480;
-    ecs.Data.addResource(Resource_Camera,
+    ecs.Data.levelResources.add(Resource_Camera,
         {
-            initQueryResources: ["pixelCanvas", "levelgrid"],
+            initQueryResources: ["pixelCanvas", "levelGrid"],
             screenWidth: windowWidth,
             screenHeight: windowHeight,
             aspectRatio: 4.0 / 3.0,
