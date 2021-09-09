@@ -14,7 +14,8 @@ import * as Utils from "./utils.js";
 
     The global object `Data` holds all Entities and Resources.
     It can spawn Entities with `Data.newEntity()`
-    It can add a new Resource with `Data.gameResources.add()` or `Data.levelResources.add()`
+    It can register a Resource with `Data.registerResource()`
+    It can register a System with `Data.registerSystem()`
 
     ## Entity
 
@@ -31,15 +32,23 @@ import * as Utils from "./utils.js";
 
     ## Program flow
 
-    1. Initialize Resource systems in order of their priority. Wait for completion of each priority.
-    2. Run "init"-type Systems from SYSTEM_STAGE.FRAME_INIT and wait for completion
-    3. Start the main loop :
-        1. Run Resource systems `Resource.update()`, wait for completion
-        2. Run "normal" Systems in parallel, but wait for each stage to complete :
-            1. SYSTEM_STAGE.FRAME_INIT
-            2. SYSTEM_STAGE.FRAME_MAIN
-            3. SYSTEM_STAGE.FRAME_END
-
+    1. Run each module's `init()`. This in turn will :
+        1. run each sub-module's `init()` as necessary
+        2. register the module's Systems
+        3. register the module's Resources
+    2. Load the global objects. For now this is only Resources.
+    3. Load the first Scene. This will :
+        1. Load the Scene's Resources
+        2. Load the Scene's Systems
+    4. Start the game. This will :
+        1. Initialize Resource systems in order of their priority. Wait for completion of each priority.
+        2. Run "init"-type Systems from SYSTEM_STAGE.FRAME_INIT and wait for completion
+        3. Start the main loop :
+            1. Run Resource systems `Resource.update()`, wait for completion
+            2. Run "normal" Systems in parallel, but wait for each stage to complete :
+                1. SYSTEM_STAGE.FRAME_INIT
+                2. SYSTEM_STAGE.FRAME_MAIN
+                3. SYSTEM_STAGE.FRAME_END
 
     # Resources
 
@@ -67,17 +76,13 @@ import * as Utils from "./utils.js";
 
     ## Add a new Resource
 
-    Add a new Resource available to the global game with :
+    Register a new Resource with :
     
     ```
-    Data.gameResources.add(Resource_Something, initOptions, priority)
+    Data.registerResource(Resource_Something);
     ```
 
-    Add a new Resource available only to the current level with :
-    
-    ```
-    Data.levelResources.add(Resource_Something, initOptions, priority)
-    ```
+    This makes the Resource available by its name.
 
     # Systems
 
@@ -158,6 +163,7 @@ import * as Utils from "./utils.js";
     ## Add a new System
 
     Register a new System with :
+
     ```
     Data.registerSystem(System_Something);
     ```
@@ -169,15 +175,41 @@ import * as Utils from "./utils.js";
     Automatically, when adding a new System, a `promiseRun()` function is created, turning the `run()` function into a Promise returned by the `promiseRun()` function.
     If the desired behavior of this Promise needs to be customized, you can provide the `promiseRun()` function yourself to the System (instead of the `run()` function).
     
-    ## Scene : Systems scheduling
+    ## Scene : Levels scene management
 
-    `schedulingConfig.json` describes Scenes which contain the configuration of Systems for each game level
+    `scenes.json` describes Scenes which contain the configuration of Resources and Systems for each game level
     The format is :
     {
+        "_global": {
+            "resources": [
+                {
+                    "name": "someGlobalResourceName",
+                    "initOptions": {
+                        // object with initilization options for this Resource
+                    }
+                },
+                {
+                    // ... etc for all global Resources
+                }
+            ]
+        },
         "levelX": {
-            "init": ["list of system names"],
-            "frameMain": ["list of system names"],
-            "frameEnd": ["list of system names"],
+            "resources" : [
+                {
+                    "name": "someLevelResourceName",
+                    "initOptions": {
+                        // object with initilization options for this Resource
+                    }
+                },
+                {
+                    // ... etc for all of the level's Resources
+                }
+            ],
+            "systems" : {
+                "init": ["list of system names", ...],
+                "frameMain": ["list of system names", ...],
+                "frameEnd": ["list of system names", ...],
+            },
             "next": "levelY"
         },
         "levelY" : {}, // etc...
@@ -385,18 +417,12 @@ export const Controller = (function build_Controller() {
 */
 const ResourceStore = {
     init: function ResourceStore_init() {
-        /// Lists of Resources, ordered by priority level
+        /// List of Resources
         this.resources = [];
     },
 
-    add: function ResourceStore_add(resource, initOptions, priority) {
-        if (priority == undefined) {
-            priority = 0;
-        }
-        if (this.resources[priority] == undefined) {
-            this.resources[priority] = [];
-        }
-        this.resources[priority].push(resource);
+    add: function ResourceStore_add(resource, initOptions) {
+        this.resources.push(resource);
         resource.prepareInit(initOptions);
         return this;
     },
@@ -405,16 +431,10 @@ const ResourceStore = {
     *   Get the first Resource that has the queried name
     */
     get: function ResourceStore_get(resourceName) {
-        for (let resourceList of this.resources) {
-            // for each priority level
-            if (resourceList == undefined) {
-                continue;
-            }
-            for (const resource of resourceList) {
-                if (resource.name == resourceName) {
-                    /// found it, return the first match
-                    return resource;
-                }
+        for (const resource of this.resources) {
+            if (resource.name == resourceName) {
+                /// found it, return the first match
+                return resource;
             }
         }
         /// not found
@@ -443,33 +463,27 @@ const ResourceStore = {
     */
     initAll: async function ResourceStore_initAll() {
         return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
-            for (let resourceList of this.resources) {
-                if (resourceList == undefined) {
-                    /// no Resources at current priority level
-                    continue;
+            let resourcePromises = [];
+            for (let resource of this.resources) {
+                // Resources may query for other resources during initialization
+                const queryResult = Data.queryAllResources(resource.initQueryResources);
+                let queryResourcesResult =
+                {
+                    ecs: {
+                        Data: Data,
+                        Controller: Controller,
+                    },
+                    resources: queryResult,
+                };
+                // initiate initialization
+                let initResult = resource.init(queryResourcesResult);
+                if (initResult && initResult.then != undefined) {
+                    // add to wait list
+                    resourcePromises.push(initResult);
                 }
-                let resourcePromises = [];
-                for (let resource of resourceList) {
-                    // Resources may query for other resources during initialization
-                    const queryResult = Data.queryAllResources(resource.initQueryResources);
-                    let queryResourcesResult =
-                    {
-                        ecs: {
-                            Data: Data,
-                            Controller: Controller,
-                        },
-                        resources: queryResult,
-                    };
-                    // initiate initialization
-                    let initResult = resource.init(queryResourcesResult);
-                    if (initResult && initResult.then != undefined) {
-                        // add to wait list
-                        resourcePromises.push(initResult);
-                    }
-                }
-                // wait for completion of all resources of this priority level
-                await Promise.all(resourcePromises);
             }
+            // wait for completion of all resources of this priority level
+            await Promise.all(resourcePromises);
             resolve();
         }.bind(this));
     },
@@ -478,24 +492,17 @@ const ResourceStore = {
     *   Update all Resources
     */
     updateAll: async function ResourceStore_updateAll() {
-        for (let resourceList of this.resources) {
-            // for each priority level
-            let resourceUpdatePromises = [];
-            if (resourceList == undefined) {
-                /// no Resources at current priority level
-                continue;
-            }
-            for (let resource of resourceList) {
-                if (resource.update) {
-                    let updateResult = resource.update();
-                    if (updateResult && updateResult.then != undefined) {
-                        // add to wait list
-                        resourceUpdatePromises.push(updateResult);
-                    }
+        let resourceUpdatePromises = [];
+        for (let resource of this.resources) {
+            if (resource.update) {
+                let updateResult = resource.update();
+                if (updateResult && updateResult.then != undefined) {
+                    // add to wait list
+                    resourceUpdatePromises.push(updateResult);
                 }
             }
-            await Promise.all(resourceUpdatePromises);
         }
+        await Promise.all(resourceUpdatePromises);
     },
 };
 
@@ -540,27 +547,44 @@ export const Data = (function build_Data() {
     };
     //#endregion
     //#region Resources
-    obj_Data.gameResources = Object.create(ResourceStore);
-    obj_Data.gameResources.init();
-    obj_Data.levelResources = Object.create(ResourceStore);
-    obj_Data.levelResources.init();
+    /// { "resourceName": resource }
+    obj_Data.resourcesRegistry = new Map();
+
+    obj_Data.registerResource = function Data_registerResource(resource) {
+        obj_Data.resourcesRegistry.set(resource.name, resource);
+    };
+
+    obj_Data.getResource = function Data_getResource(resourceName) {
+        return obj_Data.resourcesRegistry.get(resourceName);
+    };
 
     obj_Data.queryAllResources = function Data_queryAllResources(resourceQuery) {
         const queryResults = {}
-        const gameResults = obj_Data.gameResources.query(resourceQuery);
-        Object.assign(queryResults, gameResults);
+        const globalResults = obj_Data.globalResources.query(resourceQuery);
+        Object.assign(queryResults, globalResults);
         const levelResults = obj_Data.levelResources.query(resourceQuery);
         Object.assign(queryResults, levelResults);
         return queryResults;
     };
 
+    (function Data_initGlobalResourcesStorage() {
+        obj_Data.globalResources = Object.create(ResourceStore);
+        obj_Data.globalResources.init();
+    })();
+
+
+    (function Data_initLevelResourcesStorage() {
+        obj_Data.levelResources = Object.create(ResourceStore);
+        obj_Data.levelResources.init();
+    })();
+
     obj_Data.initAllResources = async function Data_initAllResources() {
-        await obj_Data.gameResources.initAll();
+        await obj_Data.globalResources.initAll();
         await obj_Data.levelResources.initAll();
     };
 
     obj_Data.updateAllResources = async function Data_updateAllResources() {
-        await obj_Data.gameResources.updateAll();
+        await obj_Data.globalResources.updateAll();
         await obj_Data.levelResources.updateAll();
     };
     //#endregion
@@ -593,7 +617,7 @@ export const Data = (function build_Data() {
 export const Scene = (function build_Scene() {
     const obj_Scene = {};
 
-    let Scene_schedulingConfig, Scene_currentName, Scene_currentConfig;
+    let Scene_fullConfig, Scene_currentName, Scene_currentConfig;
     obj_Scene.systemQueue = new Map([
         [SYSTEM_STAGE.INIT, []],
         [SYSTEM_STAGE.FRAME_INIT, []],
@@ -605,7 +629,25 @@ export const Scene = (function build_Scene() {
         const rawSchedulingFile = await Utils.Http.Request({
             url: "www/scenes.json",
         });
-        Scene_schedulingConfig = JSON.parse(rawSchedulingFile.responseText);
+        Scene_fullConfig = JSON.parse(rawSchedulingFile.responseText);
+    };
+
+    obj_Scene.loadGlobals = function Scene_loadGlobals() {
+        const globalsConfig = Scene_fullConfig["_global"];
+        if (globalsConfig === undefined) {
+            /// no global config
+            return;
+        }
+        const resourceConfigs = globalsConfig.resources;
+        if (resourceConfigs === undefined) {
+            /// no global resources
+            return;
+        }
+        for (const resourceConfig of resourceConfigs) {
+            const resource = Data.getResource(resourceConfig.name);
+            const initOptions = resourceConfig.initOptions;
+            Data.globalResources.add(resource, initOptions);
+        }
     };
 
     /*
@@ -613,7 +655,17 @@ export const Scene = (function build_Scene() {
     */
     obj_Scene.load = function Scene_load(sceneName) {
         Scene_currentName = sceneName;
-        Scene_currentConfig = Scene_schedulingConfig[Scene_currentName];
+        Scene_currentConfig = Scene_fullConfig[Scene_currentName];
+        const resourceConfigs = Scene_currentConfig.resources;
+        if (resourceConfigs === undefined) {
+            /// no resources for this scene
+            return;
+        }
+        for (const resourceConfig of resourceConfigs) {
+            const resource = Data.getResource(resourceConfig.name);
+            const initOptions = resourceConfig.initOptions;
+            Data.levelResources.add(resource, initOptions);
+        }
         const systems = Scene_currentConfig.systems;
         if (systems === undefined) {
             /// no systems for this scene
@@ -642,5 +694,5 @@ export const Scene = (function build_Scene() {
 */
 export async function init() {
     await Scene.init();
-    Data.gameResources.add(Resource_Time);
+    Data.registerResource(Resource_Time);
 }

@@ -227,33 +227,7 @@ const System_moveCamera = {
 };
 
 export function init(ecs) {
-    ecs.Data.gameResources.add(Resource_PixelCanvas,
-        {
-            scale: 4.0,
-        },
-        0, // higher priority than Camera
-    );
-
-    // let border = 16;
-    // let windowWidth = window.innerWidth - border;
-    // let windowHeight = window.innerHeight - border;
-    let windowWidth = 640;
-    let windowHeight = 480;
-    ecs.Data.levelResources.add(Resource_Camera,
-        {
-            initQueryResources: ["pixelCanvas", "levelGrid"],
-            screenWidth: windowWidth,
-            screenHeight: windowHeight,
-            aspectRatio: 4.0 / 3.0,
-            backgroundColor: "#595652",
-            deadzoneSize: {
-                width: 10,
-                height: 10,
-            },
-            animationSmoothness: 10,
-        },
-        2, // higher priority than LevelSprite, lower than PixelCanvas and LevelGrid
-    );
-
+    ecs.Data.registerResource(Resource_PixelCanvas);
+    ecs.Data.registerResource(Resource_Camera);
     ecs.Data.registerSystem(System_moveCamera);
 }

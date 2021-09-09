@@ -1,17 +1,139 @@
 {
-    "global": {
+    "_global": {
         "resources": [
-            "time",
-            "pixelCanvas",
-            "input"
+            {
+                "name": "time"
+            },
+            {
+                "name": "pixelCanvas",
+                "initOptions": {
+                    "scale": 4.0
+                }
+            },
+            {
+                "name": "input",
+                "initOptions": {
+                    "defaultKeys": [
+                        {
+                            "type": "gamepadButton",
+                            "button": "xbox_LEFT",
+                            "action": "left"
+                        },
+                        {
+                            "type": "gamepadButton",
+                            "button": "xbox_RIGHT",
+                            "action": "right"
+                        },
+                        {
+                            "type": "gamepadButton",
+                            "button": "xbox_A",
+                            "action": "jump"
+                        },
+                        {
+                            "type": "gamepadButton",
+                            "button": "xbox_X",
+                            "action": "attack"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "ArrowLeft",
+                            "action": "left"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "ArrowRight",
+                            "action": "right"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": " ",
+                            "action": "jump"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "q",
+                            "action": "left"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "a",
+                            "action": "left"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "d",
+                            "action": "right"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "j",
+                            "action": "jump"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "h",
+                            "action": "attack"
+                        }
+                    ]
+                }
+            }
         ]
+    },
+    "welcome": {
+        "resources": [],
+        "systems": {
+            "init": [],
+            "frameMain": [],
+            "frameEnd": []
+        },
+        "next": "level1"
     },
     "level1": {
         "resources": [
-            "levelGrid",
-            "camera",
-            "levelSprite",
-            "physics"
+            {
+                "name": "levelGrid",
+                "initOptions": {
+                    "url": "www/levelmap.json",
+                    "gridCellWidth": 16,
+                    "gridCellHeight": 16
+                }
+            },
+            {
+                "name": "camera",
+                "initOptions": {
+                    "initQueryResources": [
+                        "pixelCanvas",
+                        "levelGrid"
+                    ],
+                    "screenWidth": 640,
+                    "screenHeight": 480,
+                    "aspectRatio": 1.333333333,
+                    "backgroundColor": "#595652",
+                    "deadzoneSize": {
+                        "width": 10,
+                        "height": 10
+                    },
+                    "animationSmoothness": 10
+                }
+            },
+            {
+                "name": "levelSprite",
+                "initOptions": {
+                    "initQueryResources": [
+                        "levelGrid",
+                        "pixelCanvas"
+                    ],
+                    "sheetSrc": "assets/terrain_tilemap.png",
+                    "sheetConfigUrl": "assets/terrain_tilemap.json"
+                }
+            },
+            {
+                "name": "physics",
+                "initOptions": {
+                    "friction": 0.75,
+                    "gravity": 350
+                }
+            }
         ],
         "systems": {
             "init": [
@@ -42,8 +164,7 @@
         "systems": {
             "init": [],
             "frameMain": [],
-            "frameEnd": [],
-            "next": "level3"
+            "frameEnd": []
         },
         "next": "level3"
     }

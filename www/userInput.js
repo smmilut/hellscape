@@ -2,12 +2,12 @@
 * Game actions to which we can bind keys
 */
 export const USER_ACTION = Object.freeze({
-    LEFT: "LEFT",
-    RIGHT: "RIGHT",
-    UP: "UP",
-    DOWN: "DOWN",
-    JUMP: "JUMP",
-    ATTACK: "ATTACK",
+    LEFT: "left",
+    RIGHT: "right",
+    UP: "up",
+    DOWN: "down",
+    JUMP: "jump",
+    ATTACK: "attack",
 });
 
 /*
@@ -81,33 +81,34 @@ const Resource_Keyboard = (function build_Keyboard() {
 * Type of input key
 */
 export const KEYTYPE = Object.freeze({
-    KEY: "key",  // keyboard key
-    BUTTON: "button",  // gamepad button
-    AXIS: "axis",  // gamepad axis
+    KEY: "keyboardKey",  // keyboard key
+    BUTTON: "gamepadButton",  // gamepad button
+    AXIS: "gamepadAxis",  // gamepad axis
 });
 
 /*
-* The gamepad button index must also be its index for the browser event
+* Reference between gamepad button names and button index for the browser event
 */
-export const GAMEPAD_BUTTON = Object.freeze({
-    A: 0,   // Bottom button in right cluster
-    B: 1,  // Right button in right cluster
-    X: 2,  // Left button in right cluster
-    Y: 3,  // Top button in right cluster
-    L1: 4,  // Top left front button
-    R1: 5,  // Top right front button
-    L2: 6,  // Bottom left front button
-    R2: 7,  // Bottom right front button
-    SELECT: 8,  // Left button in center cluster
-    START: 9,  // Right button in center cluster
-    L: 10,  // Left stick pressed button
-    R: 11,  // Right stick pressed button
-    UP: 12,  // Top button in left cluster
-    DOWN: 13,  // Bottom button in left cluster
-    LEFT: 14,  // Left button in left cluster
-    RIGHT: 15,  // Right button in left cluster
-    HOME: 16,  // Center button in center cluster 
-});
+const GAMEPAD_BUTTON = new Map([
+    ["xbox_A", 0],   // Bottom button in right cluster
+    ["xbox_B", 1],  // Right button in right cluster
+    ["xbox_X", 2],  // Left button in right cluster
+    ["xbox_Y", 3],  // Top button in right cluster
+    ["xbox_L1", 4],  // Top left front button
+    ["xbox_R1", 5],  // Top right front button
+    ["xbox_L2", 6],  // Bottom left front button
+    ["xbox_R2", 7],  // Bottom right front button
+    ["xbox_SELECT", 8],  // Left button in center cluster
+    ["xbox_START", 9],  // Right button in center cluster
+    ["xbox_L", 10],  // Left stick pressed button
+    ["xbox_R", 11],  // Right stick pressed button
+    ["xbox_UP", 12],  // Top button in left cluster
+    ["xbox_DOWN", 13],  // Bottom button in left cluster
+    ["xbox_LEFT", 14],  // Left button in left cluster
+    ["xbox_RIGHT", 15],  // Right button in left cluster
+    ["xbox_HOME", 16],  // Center button in center cluster 
+
+]);
 
 /*
 * The gamepad axis index must also be its index for the browser event
@@ -217,7 +218,8 @@ const Resource_Gamepad = (function build_Gamepad() {
 
     obj_Gamepad.mapKey = function Gamepad_mapKey(keyBindingConfig) {
         if (keyBindingConfig.type == KEYTYPE.BUTTON) {
-            Gamepad_buttonMap.set(keyBindingConfig.button, keyBindingConfig.action);
+            const button = GAMEPAD_BUTTON.get(keyBindingConfig.button);
+            Gamepad_buttonMap.set(button, keyBindingConfig.action);
         }
     };
 
@@ -312,68 +314,5 @@ const Resource_Input = (function build_Input() {
 *   Initialize user input : make user input Resource available
 */
 export function init(ecs) {
-    ecs.Data.gameResources.add(Resource_Input, {
-        defaultKeys: [
-            {
-                type: KEYTYPE.BUTTON,
-                button: GAMEPAD_BUTTON.LEFT,
-                action: USER_ACTION.LEFT,
-            },
-            {
-                type: KEYTYPE.BUTTON,
-                button: GAMEPAD_BUTTON.RIGHT,
-                action: USER_ACTION.RIGHT,
-            },
-            {
-                type: KEYTYPE.BUTTON,
-                button: GAMEPAD_BUTTON.A,
-                action: USER_ACTION.JUMP,
-            },
-            {
-                type: KEYTYPE.BUTTON,
-                button: GAMEPAD_BUTTON.X,
-                action: USER_ACTION.ATTACK,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "ArrowLeft",
-                action: USER_ACTION.LEFT,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "ArrowRight",
-                action: USER_ACTION.RIGHT,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: " ",
-                action: USER_ACTION.JUMP,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "q",
-                action: USER_ACTION.LEFT,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "a",
-                action: USER_ACTION.LEFT,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "d",
-                action: USER_ACTION.RIGHT,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "j",
-                action: USER_ACTION.JUMP,
-            },
-            {
-                type: KEYTYPE.KEY,
-                button: "h",
-                action: USER_ACTION.ATTACK,
-            },
-        ],
-    });
+    ecs.Data.registerResource(Resource_Input);
 }

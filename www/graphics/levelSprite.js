@@ -157,7 +157,7 @@ const newTilemapLayoutParser = function newTilemapLayoutParser() {
 const Resource_LevelSprite = (function build_LevelSprite() {
     // the object we are building
     const obj_LevelSprite = {
-        name: "levelsprite",
+        name: "levelSprite",
     };
 
     let LevelSprite_sheet, LevelSprite_image, LevelSprite_initOptions;
@@ -283,12 +283,5 @@ const Resource_LevelSprite = (function build_LevelSprite() {
 })();
 
 export function init(ecs) {
-    ecs.Data.levelResources.add(Resource_LevelSprite,
-        {
-            initQueryResources: ["levelGrid", "pixelCanvas"],
-            sheetSrc: "assets/terrain_tilemap.png",
-            sheetConfigUrl: "assets/terrain_tilemap.json",
-        },
-        4, // lower priority than LevelGrid
-    );
+    ecs.Data.registerResource(Resource_LevelSprite);
 }

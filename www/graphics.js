@@ -36,11 +36,11 @@ const System_renderBackdrop = {
 
 const System_renderLevel = {
     name: "renderLevel",
-    resourceQuery: ["camera", "levelsprite"],
+    resourceQuery: ["camera", "levelSprite"],
     run: function renderLevel(queryResults) {
         let camera = queryResults.resources.camera;
-        const levelsprite = queryResults.resources.levelsprite;
-        camera.render(levelsprite, { x: 0, y: 0 });
+        const levelSprite = queryResults.resources.levelSprite;
+        camera.render(levelSprite, { x: 0, y: 0 });
     }
 };
 

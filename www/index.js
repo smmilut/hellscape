@@ -22,6 +22,7 @@ function startGame(ecs) {
 */
 (async function onLoadPage() {
     await initSubModules(ECS);
+    ECS.Scene.loadGlobals();
     ECS.Scene.load("level1");
     startGame(ECS);
 })()

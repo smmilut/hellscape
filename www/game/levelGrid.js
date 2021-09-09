@@ -98,12 +98,5 @@ const Resource_LevelGrid = (function build_LevelGrid() {
 
 
 export function init(ecs) {
-    ecs.Data.levelResources.add(Resource_LevelGrid,
-        {
-            url: "www/levelmap.json",
-            gridCellWidth: 16,
-            gridCellHeight: 16,
-        },
-        1, // higher priority than LevelSprite
-    );
+    ecs.Data.registerResource(Resource_LevelGrid);
 }

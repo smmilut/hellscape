@@ -118,12 +118,7 @@ const System_mobilesCollideLevel = {
 
 
 export function init(ecs) {
-    ecs.Data.levelResources.add(Resource_Physics,
-        {
-            friction: 0.75,
-            gravity: 350,
-        }
-    );
+    ecs.Data.registerResource(Resource_Physics);
     ecs.Data.registerSystem(System_moveMobiles);
     ecs.Data.registerSystem(System_mobilesCollideLevel);
 }
