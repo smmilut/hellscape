@@ -14,7 +14,7 @@ export const USER_ACTION = Object.freeze({
 * Keyboard management
 * Could be used as a Resource individually
 */
-const KeyboardResource = (function build_Keyboard() {
+const Resource_Keyboard = (function build_Keyboard() {
     const obj_Keyboard = {
         name: "keyboard",
     };
@@ -123,7 +123,7 @@ export const GAMEPAD_AXIS = Object.freeze({
 * Gamepad management
 * Could be used as a Resource individually
 */
-const GamepadResource = (function build_Gamepad() {
+const Resource_Gamepad = (function build_Gamepad() {
     const obj_Gamepad = {
         name: "gamepad",
     };
@@ -248,7 +248,7 @@ const GamepadResource = (function build_Gamepad() {
 /*
 * User input of Keyboard and Gamepad combined
 */
-const InputResource = (function build_Input() {
+const Resource_Input = (function build_Input() {
     const obj_Input = {
         name: "input",
     };
@@ -256,8 +256,8 @@ const InputResource = (function build_Input() {
 
     obj_Input.prepareInit = function Input_prepareInit(initOptions) {
         Input_initOptions = initOptions || {};
-        Input_Keyboard = KeyboardResource;
-        Input_Gamepad = GamepadResource;
+        Input_Keyboard = Resource_Keyboard;
+        Input_Gamepad = Resource_Gamepad;
         if (Input_initOptions.defaultKeys) {
             for (let keyBindingConfig of Input_initOptions.defaultKeys) {
                 obj_Input.mapKey(keyBindingConfig);
@@ -312,7 +312,7 @@ const InputResource = (function build_Input() {
 *   Initialize user input : make user input Resource available
 */
 export function init(ecs) {
-    ecs.Data.gameResources.add(InputResource, {
+    ecs.Data.gameResources.add(Resource_Input, {
         defaultKeys: [
             {
                 type: KEYTYPE.BUTTON,

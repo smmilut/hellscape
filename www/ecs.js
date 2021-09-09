@@ -603,7 +603,7 @@ export const Scene = (function build_Scene() {
 
     obj_Scene.init = async function Scene_init() {
         const rawSchedulingFile = await Utils.Http.Request({
-            url: "www/schedulingConfig.json",
+            url: "www/scenes.json",
         });
         Scene_schedulingConfig = JSON.parse(rawSchedulingFile.responseText);
     };
@@ -614,8 +614,13 @@ export const Scene = (function build_Scene() {
     obj_Scene.load = function Scene_load(sceneName) {
         Scene_currentName = sceneName;
         Scene_currentConfig = Scene_schedulingConfig[Scene_currentName];
+        const systems = Scene_currentConfig.systems;
+        if (systems === undefined) {
+            /// no systems for this scene
+            return;
+        }
         for (const [stageName, systemQueue] of obj_Scene.systemQueue) {
-            const systemNames = Scene_currentConfig[stageName];
+            const systemNames = systems[stageName];
             if (systemNames === undefined) {
                 /// no configuration for this stage
                 continue;

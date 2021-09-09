@@ -1,0 +1,50 @@
+{
+    "global": {
+        "resources": [
+            "time",
+            "pixelCanvas",
+            "input"
+        ]
+    },
+    "level1": {
+        "resources": [
+            "levelGrid",
+            "camera",
+            "levelSprite",
+            "physics"
+        ],
+        "systems": {
+            "init": [
+                "initBackdrops",
+                "spawnPlayer",
+                "spawnMobs"
+            ],
+            "frameMain": [
+                "moveCamera",
+                "moveMobiles",
+                "mobilesCollideLevel",
+                "handleInput",
+                "mobBehave",
+                "checkCollisions"
+            ],
+            "frameEnd": [
+                "updateAnimation",
+                "clearBackground",
+                "renderBackdrop",
+                "renderLevel",
+                "renderSprites"
+            ]
+        },
+        "next": "level2"
+    },
+    "level2": {
+        "resources": [],
+        "systems": {
+            "init": [],
+            "frameMain": [],
+            "frameEnd": [],
+            "next": "level3"
+        },
+        "next": "level3"
+    }
+}
