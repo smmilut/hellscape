@@ -62,7 +62,6 @@ const Resource_Camera = (function build_Camera() {
 
     obj_Camera.init = function Camera_init(queryResults) {
         const pixelCanvas = queryResults.resources.pixelCanvas;
-        const levelGrid = queryResults.resources.levelGrid;
         return new Promise(function promise_Camera_init(resolve, reject) {
             obj_Camera.backgroundColor = Camera_initOptions.backgroundColor;
             /// Calculate viewport height based on screen width
@@ -78,17 +77,8 @@ const Resource_Camera = (function build_Camera() {
             obj_Camera.scale = pixelCanvas.scale;
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
-            if (levelGrid.width < obj_Camera.gameWidth) {
-                /// Level not wide enough to fill the Camera
-                obj_Camera.gameWidth = levelGrid.width;
-                obj_Camera.screenWidth = obj_Camera.gameWidth * obj_Camera.scale;
-            }
-            if (levelGrid.height < obj_Camera.gameHeight) {
-                /// Level not high enough to fill the Camera
-                obj_Camera.gameHeight = levelGrid.height;
-                obj_Camera.screenHeight = obj_Camera.gameHeight * obj_Camera.scale;
-            }
-
+            /// If the level is not big enough to fill the Camera, then we still keep the larger Camera size
+            
             [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);
             let parentId = Camera_initOptions.parentId || "game";
             const elParent = document.getElementById(parentId);

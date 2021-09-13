@@ -102,8 +102,7 @@
                 "name": "camera",
                 "initOptions": {
                     "initQueryResources": [
-                        "pixelCanvas",
-                        "levelGrid"
+                        "pixelCanvas"
                     ],
                     "screenWidth": 640,
                     "screenHeight": 480,
