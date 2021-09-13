@@ -8,6 +8,7 @@ export const USER_ACTION = Object.freeze({
     DOWN: "down",
     JUMP: "jump",
     ATTACK: "attack",
+    MENU: "menu",
 });
 
 /*
@@ -80,7 +81,7 @@ const Resource_Keyboard = (function build_Keyboard() {
 /*
 * Type of input key
 */
-export const KEYTYPE = Object.freeze({
+const KEYTYPE = Object.freeze({
     KEY: "keyboardKey",  // keyboard key
     BUTTON: "gamepadButton",  // gamepad button
     AXIS: "gamepadAxis",  // gamepad axis
@@ -113,7 +114,7 @@ const GAMEPAD_BUTTON = new Map([
 /*
 * The gamepad axis index must also be its index for the browser event
 */
-export const GAMEPAD_AXIS = Object.freeze({
+const GAMEPAD_AXIS = Object.freeze({
     LHORIZ: 0,  // Horizontal axis for left stick (negative left/positive right)
     LVERT: 1,  // Vertical axis for left stick (negative up/positive down)
     RHORIZ: 2,  // Horizontal axis for right stick (negative left/positive right)
@@ -253,6 +254,7 @@ const Resource_Gamepad = (function build_Gamepad() {
 const Resource_Input = (function build_Input() {
     const obj_Input = {
         name: "input",
+        USER_ACTION: USER_ACTION,
     };
     let Input_initOptions, Input_Keyboard, Input_Gamepad;
 

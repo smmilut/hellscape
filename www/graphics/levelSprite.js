@@ -182,7 +182,7 @@ const Resource_LevelSprite = (function build_LevelSprite() {
         LevelSprite_sheet = image;
         parseSheetLayout(LevelSprite_sheetConfig.layout);
         // finally we have map data and a sprite sheet
-        generateBackgroundImage(levelGrid, pixelCanvas);
+        await generateBackgroundImage(levelGrid, pixelCanvas);
     };
 
     function parseSheetLayout(sheetLayout) {
@@ -192,82 +192,87 @@ const Resource_LevelSprite = (function build_LevelSprite() {
     /*
     * Generate the background image from the level map data
     */
-    function generateBackgroundImage(levelGrid, pixelCanvas) {
-        let levelWidth = levelGrid.width;
-        let levelHeight = levelGrid.height;
-        // create a new canvas for compositing the image
-        let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
-        // easy debug //document.getElementById("hiddenloading").appendChild(canvas);
-        const levelData = levelGrid.data;
-        function bitIsBlock(value) {
-            /// TODO : reform with upcoming generic tileset management
-            if (value == levelGrid.TILE_TYPE.BLOCK || value == undefined) {
-                return 1;
-            } else {
-                return 0;
+    async function generateBackgroundImage(levelGrid, pixelCanvas) {
+        return new Promise(function promiseBackgroundImage(resolve, reject) {
+            let levelWidth = levelGrid.width;
+            let levelHeight = levelGrid.height;
+            // create a new canvas for compositing the image
+            let [canvas, context] = pixelCanvas.newUnscaled(levelWidth, levelHeight);
+            // easy debug //document.getElementById("hiddenloading").appendChild(canvas);
+            const levelData = levelGrid.data;
+            function bitIsBlock(value) {
+                /// TODO : reform with upcoming generic tileset management
+                if (value == levelGrid.TILE_TYPE.BLOCK || value == undefined) {
+                    return 1;
+                } else {
+                    return 0;
+                }
             }
-        }
-        /// iterate the level map data
-        for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
-            const row = levelData[rowIndex];
-            const upRow = levelData[rowIndex - 1];
-            const downRow = levelData[rowIndex + 1];
-            for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_LevelSprite.sheetCellWidth) {
-                let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-                if (upRow == undefined) {
-                    /// top edge of the map
-                    neighborBits[5] = undefined;
-                    neighborBits[6] = undefined;
-                    neighborBits[7] = undefined;
-                } else {
-                    neighborBits[5] = bitIsBlock(upRow[columnIndex + 1]);
-                    neighborBits[6] = bitIsBlock(upRow[columnIndex]);
-                    neighborBits[7] = bitIsBlock(upRow[columnIndex - 1]);
-                }
-                if (downRow == undefined) {
-                    /// bottom edge of the map
-                    neighborBits[1] = undefined;
-                    neighborBits[2] = undefined;
-                    neighborBits[3] = undefined;
-                } else {
-                    neighborBits[1] = bitIsBlock(downRow[columnIndex - 1]);
-                    neighborBits[2] = bitIsBlock(downRow[columnIndex]);
-                    neighborBits[3] = bitIsBlock(downRow[columnIndex + 1]);
-                }
-                /// current row
-                neighborBits[0] = bitIsBlock(row[columnIndex - 1]);  // left cell may be undefined if left edge
-                neighborBits[8] = bitIsBlock(row[columnIndex]);
-                neighborBits[4] = bitIsBlock(row[columnIndex + 1]);  // right cell may be undefined if right edge
-                for (let neighborIndex = 0; neighborIndex < neighborBits.length; neighborIndex++) {
-                    const neighborBit = neighborBits[neighborIndex];
-                    if (neighborBit == undefined) {
-                        /// edge of the map
-                        // consider it has a block for the purpose of calculating neighbors
-                        neighborBits[neighborIndex] = 1;
+            /// iterate the level map data
+            for (let rowIndex = 0, destinationY = 0; rowIndex < levelData.length; rowIndex++, destinationY += obj_LevelSprite.sheetCellHeight) {
+                const row = levelData[rowIndex];
+                const upRow = levelData[rowIndex - 1];
+                const downRow = levelData[rowIndex + 1];
+                for (let columnIndex = 0, destinationX = 0; columnIndex < row.length; columnIndex++, destinationX += obj_LevelSprite.sheetCellWidth) {
+                    let neighborBits = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                    if (upRow == undefined) {
+                        /// top edge of the map
+                        neighborBits[5] = undefined;
+                        neighborBits[6] = undefined;
+                        neighborBits[7] = undefined;
+                    } else {
+                        neighborBits[5] = bitIsBlock(upRow[columnIndex + 1]);
+                        neighborBits[6] = bitIsBlock(upRow[columnIndex]);
+                        neighborBits[7] = bitIsBlock(upRow[columnIndex - 1]);
+                    }
+                    if (downRow == undefined) {
+                        /// bottom edge of the map
+                        neighborBits[1] = undefined;
+                        neighborBits[2] = undefined;
+                        neighborBits[3] = undefined;
+                    } else {
+                        neighborBits[1] = bitIsBlock(downRow[columnIndex - 1]);
+                        neighborBits[2] = bitIsBlock(downRow[columnIndex]);
+                        neighborBits[3] = bitIsBlock(downRow[columnIndex + 1]);
+                    }
+                    /// current row
+                    neighborBits[0] = bitIsBlock(row[columnIndex - 1]);  // left cell may be undefined if left edge
+                    neighborBits[8] = bitIsBlock(row[columnIndex]);
+                    neighborBits[4] = bitIsBlock(row[columnIndex + 1]);  // right cell may be undefined if right edge
+                    for (let neighborIndex = 0; neighborIndex < neighborBits.length; neighborIndex++) {
+                        const neighborBit = neighborBits[neighborIndex];
+                        if (neighborBit == undefined) {
+                            /// edge of the map
+                            // consider it has a block for the purpose of calculating neighbors
+                            neighborBits[neighborIndex] = 1;
+                        }
+                    }
+                    let neighborCode = Utils.Number.bitArrayToNum(neighborBits);
+                    let variations = LevelSprite_sheetLayout[obj_LevelSprite.theme][neighborCode];
+                    if (variations != undefined) {
+                        /// This neighbor code has been defined in the sheet layout,
+                        /// we can draw it.
+                        let cellInfo = variations[0];  // 0 because first variation has the highest neighbor awareness
+                        let sourceX = cellInfo.sourceX * obj_LevelSprite.sheetCellWidth;
+                        let sourceY = cellInfo.sourceY * obj_LevelSprite.sheetCellHeight;
+                        // Draw to the hidden temporary canvas
+                        context.drawImage(LevelSprite_sheet,
+                            sourceX, sourceY,
+                            obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight,
+                            destinationX, destinationY,
+                            obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight);
                     }
                 }
-                let neighborCode = Utils.Number.bitArrayToNum(neighborBits);
-                let variations = LevelSprite_sheetLayout[obj_LevelSprite.theme][neighborCode];
-                if (variations != undefined) {
-                    /// This neighbor code has been defined in the sheet layout,
-                    /// we can draw it.
-                    let cellInfo = variations[0];  // 0 because first variation has the highest neighbor awareness
-                    let sourceX = cellInfo.sourceX * obj_LevelSprite.sheetCellWidth;
-                    let sourceY = cellInfo.sourceY * obj_LevelSprite.sheetCellHeight;
-                    // Draw to the hidden temporary canvas
-                    context.drawImage(LevelSprite_sheet,
-                        sourceX, sourceY,
-                        obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight,
-                        destinationX, destinationY,
-                        obj_LevelSprite.sheetCellWidth, obj_LevelSprite.sheetCellHeight);
-                }
             }
-        }
-        // Background drawing is finished
-        // Export to image
-        let imageUri = canvas.toDataURL();
-        LevelSprite_image = new Image();
-        LevelSprite_image.src = imageUri;
+            // Background drawing is finished
+            // Export to image
+            let imageUri = canvas.toDataURL();
+            LevelSprite_image = new Image();
+            LevelSprite_image.addEventListener("load", function onloadImage() {
+                resolve(LevelSprite_image);
+            });
+            LevelSprite_image.src = imageUri;
+        });
     };
 
     obj_LevelSprite.draw = function LevelSprite_draw(context, position) {

@@ -321,17 +321,29 @@ export const SYSTEM_STAGE = Object.freeze({
 export const Controller = (function build_Controller() {
     const obj_Controller = {};
 
-    let _Controller_animationRequestId;
+    let Controller_animationRequestId, Controller_isStopping;
 
     /*
     * Run systems
     */
     obj_Controller.start = async function Controller_start() {
+        Controller_isStopping = false;
+        return new Promise(function requestFirstFrame(resolve, reject) {
+            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+        });
+    };
+
+    obj_Controller.stop = async function Controller_stop() {
+        Controller_isStopping = true;
+        window.cancelAnimationFrame(Controller_animationRequestId);
+    }
+
+    /*
+    *   Init level
+    */
+    obj_Controller.initLevel = async function Controller_initLevel() {
         await Data.initAllResources();
         await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.INIT));
-        return new Promise(function requestFirstFrame(resolve, reject) {
-            _Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
-        });
     };
 
     /*
@@ -339,11 +351,27 @@ export const Controller = (function build_Controller() {
     */
     async function animateFrame(_timeNow) {
         await Data.updateAllResources();
+        if (Controller_isStopping) {
+            /// interrupt the frame
+            return;
+        }
         await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
+        if (Controller_isStopping) {
+            /// interrupt the frame
+            return;
+        }
         await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
+        if (Controller_isStopping) {
+            /// interrupt the frame
+            return;
+        }
         await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_END));
+        if (Controller_isStopping) {
+            /// interrupt the frame
+            return;
+        }
         return new Promise(function requestNewFrame(resolve, reject) {
-            _Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
+            Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
     }
 
@@ -375,6 +403,7 @@ export const Controller = (function build_Controller() {
                 ecs: {
                     Data: Data,
                     Controller: Controller,
+                    Scene: Scene,
                 },
             };
             //#region prepare requested Resources
@@ -418,6 +447,10 @@ export const Controller = (function build_Controller() {
 const ResourceStore = {
     init: function ResourceStore_init() {
         /// List of Resources
+        this.resources = [];
+    },
+
+    clear: function ResourceStore_clear() {
         this.resources = [];
     },
 
@@ -617,15 +650,19 @@ export const Data = (function build_Data() {
 export const Scene = (function build_Scene() {
     const obj_Scene = {};
 
-    let Scene_fullConfig, Scene_currentName, Scene_currentConfig;
-    obj_Scene.systemQueue = new Map([
-        [SYSTEM_STAGE.INIT, []],
-        [SYSTEM_STAGE.FRAME_INIT, []],
-        [SYSTEM_STAGE.FRAME_MAIN, []],
-        [SYSTEM_STAGE.FRAME_END, []],
-    ]);
+    let Scene_fullConfig, Scene_currentName, Scene_currentConfig, Scene_nextName;
+
+    function clearSystemQueue() {
+        obj_Scene.systemQueue = new Map([
+            [SYSTEM_STAGE.INIT, []],
+            [SYSTEM_STAGE.FRAME_INIT, []],
+            [SYSTEM_STAGE.FRAME_MAIN, []],
+            [SYSTEM_STAGE.FRAME_END, []],
+        ]);
+    }
 
     obj_Scene.init = async function Scene_init() {
+        clearSystemQueue();
         const rawSchedulingFile = await Utils.Http.Request({
             url: "www/scenes.json",
         });
@@ -656,34 +693,41 @@ export const Scene = (function build_Scene() {
     obj_Scene.load = function Scene_load(sceneName) {
         Scene_currentName = sceneName;
         Scene_currentConfig = Scene_fullConfig[Scene_currentName];
+        Scene_nextName = Scene_currentConfig.next;
         const resourceConfigs = Scene_currentConfig.resources;
-        if (resourceConfigs === undefined) {
-            /// no resources for this scene
-            return;
-        }
-        for (const resourceConfig of resourceConfigs) {
-            const resource = Data.getResource(resourceConfig.name);
-            const initOptions = resourceConfig.initOptions;
-            Data.levelResources.add(resource, initOptions);
+        if (resourceConfigs !== undefined) {
+            Data.levelResources.clear();
+            for (const resourceConfig of resourceConfigs) {
+                const resource = Data.getResource(resourceConfig.name);
+                const initOptions = resourceConfig.initOptions;
+                Data.levelResources.add(resource, initOptions);
+            }
         }
         const systems = Scene_currentConfig.systems;
-        if (systems === undefined) {
-            /// no systems for this scene
-            return;
-        }
-        for (const [stageName, systemQueue] of obj_Scene.systemQueue) {
-            const systemNames = systems[stageName];
-            if (systemNames === undefined) {
-                /// no configuration for this stage
-                continue;
+        if (systems !== undefined) {
+            clearSystemQueue();
+            for (const [stageName, systemQueue] of obj_Scene.systemQueue) {
+                const systemNames = systems[stageName];
+                if (systemNames === undefined) {
+                    /// no configuration for this stage
+                    continue;
+                }
+                for (const systemName of systemNames) {
+                    const system = Data.getSystem(systemName);
+                    systemQueue.push(system);
+                }
             }
-            for (const systemName of systemNames) {
-                const system = Data.getSystem(systemName);
-                systemQueue.push(system);
-            }
         }
+        console.log("loaded", sceneName);
     };
 
+    obj_Scene.loadNext = async function Scene_loadNext() {
+        /// interrupt the frame
+        Controller.stop();
+        obj_Scene.load(Scene_nextName);
+        await Controller.initLevel();
+        Controller.start();
+    };
 
     return obj_Scene;
 })();

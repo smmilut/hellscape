@@ -66,24 +66,20 @@ const Resource_Camera = (function build_Camera() {
             obj_Camera.backgroundColor = Camera_initOptions.backgroundColor;
             /// Calculate viewport height based on screen width
             obj_Camera.screenWidth = Camera_initOptions.screenWidth;
-            obj_Camera.screenHeight = obj_Camera.screenWidth * 1.0 / Camera_initOptions.aspectRatio;
-            if (obj_Camera.screenHeight > Camera_initOptions.screenHeight) {
-                /// Because of fixed ratio, viewport is now too high and will require a scrollbar
-                /// Instead, Calculate viewport width based on screen height
-                obj_Camera.screenHeight = Camera_initOptions.screenHeight;
-                obj_Camera.screenWidth = obj_Camera.screenHeight * Camera_initOptions.aspectRatio;
-            }
+            obj_Camera.screenHeight = Camera_initOptions.screenHeight;
+            console.log(obj_Camera.screenWidth, obj_Camera.screenHeight);
             // The scaling factor between original images and how they are displayed on screen to show off pixel art
             obj_Camera.scale = pixelCanvas.scale;
-            obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
+            obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
+            console.log(obj_Camera.gameWidth, obj_Camera.gameHeight, obj_Camera.scale);
             /// If the level is not big enough to fill the Camera, then we still keep the larger Camera size
             
             [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);
             let parentId = Camera_initOptions.parentId || "game";
             const elParent = document.getElementById(parentId);
+            elParent.innerHTML = "";
             elParent.appendChild(Camera_canvas);
-
 
             obj_Camera.deadzoneSize = Camera_initOptions.deadzoneSize;
             Camera_gameCenter = Camera_initOptions.gameCenter || { x: obj_Camera.gameWidth / 2, y: obj_Camera.gameHeight / 2 };

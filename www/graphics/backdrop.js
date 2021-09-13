@@ -71,7 +71,7 @@ const newComponent_Backdrop = function newComponent_Backdrop(initOptions) {
 
     };
 
-    obj_Backdrop.draw = function LevelSprite_draw(context, position) {
+    obj_Backdrop.draw = function Backdrop_draw(context, position) {
         context.drawImage(obj_Backdrop.imageRepeat, position.x, position.y);
     };
 

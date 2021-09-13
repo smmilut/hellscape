@@ -11,6 +11,22 @@
                 }
             },
             {
+                "name": "camera",
+                "initOptions": {
+                    "initQueryResources": [
+                        "pixelCanvas"
+                    ],
+                    "screenWidth": 640,
+                    "screenHeight": 480,
+                    "backgroundColor": "#595652",
+                    "deadzoneSize": {
+                        "width": 10,
+                        "height": 10
+                    },
+                    "animationSmoothness": 10
+                }
+            },
+            {
                 "name": "input",
                 "initOptions": {
                     "defaultKeys": [
@@ -33,6 +49,16 @@
                             "type": "gamepadButton",
                             "button": "xbox_X",
                             "action": "attack"
+                        },
+                        {
+                            "type": "gamepadButton",
+                            "button": "xbox_START",
+                            "action": "menu"
+                        },
+                        {
+                            "type": "keyboardKey",
+                            "button": "Enter",
+                            "action": "menu"
                         },
                         {
                             "type": "keyboardKey",
@@ -82,9 +108,16 @@
     "welcome": {
         "resources": [],
         "systems": {
-            "init": [],
-            "frameMain": [],
-            "frameEnd": []
+            "init": [
+                "spawnWelcome"
+            ],
+            "frameMain": [
+                "welcomeHandleInput"
+            ],
+            "frameEnd": [
+                "clearBackground",
+                "renderWelcome"
+            ]
         },
         "next": "level1"
     },
@@ -96,23 +129,6 @@
                     "url": "www/levelmap.json",
                     "gridCellWidth": 16,
                     "gridCellHeight": 16
-                }
-            },
-            {
-                "name": "camera",
-                "initOptions": {
-                    "initQueryResources": [
-                        "pixelCanvas"
-                    ],
-                    "screenWidth": 640,
-                    "screenHeight": 480,
-                    "aspectRatio": 1.333333333,
-                    "backgroundColor": "#595652",
-                    "deadzoneSize": {
-                        "width": 10,
-                        "height": 10
-                    },
-                    "animationSmoothness": 10
                 }
             },
             {

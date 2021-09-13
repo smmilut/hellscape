@@ -12,10 +12,6 @@ async function initSubModules(ecs) {
     Game.init(ecs);
 }
 
-function startGame(ecs) {
-    ecs.Controller.start();
-}
-
 /*
 * Main program entry point
 *   when loading this script, all starts
@@ -23,6 +19,7 @@ function startGame(ecs) {
 (async function onLoadPage() {
     await initSubModules(ECS);
     ECS.Scene.loadGlobals();
-    ECS.Scene.load("level1");
-    startGame(ECS);
+    ECS.Scene.load("welcome");
+    await ECS.Controller.initLevel();
+    ECS.Controller.start();
 })()

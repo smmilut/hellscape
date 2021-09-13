@@ -1,8 +1,6 @@
 import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
 import * as Sprites from "../graphics/sprite.js";
-import * as Input from "../userInput.js";
-import * as Utils from "../utils.js";
 
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
@@ -123,32 +121,32 @@ const System_handleInput = {
         let input = queryResults.resources.input;
         for (let e of queryResults.components.player) {
             let actionName = Actions.ACTION_POSE.NONE;
-            if (input.isKeyDown(Input.USER_ACTION.LEFT)) {
+            if (input.isKeyDown(input.USER_ACTION.LEFT)) {
                 e.speed.incrementLeft();
                 actionName = Actions.ACTION_POSE.WALK;
                 e.facing.direction = Actions.FACING.LEFT;
-            } else if (input.isKeyDown(Input.USER_ACTION.RIGHT)) {
+            } else if (input.isKeyDown(input.USER_ACTION.RIGHT)) {
                 e.speed.incrementRight();
                 actionName = Actions.ACTION_POSE.WALK;
                 e.facing.direction = Actions.FACING.RIGHT;
             } else {
                 actionName = Actions.ACTION_POSE.STAND;
             }
-            if (input.isKeyDown(Input.USER_ACTION.JUMP)) {
+            if (input.isKeyDown(input.USER_ACTION.JUMP)) {
                 e.jump.apply(e.speed);
                 if (e.jump.qtyLeft > 0.0) {
                     /// still doing the jump
                     actionName = Actions.ACTION_POSE.JUMP;
                 }
             }
-            if (input.isKeyDown(Input.USER_ACTION.ATTACK)) {
+            if (input.isKeyDown(input.USER_ACTION.ATTACK)) {
                 actionName = Actions.ACTION_POSE.ATTACK;
                 e.attack.isAttacking = true;
             }
-            if (input.isKeyUp(Input.USER_ACTION.ATTACK)) {
+            if (input.isKeyUp(input.USER_ACTION.ATTACK)) {
                 e.attack.isAttacking = false;
             }
-            if (input.isKeyUp(Input.USER_ACTION.JUMP)) {
+            if (input.isKeyUp(input.USER_ACTION.JUMP)) {
                 e.jump.rearm();
             }
             e.sprite.setPose({
