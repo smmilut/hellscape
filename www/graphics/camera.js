@@ -67,12 +67,10 @@ const Resource_Camera = (function build_Camera() {
             /// Calculate viewport height based on screen width
             obj_Camera.screenWidth = Camera_initOptions.screenWidth;
             obj_Camera.screenHeight = Camera_initOptions.screenHeight;
-            console.log(obj_Camera.screenWidth, obj_Camera.screenHeight);
             // The scaling factor between original images and how they are displayed on screen to show off pixel art
             obj_Camera.scale = pixelCanvas.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
-            console.log(obj_Camera.gameWidth, obj_Camera.gameHeight, obj_Camera.scale);
             /// If the level is not big enough to fill the Camera, then we still keep the larger Camera size
             
             [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);

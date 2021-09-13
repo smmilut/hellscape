@@ -17,7 +17,6 @@ const newComponent_Fullscreen = async function newComponent_Fullscreen(initOptio
 
     obj_Fullscreen.init = async function Fullscreen_init() {
         obj_Fullscreen.image = await Utils.File.ImageLoader.get(obj_Fullscreen.sheetSrc);
-        console.log("image size", obj_Fullscreen.image.width, obj_Fullscreen.image.height);
     };
 
     obj_Fullscreen.draw = function Fullscreen_draw(context, position) {
