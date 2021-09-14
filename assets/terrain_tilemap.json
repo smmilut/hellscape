@@ -331,6 +331,13 @@
             "cellPosition": [6, 5],
             "neighborConnect": [8, 4, 2],
             "neighborNoconnect": [6, 7]
+        },
+        {
+            "theme": "hellplatform",
+            "type": "exit",
+            "cellPosition": [9, 0],
+            "neighborConnect": [],
+            "neighborNoconnect": []
         }
     ]
 }

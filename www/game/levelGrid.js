@@ -10,6 +10,7 @@ export const COLLISION_DIRECTION = Object.freeze({
 export const TILE_TYPE = Object.freeze({
     NONE: 0,
     BLOCK: 1,
+    EXIT: 2,
     MOB: 8,
     PLAYER: 9,
 });

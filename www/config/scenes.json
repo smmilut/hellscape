@@ -126,7 +126,7 @@
             {
                 "name": "levelGrid",
                 "initOptions": {
-                    "url": "www/levelmap.json",
+                    "url": "www/levelmap1.json",
                     "gridCellWidth": 16,
                     "gridCellHeight": 16
                 }
@@ -175,11 +175,55 @@
         "next": "level2"
     },
     "level2": {
-        "resources": [],
+        "resources": [
+            {
+                "name": "levelGrid",
+                "initOptions": {
+                    "url": "www/levelmap2.json",
+                    "gridCellWidth": 16,
+                    "gridCellHeight": 16
+                }
+            },
+            {
+                "name": "levelSprite",
+                "initOptions": {
+                    "initQueryResources": [
+                        "levelGrid",
+                        "pixelCanvas"
+                    ],
+                    "sheetSrc": "assets/terrain_tilemap.png",
+                    "sheetConfigUrl": "assets/terrain_tilemap.json"
+                }
+            },
+            {
+                "name": "physics",
+                "initOptions": {
+                    "friction": 0.75,
+                    "gravity": 350
+                }
+            }
+        ],
         "systems": {
-            "init": [],
-            "frameMain": [],
-            "frameEnd": []
+            "init": [
+                "initBackdrops",
+                "spawnPlayer",
+                "spawnMobs"
+            ],
+            "frameMain": [
+                "moveCamera",
+                "moveMobiles",
+                "mobilesCollideLevel",
+                "handleInput",
+                "mobBehave",
+                "checkCollisions"
+            ],
+            "frameEnd": [
+                "updateAnimation",
+                "clearBackground",
+                "renderBackdrop",
+                "renderLevel",
+                "renderSprites"
+            ]
         },
         "next": "level3"
     }
