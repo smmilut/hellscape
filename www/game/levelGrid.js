@@ -8,12 +8,26 @@ export const COLLISION_DIRECTION = Object.freeze({
 });
 
 export const TILE_TYPE = Object.freeze({
-    NONE: 0,
-    BLOCK: 1,
-    EXIT: 2,
-    MOB: 8,
-    PLAYER: 9,
+    NONE: "none",
+    BLOCK: "block",
+    EXIT: "exit",
+    MOB: "mob",  /// TODO : create separate notion for map cell type (block, sky, etc) and things like items or spawn points that are also located on those map cells
+    PLAYER: "player",
+    EDGE: "edge",
 });
+
+/*
+*   TODO : replace this code by the TILE_TYPE
+    I Keep it for now, because It's easier to manually write maps in a text file with single numbers.
+    But TODO replace this when we do procedural generation of maps (then we no longer care to have maps easy to edit as text)
+*/
+export const MANUAL_TILE_CODE = new Map([
+    [0, TILE_TYPE.NONE],
+    [1, TILE_TYPE.BLOCK],
+    [2, TILE_TYPE.EXIT],
+    [8, TILE_TYPE.MOB],
+    [9, TILE_TYPE.PLAYER],
+]);
 
 /*
 * the Level grid data
@@ -21,7 +35,7 @@ export const TILE_TYPE = Object.freeze({
 const Resource_LevelGrid = (function build_LevelGrid() {
     const obj_LevelGrid = {
         name: "levelGrid",
-        COLLISION_DIRECTION : COLLISION_DIRECTION,
+        COLLISION_DIRECTION: COLLISION_DIRECTION,
         TILE_TYPE: TILE_TYPE,
     };
 
@@ -38,7 +52,13 @@ const Resource_LevelGrid = (function build_LevelGrid() {
             url: LevelGrid_initOptions.url,
         });
         let json_obj = JSON.parse(data.responseText);
-        obj_LevelGrid.data = json_obj.map;
+        /// TODO : replace when doing map procedural generation
+        /// convert manually generated map (with number codes) to actual TILE_TYPE
+        obj_LevelGrid.data = json_obj.map.map(function getTileCodeOfRow(row) {
+            return row.map(function getTileCode(cellCode) {
+                return MANUAL_TILE_CODE.get(cellCode);
+            });
+        });
         obj_LevelGrid.gridHeight = obj_LevelGrid.data.length;
         obj_LevelGrid.gridWidth = obj_LevelGrid.data[0].length;
         obj_LevelGrid.height = obj_LevelGrid.gridHeight * obj_LevelGrid.cellHeight;
