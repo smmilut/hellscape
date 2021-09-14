@@ -34,6 +34,6 @@ const System_checkCollisions = {
 export function init(ecs) {
     initSubModules(ecs);
     //#region game Systems running always, and in this order
-    ecs.Data.registerSystem(System_checkCollisions);
+    ecs.Systems.register(System_checkCollisions);
     //#endregion
 }

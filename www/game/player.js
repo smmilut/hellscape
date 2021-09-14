@@ -202,6 +202,6 @@ const System_spawnPlayer = {
 };
 
 export function init(ecs) {
-    ecs.Data.registerSystem(System_spawnPlayer);
-    ecs.Data.registerSystem(System_handleInput);
+    ecs.Systems.register(System_spawnPlayer);
+    ecs.Systems.register(System_handleInput);
 }

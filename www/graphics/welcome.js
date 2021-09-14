@@ -66,7 +66,7 @@ const System_welcomeHandleInput = {
 };
 
 export function init(ecs) {
-    ecs.Data.registerSystem(System_spawnWelcome);
-    ecs.Data.registerSystem(System_renderWelcome);
-    ecs.Data.registerSystem(System_welcomeHandleInput);
+    ecs.Systems.register(System_spawnWelcome);
+    ecs.Systems.register(System_renderWelcome);
+    ecs.Systems.register(System_welcomeHandleInput);
 }

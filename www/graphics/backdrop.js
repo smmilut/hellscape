@@ -165,5 +165,5 @@ const System_initBackdrops = {
 };
 
 export function init(ecs) {
-    ecs.Data.registerSystem(System_initBackdrops);
+    ecs.Systems.register(System_initBackdrops);
 }

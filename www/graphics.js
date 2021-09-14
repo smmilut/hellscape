@@ -68,9 +68,9 @@ const System_renderSprites = {
 export function init(ecs) {
     initSubModules(ecs);
     //#region graphics Systems
-    ecs.Data.registerSystem(System_clearBackground);
-    ecs.Data.registerSystem(System_renderBackdrop);
-    ecs.Data.registerSystem(System_renderLevel);
-    ecs.Data.registerSystem(System_renderSprites);
+    ecs.Systems.register(System_clearBackground);
+    ecs.Systems.register(System_renderBackdrop);
+    ecs.Systems.register(System_renderLevel);
+    ecs.Systems.register(System_renderSprites);
     //#endregion
 }

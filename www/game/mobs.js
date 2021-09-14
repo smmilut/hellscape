@@ -309,6 +309,6 @@ const System_spawnMobs = {
 };
 
 export function init(ecs) {
-    ecs.Data.registerSystem(System_spawnMobs);
-    ecs.Data.registerSystem(System_mobBehave);
+    ecs.Systems.register(System_spawnMobs);
+    ecs.Systems.register(System_mobBehave);
 }

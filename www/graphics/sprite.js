@@ -206,5 +206,5 @@ const System_updateAnimation = {
 };
 
 export function init(ecs) {
-    ecs.Data.registerSystem(System_updateAnimation);
+    ecs.Systems.register(System_updateAnimation);
 }

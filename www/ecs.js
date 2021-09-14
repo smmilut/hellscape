@@ -15,7 +15,7 @@ import * as Utils from "./utils.js";
     The global object `Data` holds all Entities and Resources.
     It can spawn Entities with `Data.newEntity()`
     It can register a Resource with `Data.registerResource()`
-    It can register a System with `Data.registerSystem()`
+>>>    It can register a System with `Data.registerSystem()`
 
     ## Entity
 
@@ -165,7 +165,7 @@ import * as Utils from "./utils.js";
     Register a new System with :
 
     ```
-    Data.registerSystem(System_Something);
+    Systems.register(System_Something);
     ```
 
     This makes the System available by its name.
@@ -332,7 +332,7 @@ export const Controller = (function build_Controller() {
     };
 
     /*
-    * Run Systems for the main loop, in order
+    * Run Systems for systemQueue, in order
     */
     async function runSystems(systemQueue) {
         let systemRunPromises = [];
@@ -559,11 +559,20 @@ export const Data = (function build_Data() {
         await obj_Data.levelResources.updateAll();
     };
     //#endregion
-    //#region Systems
-    /// { "systemName": system }
-    obj_Data.systemsRegistry = new Map();
 
-    obj_Data.registerSystem = function Data_registerSystem(system) {
+    return obj_Data;
+})();
+
+/*
+*   Store Systems
+*/
+const SystemRegistry = {
+    init: function SystemRegistry_init() {
+        /// All registered Systems by name :
+        /// { "systemName": system }
+        this.storage = new Map();
+    },
+    register: function SystemRegistry_register(system) {
         if (system.promiseRun == undefined) {
             system.promiseRun = function promiseRun_constructed() {
                 const args = arguments;
@@ -572,14 +581,41 @@ export const Data = (function build_Data() {
                 })
             };
         }
-        obj_Data.systemsRegistry.set(system.name, system);
+        this.storage.set(system.name, system);
+    },
+    get: function SystemRegistry_get(systemName) {
+        return this.storage.get(systemName);
+    },
+};
+
+/*
+* Instantiate a SystemRegistry
+*/
+function newSystemRegistry() {
+    const systemRegistry = Object.create(SystemRegistry);
+    systemRegistry.init();
+    return systemRegistry;
+}
+
+/*
+*   Manage Systems
+*/
+export const Systems = (function build_Systems() {
+    const obj_Systems = {};
+
+    obj_Systems.init = function Systems_init() {
+        obj_Systems.registry = newSystemRegistry();
     };
 
-    obj_Data.getSystem = function Data_getSystem(systemName) {
-        return obj_Data.systemsRegistry.get(systemName);
+    obj_Systems.register = function Systems_register(system) {
+        obj_Systems.registry.register(system);
     };
-    //#endregion
-    return obj_Data;
+
+    obj_Systems.get = function Systems_get(system) {
+        return obj_Systems.registry.get(system);
+    };
+
+    return obj_Systems;
 })();
 
 /*
@@ -651,7 +687,7 @@ export const Scene = (function build_Scene() {
                     continue;
                 }
                 for (const systemName of systemNames) {
-                    const system = Data.getSystem(systemName);
+                    const system = Systems.get(systemName);
                     systemQueue.push(system);
                 }
             }
@@ -675,5 +711,6 @@ export const Scene = (function build_Scene() {
 *   Initialize system : make user system Resources available
 */
 export async function init() {
+    await Systems.init();
     await Scene.init();
 }
