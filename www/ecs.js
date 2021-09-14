@@ -12,10 +12,8 @@ import * as Utils from "./utils.js";
 
     # Data
 
-    The global object `Data` holds all Entities and Resources.
+    The global object `Data` holds all Entities.
     It can spawn Entities with `Data.newEntity()`
-    It can register a Resource with `Data.registerResource()`
->>>    It can register a System with `Data.registerSystem()`
 
     ## Entity
 
@@ -79,7 +77,7 @@ import * as Utils from "./utils.js";
     Register a new Resource with :
     
     ```
-    Data.registerResource(Resource_Something);
+    Resources.register(Resource_Something);
     ```
 
     This makes the Resource available by its name.
@@ -280,7 +278,7 @@ export const Controller = (function build_Controller() {
     *   Init level
     */
     obj_Controller.initLevel = async function Controller_initLevel() {
-        await Data.initAllResources();
+        await Resources.initAll();
         await Systems.runStage(SYSTEM_STAGE.INIT);
     };
 
@@ -288,7 +286,7 @@ export const Controller = (function build_Controller() {
     * main loop
     */
     async function animateFrame(_timeNow) {
-        await Data.updateAllResources();
+        await Resources.updateAll();
         if (Controller_isStopping) {
             /// interrupt the frame
             return;
@@ -317,7 +315,7 @@ export const Controller = (function build_Controller() {
 })();
 
 /*
-*   Stores Resources ordered by priority level
+*   Stores Resources for one level, ordered by priority
 */
 const ResourceStore = {
     init: function ResourceStore_init() {
@@ -374,7 +372,7 @@ const ResourceStore = {
             let resourcePromises = [];
             for (let resource of this.resources) {
                 // Resources may query for other resources during initialization
-                const queryResult = Data.queryAllResources(resource.initQueryResources);
+                const queryResult = Resources.queryAll(resource.initQueryResources);
                 let queryResourcesResult =
                 {
                     ecs: {
@@ -415,6 +413,104 @@ const ResourceStore = {
 };
 
 /*
+*   Instantiate a ResourceStore
+*/
+function newResourceStore() {
+    const resourceStore = Object.create(ResourceStore);
+    resourceStore.init();
+    return resourceStore;
+}
+
+/*
+*   Store Resources
+*/
+const ResourceRegistry = {
+    init: function ResourceRegistry_init() {
+        /// All registered Resources by name :
+        /// { "resourceName": resource }
+        this.storage = new Map();
+    },
+    register: function ResourceRegistry_register(resource) {
+        this.storage.set(resource.name, resource);
+    },
+    get: function ResourceRegistry_get(resourceName) {
+        return this.storage.get(resourceName);
+    },
+};
+
+/*
+* Instantiate a ResourceRegistry
+*/
+function newResourceRegistry() {
+    const resourceRegistry = Object.create(ResourceRegistry);
+    resourceRegistry.init();
+    return resourceRegistry;
+}
+
+/*
+* Manage Resources
+*/
+export const Resources = (function build_Resources() {
+    const obj_Resources = {};
+
+    let Resources_global, Resources_currentLevel;
+
+    obj_Resources.init = function Resources_init() {
+        obj_Resources.registry = newResourceRegistry();
+        Resources_global = newResourceStore();
+        Resources_currentLevel = newResourceStore();
+    };
+
+    obj_Resources.register = function Resources_register(resource) {
+        obj_Resources.registry.register(resource);
+    };
+
+    obj_Resources.queryAll = function Resources_queryAll(resourceQuery) {
+        const queryResults = {}
+        const globalResults = Resources_global.query(resourceQuery);
+        Object.assign(queryResults, globalResults);
+        const levelResults = Resources_currentLevel.query(resourceQuery);
+        Object.assign(queryResults, levelResults);
+        return queryResults;
+    };
+
+    /*
+    *   Load the global Resources config into the global Resources
+    */
+    obj_Resources.loadGlobalConfigs = function Resources_loadGlobalConfigs(resourceConfigs) {
+        for (const resourceConfig of resourceConfigs) {
+            const resource = obj_Resources.registry.get(resourceConfig.name);
+            const initOptions = resourceConfig.initOptions;
+            Resources_global.add(resource, initOptions);
+        }
+    };
+
+    /*
+    *   Load the level Resources config into the current level Resources
+    */
+    obj_Resources.loadLevelConfigs = function Resources_loadLevelConfigs(resourceConfigs) {
+        Resources_currentLevel.clear();
+        for (const resourceConfig of resourceConfigs) {
+            const resource = obj_Resources.registry.get(resourceConfig.name);
+            const initOptions = resourceConfig.initOptions;
+            Resources_currentLevel.add(resource, initOptions);
+        }
+    };
+
+    obj_Resources.initAll = async function Resources_initAll() {
+        await Resources_global.initAll();
+        await Resources_currentLevel.initAll();
+    };
+
+    obj_Resources.updateAll = async function Resources_updateAll() {
+        await Resources_global.updateAll();
+        await Resources_currentLevel.updateAll();
+    };
+
+    return obj_Resources;
+})();
+
+/*
 * Program data, holds Entities and Resources
 */
 export const Data = (function build_Data() {
@@ -452,48 +548,6 @@ export const Data = (function build_Data() {
         };
 
         return obj_Entity;
-    };
-    //#endregion
-    //#region Resources
-    /// { "resourceName": resource }
-    obj_Data.resourcesRegistry = new Map();
-
-    obj_Data.registerResource = function Data_registerResource(resource) {
-        obj_Data.resourcesRegistry.set(resource.name, resource);
-    };
-
-    obj_Data.getResource = function Data_getResource(resourceName) {
-        return obj_Data.resourcesRegistry.get(resourceName);
-    };
-
-    obj_Data.queryAllResources = function Data_queryAllResources(resourceQuery) {
-        const queryResults = {}
-        const globalResults = obj_Data.globalResources.query(resourceQuery);
-        Object.assign(queryResults, globalResults);
-        const levelResults = obj_Data.levelResources.query(resourceQuery);
-        Object.assign(queryResults, levelResults);
-        return queryResults;
-    };
-
-    (function Data_initGlobalResourcesStorage() {
-        obj_Data.globalResources = Object.create(ResourceStore);
-        obj_Data.globalResources.init();
-    })();
-
-
-    (function Data_initLevelResourcesStorage() {
-        obj_Data.levelResources = Object.create(ResourceStore);
-        obj_Data.levelResources.init();
-    })();
-
-    obj_Data.initAllResources = async function Data_initAllResources() {
-        await obj_Data.globalResources.initAll();
-        await obj_Data.levelResources.initAll();
-    };
-
-    obj_Data.updateAllResources = async function Data_updateAllResources() {
-        await obj_Data.globalResources.updateAll();
-        await obj_Data.levelResources.updateAll();
     };
     //#endregion
 
@@ -582,7 +636,7 @@ export const Systems = (function build_Systems() {
     /*
     * Run Systems for the System queue of the requested stage, in order
     */
-    obj_Systems.runStage =  async function Systems_runStage(stage) {
+    obj_Systems.runStage = async function Systems_runStage(stage) {
         const systemQueue = obj_Systems.queues.get(stage);
         let systemRunPromises = [];
         for (let system of systemQueue) {
@@ -595,7 +649,7 @@ export const Systems = (function build_Systems() {
                 },
             };
             //#region prepare requested Resources
-            queryResults.resources = Data.queryAllResources(system.resourceQuery);
+            queryResults.resources = Resources.queryAll(system.resourceQuery);
             //#endregion
             if (system.componentQueries != undefined) {
                 //#region prepare requested Components
@@ -638,7 +692,6 @@ export const Scene = (function build_Scene() {
     let Scene_fullConfig, Scene_currentName, Scene_currentConfig, Scene_nextName;
 
     obj_Scene.init = async function Scene_init() {
-        Systems.initQueues();
         const rawSchedulingFile = await Utils.Http.Request({
             url: "www/scenes.json",
         });
@@ -656,11 +709,7 @@ export const Scene = (function build_Scene() {
             /// no global resources
             return;
         }
-        for (const resourceConfig of resourceConfigs) {
-            const resource = Data.getResource(resourceConfig.name);
-            const initOptions = resourceConfig.initOptions;
-            Data.globalResources.add(resource, initOptions);
-        }
+        Resources.loadGlobalConfigs(resourceConfigs);
     };
 
     /*
@@ -672,12 +721,7 @@ export const Scene = (function build_Scene() {
         Scene_nextName = Scene_currentConfig.next;
         const resourceConfigs = Scene_currentConfig.resources;
         if (resourceConfigs !== undefined) {
-            Data.levelResources.clear();
-            for (const resourceConfig of resourceConfigs) {
-                const resource = Data.getResource(resourceConfig.name);
-                const initOptions = resourceConfig.initOptions;
-                Data.levelResources.add(resource, initOptions);
-            }
+            Resources.loadLevelConfigs(resourceConfigs);
         }
         const systemQueueConfig = Scene_currentConfig.systems;
         if (systemQueueConfig !== undefined) {
@@ -703,6 +747,7 @@ export const Scene = (function build_Scene() {
 *   Initialize system : make user system Resources available
 */
 export async function init() {
+    await Resources.init();
     await Systems.init();
     await Scene.init();
 }

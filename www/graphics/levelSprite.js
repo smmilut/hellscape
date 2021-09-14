@@ -288,5 +288,5 @@ const Resource_LevelSprite = (function build_LevelSprite() {
 })();
 
 export function init(ecs) {
-    ecs.Data.registerResource(Resource_LevelSprite);
+    ecs.Resources.register(Resource_LevelSprite);
 }

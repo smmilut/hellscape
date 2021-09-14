@@ -316,5 +316,5 @@ const Resource_Input = (function build_Input() {
 *   Initialize user input : make user input Resource available
 */
 export function init(ecs) {
-    ecs.Data.registerResource(Resource_Input);
+    ecs.Resources.register(Resource_Input);
 }
