@@ -210,8 +210,8 @@ const System_moveCamera = {
     },
 };
 
-export function init(ecs) {
-    ecs.Resources.register(Resource_PixelCanvas);
-    ecs.Resources.register(Resource_Camera);
-    ecs.Systems.register(System_moveCamera);
+export function init(engine) {
+    engine.registerResource(Resource_PixelCanvas);
+    engine.registerResource(Resource_Camera);
+    engine.registerSystem(System_moveCamera);
 }

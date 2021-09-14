@@ -1,17 +1,17 @@
-import * as ECS from "./ecs.js";
+import * as Engine from "./engine.js";
 import * as EngineUtils from "./engineUtils.js";
-import * as GFX from "./graphics.js";
+import * as Graphics from "./graphics.js";
 import * as Input from "./userInput.js";
 import * as Game from "./game.js";
 
-async function initSubModules(ecs) {
-    /// Always init ECS first
-    await ecs.init();
+async function initSubModules(engine) {
+    /// Always init engine first
+    await engine.init();
     /// init other modules
-    EngineUtils.init(ecs);
-    GFX.init(ecs);
-    Input.init(ecs);
-    Game.init(ecs);
+    EngineUtils.init(engine);
+    Graphics.init(engine);
+    Input.init(engine);
+    Game.init(engine);
 }
 
 /*
@@ -19,9 +19,8 @@ async function initSubModules(ecs) {
 *   when loading this script, all starts
 */
 (async function onLoadPage() {
-    await initSubModules(ECS);
-    ECS.Scene.loadGlobals();
-    ECS.Scene.load("welcome");
-    await ECS.Controller.initLevel();
-    ECS.Controller.start();
+    await initSubModules(Engine);
+    Engine.loadFirstLevel();
+    await Engine.initLevel();
+    Engine.start();
 })()

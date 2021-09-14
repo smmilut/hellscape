@@ -3,11 +3,11 @@ import * as Physics from "./game/physics.js";
 import * as Player from "./game/player.js";
 import * as Mobs from "./game/mobs.js";
 
-function initSubModules(ecs) {
-    LevelGrid.init(ecs);
-    Physics.init(ecs);
-    Player.init(ecs);
-    Mobs.init(ecs);
+function initSubModules(engine) {
+    LevelGrid.init(engine);
+    Physics.init(engine);
+    Player.init(engine);
+    Mobs.init(engine);
 }
 
 const System_checkCollisions = {
@@ -31,9 +31,7 @@ const System_checkCollisions = {
     },
 };
 
-export function init(ecs) {
-    initSubModules(ecs);
-    //#region game Systems running always, and in this order
-    ecs.Systems.register(System_checkCollisions);
-    //#endregion
+export function init(engine) {
+    initSubModules(engine);
+    engine.registerSystem(System_checkCollisions);
 }

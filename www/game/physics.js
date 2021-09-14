@@ -117,8 +117,8 @@ const System_mobilesCollideLevel = {
 };
 
 
-export function init(ecs) {
-    ecs.Resources.register(Resource_Physics);
-    ecs.Systems.register(System_moveMobiles);
-    ecs.Systems.register(System_mobilesCollideLevel);
+export function init(engine) {
+    engine.registerResource(Resource_Physics);
+    engine.registerSystem(System_moveMobiles);
+    engine.registerSystem(System_mobilesCollideLevel);
 }

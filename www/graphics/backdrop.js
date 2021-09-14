@@ -141,11 +141,11 @@ const layersSheetOptions = [
     },
 ];
 
-function spawnNewBackdrop(ecs, layerOptions, levelGrid, pixelCanvas) {
+function spawnNewBackdrop(engine, layerOptions, levelGrid, pixelCanvas) {
     const backdrop = newComponent_Backdrop(layerOptions.sheetOptions);
     return backdrop.init(levelGrid, pixelCanvas)
         .then(function backdropInitialized() {
-            return ecs.Data.newEntity()
+            return engine.spawn()
                 .addComponent(backdrop)
                 .addComponent(Physics.newComponent_Position(layerOptions.gamePosition));
         })
@@ -155,15 +155,15 @@ const System_initBackdrops = {
     name: "initBackdrops",
     resourceQuery: ["levelGrid", "pixelCanvas"],
     run: function initBackdrops(queryResults) {
-        const ecs = queryResults.ecs;
+        const engine = queryResults.engine;
         const levelGrid = queryResults.resources.levelGrid;
         const pixelCanvas = queryResults.resources.pixelCanvas;
         for (const layerOptions of layersSheetOptions) {
-            spawnNewBackdrop(ecs, layerOptions, levelGrid, pixelCanvas);
+            spawnNewBackdrop(engine, layerOptions, levelGrid, pixelCanvas);
         }
     },
 };
 
-export function init(ecs) {
-    ecs.Systems.register(System_initBackdrops);
+export function init(engine) {
+    engine.registerSystem(System_initBackdrops);
 }

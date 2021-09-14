@@ -157,8 +157,8 @@ const System_handleInput = {
     },
 };
 
-async function spawnNewPlayer(ecs, gridX, gridY) {
-    return ecs.Data.newEntity()
+async function spawnNewPlayer(engine, gridX, gridY) {
+    return engine.spawn()
         .addComponent(newTagPlayer())
         .addComponent(Physics.newComponent_Position({
             gridX: gridX,
@@ -186,7 +186,7 @@ const System_spawnPlayer = {
     name: "spawnPlayer",
     resourceQuery: ["levelGrid"],
     run: function spawnPlayer(queryResults) {
-        const ecs = queryResults.ecs;
+        const engine = queryResults.engine;
         const levelGrid = queryResults.resources.levelGrid;
         const levelData = levelGrid.data;
         /// iterate the level map data
@@ -194,14 +194,14 @@ const System_spawnPlayer = {
             const row = levelData[rowIndex];
             for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
                 if (row[columnIndex] == levelGrid.TILE_TYPE.PLAYER) {
-                    spawnNewPlayer(ecs, columnIndex, rowIndex);
+                    spawnNewPlayer(engine, columnIndex, rowIndex);
                 }
             }
         }
     },
 };
 
-export function init(ecs) {
-    ecs.Systems.register(System_spawnPlayer);
-    ecs.Systems.register(System_handleInput);
+export function init(engine) {
+    engine.registerSystem(System_spawnPlayer);
+    engine.registerSystem(System_handleInput);
 }

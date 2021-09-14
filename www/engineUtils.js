@@ -64,6 +64,6 @@ const Resource_Time = (function build_Time() {
 /*
 *   Initialize system : make Resources available
 */
-export async function init(ecs) {
-    ecs.Resources.register(Resource_Time);
+export async function init(engine) {
+    engine.registerResource(Resource_Time);
 }

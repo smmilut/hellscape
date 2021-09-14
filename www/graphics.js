@@ -5,12 +5,12 @@ import * as Backdrop from "./graphics/backdrop.js";
 import * as Sprites from "./graphics/sprite.js";
 import * as Welcome from "./graphics/welcome.js";
 
-function initSubModules(ecs) {
-    Camera.init(ecs);
-    LevelSprite.init(ecs);
-    Backdrop.init(ecs);
-    Sprites.init(ecs);
-    Welcome.init(ecs);
+function initSubModules(engine) {
+    Camera.init(engine);
+    LevelSprite.init(engine);
+    Backdrop.init(engine);
+    Sprites.init(engine);
+    Welcome.init(engine);
 }
 
 const System_clearBackground = {
@@ -65,12 +65,10 @@ const System_renderSprites = {
 /*
 *   Initialize graphics : make graphic Resource available
 */
-export function init(ecs) {
-    initSubModules(ecs);
-    //#region graphics Systems
-    ecs.Systems.register(System_clearBackground);
-    ecs.Systems.register(System_renderBackdrop);
-    ecs.Systems.register(System_renderLevel);
-    ecs.Systems.register(System_renderSprites);
-    //#endregion
+export function init(engine) {
+    initSubModules(engine);
+    engine.registerSystem(System_clearBackground);
+    engine.registerSystem(System_renderBackdrop);
+    engine.registerSystem(System_renderLevel);
+    engine.registerSystem(System_renderSprites);
 }

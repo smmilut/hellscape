@@ -287,6 +287,6 @@ const Resource_LevelSprite = (function build_LevelSprite() {
     return obj_LevelSprite;
 })();
 
-export function init(ecs) {
-    ecs.Resources.register(Resource_LevelSprite);
+export function init(engine) {
+    engine.registerResource(Resource_LevelSprite);
 }

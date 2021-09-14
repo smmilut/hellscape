@@ -31,8 +31,8 @@ const newComponent_Fullscreen = async function newComponent_Fullscreen(initOptio
 const System_spawnWelcome = {
     name: "spawnWelcome",
     run: async function spawnWelcome(queryResults) {
-        const ecs = queryResults.ecs;
-        ecs.Data.newEntity()
+        const engine = queryResults.engine;
+        engine.spawn()
             .addComponent(newComponent_TagWelcome())
             .addComponent(await newComponent_Fullscreen({
                 sheetSrc: "assets/welcome.png",
@@ -60,13 +60,13 @@ const System_welcomeHandleInput = {
     run: function welcomeHandleInput(queryResults) {
         let input = queryResults.resources.input;
         if (input.isKeyDown(input.USER_ACTION.MENU)) {
-            queryResults.ecs.Scene.loadNext();
+            queryResults.engine.loadNextScene();
         }
     },
 };
 
-export function init(ecs) {
-    ecs.Systems.register(System_spawnWelcome);
-    ecs.Systems.register(System_renderWelcome);
-    ecs.Systems.register(System_welcomeHandleInput);
+export function init(engine) {
+    engine.registerSystem(System_spawnWelcome);
+    engine.registerSystem(System_renderWelcome);
+    engine.registerSystem(System_welcomeHandleInput);
 }

@@ -97,6 +97,6 @@ const Resource_LevelGrid = (function build_LevelGrid() {
 })();
 
 
-export function init(ecs) {
-    ecs.Resources.register(Resource_LevelGrid);
+export function init(engine) {
+    engine.registerResource(Resource_LevelGrid);
 }
