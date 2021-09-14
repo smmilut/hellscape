@@ -246,7 +246,7 @@ import * as Utils from "./utils.js";
 /*
 * System stages : priorities for running Systems each frame
 */
-export const SYSTEM_STAGE = Object.freeze({
+const SYSTEM_STAGE = Object.freeze({
     INIT: "init",
     FRAME_INIT: "frameInit",
     FRAME_MAIN: "frameMain",
@@ -281,7 +281,7 @@ export const Controller = (function build_Controller() {
     */
     obj_Controller.initLevel = async function Controller_initLevel() {
         await Data.initAllResources();
-        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.INIT));
+        await Systems.runStage(SYSTEM_STAGE.INIT);
     };
 
     /*
@@ -293,17 +293,17 @@ export const Controller = (function build_Controller() {
             /// interrupt the frame
             return;
         }
-        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_INIT));
+        await Systems.runStage(SYSTEM_STAGE.FRAME_INIT);
         if (Controller_isStopping) {
             /// interrupt the frame
             return;
         }
-        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_MAIN));
+        await Systems.runStage(SYSTEM_STAGE.FRAME_MAIN);
         if (Controller_isStopping) {
             /// interrupt the frame
             return;
         }
-        await runSystems(Scene.systemQueue.get(SYSTEM_STAGE.FRAME_END));
+        await Systems.runStage(SYSTEM_STAGE.FRAME_END);
         if (Controller_isStopping) {
             /// interrupt the frame
             return;
@@ -311,69 +311,6 @@ export const Controller = (function build_Controller() {
         return new Promise(function requestNewFrame(resolve, reject) {
             Controller_animationRequestId = window.requestAnimationFrame(animateFrame);
         });
-    }
-
-    /*
-    * Add System to the main loop, in order
-    */
-    obj_Controller.addSystem = function Controller_addSystem(system, stage) {
-        if (stage == undefined) {
-            stage = SYSTEM_STAGE.FRAME_MAIN;
-        }
-        if (system.promiseRun == undefined) {
-            system.promiseRun = function promiseRun_constructed() {
-                const args = arguments;
-                return new Promise(function promiseRunSystem(resolve, reject) {
-                    resolve(system.run(...args));
-                })
-            };
-        }
-        Scene.systemQueue.get(stage).push(system);
-    };
-
-    /*
-    * Run Systems for systemQueue, in order
-    */
-    async function runSystems(systemQueue) {
-        let systemRunPromises = [];
-        for (let system of systemQueue) {
-            const queryResults = {
-                ecs: {
-                    Data: Data,
-                    Controller: Controller,
-                    Scene: Scene,
-                },
-            };
-            //#region prepare requested Resources
-            queryResults.resources = Data.queryAllResources(system.resourceQuery);
-            //#endregion
-            if (system.componentQueries != undefined) {
-                //#region prepare requested Components
-                // the map of { queryName: queryResult }
-                queryResults.components = {};
-                for (let componentQueryName in system.componentQueries) {
-                    // the list of names of queried Components
-                    const componentQuery = system.componentQueries[componentQueryName];
-                    // the list of result [Entities,] for this query
-                    queryResults.components[componentQueryName] = [];
-                    for (let entity of Data.entities) {
-                        if (entity.hasAllComponents(componentQuery)) {
-                            // this Entity is valid for the query, get all Components
-                            const resultComponents = {};
-                            for (let queriedComponentName of componentQuery) {
-                                // take the 1st one only, don't expect several Components with the same name
-                                let resultComponent = entity.getComponents(queriedComponentName)[0];
-                                resultComponents[queriedComponentName] = resultComponent;
-                            }
-                            queryResults.components[componentQueryName].push(resultComponents);
-                        }
-                    }
-                }
-                //#endregion
-            }
-            systemRunPromises.push(system.promiseRun(queryResults));
-        }
-        await Promise.all(systemRunPromises);
     }
 
     return obj_Controller;
@@ -573,7 +510,7 @@ const SystemRegistry = {
         this.storage = new Map();
     },
     register: function SystemRegistry_register(system) {
-        if (system.promiseRun == undefined) {
+        if (system.promiseRun === undefined) {
             system.promiseRun = function promiseRun_constructed() {
                 const args = arguments;
                 return new Promise(function promiseRunSystem(resolve, reject) {
@@ -601,7 +538,9 @@ function newSystemRegistry() {
 *   Manage Systems
 */
 export const Systems = (function build_Systems() {
-    const obj_Systems = {};
+    const obj_Systems = {
+        SYSTEM_STAGE: SYSTEM_STAGE,
+    };
 
     obj_Systems.init = function Systems_init() {
         obj_Systems.registry = newSystemRegistry();
@@ -611,8 +550,80 @@ export const Systems = (function build_Systems() {
         obj_Systems.registry.register(system);
     };
 
-    obj_Systems.get = function Systems_get(system) {
-        return obj_Systems.registry.get(system);
+    obj_Systems.initQueues = function Systems_clearQueues() {
+        /// a map of { systemStage: [system1, system2, ...] }
+        obj_Systems.queues = new Map([
+            [SYSTEM_STAGE.INIT, []],
+            [SYSTEM_STAGE.FRAME_INIT, []],
+            [SYSTEM_STAGE.FRAME_MAIN, []],
+            [SYSTEM_STAGE.FRAME_END, []],
+        ]);
+    };
+
+    /*
+    *   Load the System queues config into the current System queues
+    */
+    obj_Systems.loadQueues = function Systems_loadQueues(systemQueueConfig) {
+        obj_Systems.initQueues();
+        for (const [stageName, systemQueue] of obj_Systems.queues) {
+            const systemNames = systemQueueConfig[stageName];
+            if (systemNames === undefined) {
+                /// no configuration for this stage
+                continue;
+            } else {
+                for (const systemName of systemNames) {
+                    const system = obj_Systems.registry.get(systemName);
+                    systemQueue.push(system);
+                }
+            }
+        }
+    };
+
+    /*
+    * Run Systems for the System queue of the requested stage, in order
+    */
+    obj_Systems.runStage =  async function Systems_runStage(stage) {
+        const systemQueue = obj_Systems.queues.get(stage);
+        let systemRunPromises = [];
+        for (let system of systemQueue) {
+            const queryResults = {
+                ecs: {
+                    Data: Data,
+                    Controller: Controller,
+                    Scene: Scene,
+                    Systems: Systems,
+                },
+            };
+            //#region prepare requested Resources
+            queryResults.resources = Data.queryAllResources(system.resourceQuery);
+            //#endregion
+            if (system.componentQueries != undefined) {
+                //#region prepare requested Components
+                // the map of { queryName: queryResult }
+                queryResults.components = {};
+                for (let componentQueryName in system.componentQueries) {
+                    // the list of names of queried Components
+                    const componentQuery = system.componentQueries[componentQueryName];
+                    // the list of result [Entities,] for this query
+                    queryResults.components[componentQueryName] = [];
+                    for (let entity of Data.entities) {
+                        if (entity.hasAllComponents(componentQuery)) {
+                            // this Entity is valid for the query, get all Components
+                            const resultComponents = {};
+                            for (let queriedComponentName of componentQuery) {
+                                // take the 1st one only, don't expect several Components with the same name
+                                let resultComponent = entity.getComponents(queriedComponentName)[0];
+                                resultComponents[queriedComponentName] = resultComponent;
+                            }
+                            queryResults.components[componentQueryName].push(resultComponents);
+                        }
+                    }
+                }
+                //#endregion
+            }
+            systemRunPromises.push(system.promiseRun(queryResults));
+        }
+        await Promise.all(systemRunPromises);
     };
 
     return obj_Systems;
@@ -626,17 +637,8 @@ export const Scene = (function build_Scene() {
 
     let Scene_fullConfig, Scene_currentName, Scene_currentConfig, Scene_nextName;
 
-    function clearSystemQueue() {
-        obj_Scene.systemQueue = new Map([
-            [SYSTEM_STAGE.INIT, []],
-            [SYSTEM_STAGE.FRAME_INIT, []],
-            [SYSTEM_STAGE.FRAME_MAIN, []],
-            [SYSTEM_STAGE.FRAME_END, []],
-        ]);
-    }
-
     obj_Scene.init = async function Scene_init() {
-        clearSystemQueue();
+        Systems.initQueues();
         const rawSchedulingFile = await Utils.Http.Request({
             url: "www/scenes.json",
         });
@@ -662,7 +664,7 @@ export const Scene = (function build_Scene() {
     };
 
     /*
-    *   construct the Systems queue for the current scene
+    *   construct the Resources and Systems queue for the current scene
     */
     obj_Scene.load = function Scene_load(sceneName) {
         Scene_currentName = sceneName;
@@ -677,21 +679,11 @@ export const Scene = (function build_Scene() {
                 Data.levelResources.add(resource, initOptions);
             }
         }
-        const systems = Scene_currentConfig.systems;
-        if (systems !== undefined) {
-            clearSystemQueue();
-            for (const [stageName, systemQueue] of obj_Scene.systemQueue) {
-                const systemNames = systems[stageName];
-                if (systemNames === undefined) {
-                    /// no configuration for this stage
-                    continue;
-                }
-                for (const systemName of systemNames) {
-                    const system = Systems.get(systemName);
-                    systemQueue.push(system);
-                }
-            }
+        const systemQueueConfig = Scene_currentConfig.systems;
+        if (systemQueueConfig !== undefined) {
+            Systems.loadQueues(systemQueueConfig);
         }
+
         console.log("loaded", sceneName);
     };
 
