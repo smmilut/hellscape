@@ -93,8 +93,6 @@ export const Scene = (function build_Scene() {
         if (systemQueueConfig !== undefined) {
             Engine.loadSystemQueues(systemQueueConfig);
         }
-
-        console.log("loaded", sceneName);
     };
 
     obj_Scene.loadNext = async function Scene_loadNext() {

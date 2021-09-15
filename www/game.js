@@ -37,21 +37,15 @@ const System_playerExit = {
     componentQueries: {
         player: ["position", "speed", "tagPlayer"],
     },
-    promiseRun: function playerExit(queryResults) {
-        return new Promise(async function promiseExit(resolve, reject) {
-            let levelGrid = queryResults.resources.levelGrid;
+    run: function playerExit(queryResults) {
+        let levelGrid = queryResults.resources.levelGrid;
 
-            for (let p of queryResults.components.player) {
-                if (levelGrid.isAtExit(p.position)) {
-                    console.log("exit level");
-                    await queryResults.engine.loadNextScene();
-                    resolve();
-                    return;
-                }
+        for (let p of queryResults.components.player) {
+            if (levelGrid.isAtExit(p.position)) {
+                queryResults.engine.loadNextScene();
+                return;
             }
-            resolve();
-            return;
-        })
+        }
     },
 };
 
