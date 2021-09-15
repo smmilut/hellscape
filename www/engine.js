@@ -26,6 +26,16 @@ export const SYSTEM_STAGE = Object.freeze({
     FRAME_END: "frameEnd",
 });
 
+export async function prepare() {
+    Scenes.Scene.loadGlobals();
+    return await initGlobalResources();
+}
+
+export async function initLevel() {
+    await initLevelResources();
+    return await runStage(SYSTEM_STAGE.INIT);
+}
+
 //#region Controller : flow control
 export function start() {
     return Controller.Controller.start();
@@ -33,10 +43,6 @@ export function start() {
 
 export function stop() {
     return Controller.Controller.stop();
-}
-
-export async function initLevel() {
-    return await Controller.Controller.initLevel();
 }
 //#endregion
 //#region Entities
@@ -57,8 +63,12 @@ export function registerResource(resource) {
     return Resources.Resources.register(resource)
 }
 
-export async function initAllResources() {
-    return await Resources.Resources.initAll();
+export async function initGlobalResources() {
+    return await Resources.Resources.initGlobal();
+}
+
+export async function initLevelResources() {
+    return await Resources.Resources.initLevel();
 }
 
 export async function updateAllResources() {

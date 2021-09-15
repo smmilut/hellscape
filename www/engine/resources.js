@@ -197,6 +197,7 @@ export const Resources = (function build_Resources() {
     *   Load the global Resources config into the global Resources
     */
     obj_Resources.loadGlobalConfigs = function Resources_loadGlobalConfigs(resourceConfigs) {
+        Resources_global.clear();
         for (const resourceConfig of resourceConfigs) {
             const resource = obj_Resources.registry.get(resourceConfig.name);
             const initOptions = resourceConfig.initOptions;
@@ -216,8 +217,13 @@ export const Resources = (function build_Resources() {
         }
     };
 
-    obj_Resources.initAll = async function Resources_initAll() {
+    obj_Resources.initGlobal = async function Resources_initGlobal() {
+        console.log("going to obj_Resources.initGlobal", Resources_global)
         await Resources_global.initAll();
+    };
+
+    obj_Resources.initLevel = async function Resources_initLevel() {
+        console.log("going to obj_Resources.initLevel", Resources_currentLevel)
         await Resources_currentLevel.initAll();
     };
 

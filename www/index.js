@@ -20,6 +20,7 @@ async function initSubModules(engine) {
 */
 (async function onLoadPage() {
     await initSubModules(Engine);
+    Engine.prepare();
     Engine.loadFirstLevel();
     await Engine.initLevel();
     Engine.start();

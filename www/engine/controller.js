@@ -54,14 +54,6 @@ export const Controller = (function build_Controller() {
     }
 
     /*
-    *   Init level
-    */
-    obj_Controller.initLevel = async function Controller_initLevel() {
-        await Engine.initAllResources();
-        await Engine.runStage(Engine.SYSTEM_STAGE.INIT);
-    };
-
-    /*
     * main loop
     */
     async function animateFrame(_timeNow) {

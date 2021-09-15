@@ -56,11 +56,12 @@ export const Scene = (function build_Scene() {
             url: "www/config/scenes.json",
         });
         Scene_fullConfig = JSON.parse(rawSchedulingFile.responseText);
+        Scene_nextName = Scene_fullConfig["firstLevel"];
     };
 
     obj_Scene.loadFirstLevel = function Scene_loadFirstLevel() {
-        obj_Scene.loadGlobals();
-        obj_Scene.load("welcome");
+        const levelName = Scene_fullConfig["firstLevel"];
+        obj_Scene.load(levelName);
     };
 
     obj_Scene.loadGlobals = function Scene_loadGlobals() {
