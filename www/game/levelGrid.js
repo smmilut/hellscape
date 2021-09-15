@@ -96,6 +96,19 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         return obj_LevelGrid.isTileBusy(position.gridX + direction[0], position.gridY + direction[1]);
     };
 
+    obj_LevelGrid.isAtExit = function LevelGrid_isAtExit(position) {
+        return obj_LevelGrid.isTileExit(position.gridX, position.gridY);
+    };
+
+    obj_LevelGrid.isTileExit = function LevelGrid_isTileExit(x, y) {
+        if (!obj_LevelGrid.isCellInside(x, y)) {
+            /// outside of map
+            return false;
+        } else {
+            return obj_LevelGrid.data[y][x] == TILE_TYPE.EXIT;
+        }
+    };
+
     /*
     * update the pixel position of a `position` based on its grid position
     */

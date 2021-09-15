@@ -99,6 +99,7 @@ export const Scene = (function build_Scene() {
     obj_Scene.loadNext = async function Scene_loadNext() {
         /// interrupt the frame
         Engine.stop();
+        Engine.despawnAll();
         obj_Scene.load(Scene_nextName);
         await Engine.initLevel();
         Engine.start();

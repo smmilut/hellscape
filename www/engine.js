@@ -47,6 +47,10 @@ export function spawn() {
 export function queryComponents(componentQuery) {
     return Entities.Entities.queryComponents(componentQuery);
 }
+
+export function despawnAll() {
+    return Entities.Entities.despawnAll();
+}
 //#endregion
 //#region Resources
 export function registerResource(resource) {

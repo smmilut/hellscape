@@ -176,7 +176,7 @@ const Resource_Camera = (function build_Camera() {
         /// Use Z position to calculate parallax
         /// Assume that at {x:0,y:0} all Z depth are aligned
         let parallax;
-        if (gamePosition.z == undefined || gamePosition.z < 0.0) {
+        if (gamePosition.z === undefined || gamePosition.z <= 0.0) {
             parallax = 1.0;
         } else {
             parallax = 1.0 / (1.0 + gamePosition.z);

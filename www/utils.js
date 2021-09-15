@@ -154,7 +154,7 @@ export const Rng = (function build_RngUtils() {
     */
     obj_Rng.range = function Rng_range(boundary1, boundary2) {
         let min, max;
-        if (boundary2 == undefined) {
+        if (boundary2 === undefined) {
             min = 0;
             max = boundary1;
         } else {
@@ -220,10 +220,10 @@ export const Rng = (function build_RngUtils() {
 *   Linear interpolation between value0 and value1, for parameter t between 0 and 1
 */
 export function lerp(value0, value1, t, edge0, edge1) {
-    if (edge0 == undefined) {
+    if (edge0 === undefined) {
         edge0 = 0.0;
     }
-    if (edge1 == undefined) {
+    if (edge1 === undefined) {
         edge1 = 1.0;
     }
     // Scale, bias and saturate x to 0..1 range
@@ -235,10 +235,10 @@ export function lerp(value0, value1, t, edge0, edge1) {
 *   Smooth interpolation between value0 and value1, for parameter t between edge0 and edge1
 */
 export function smoothstep(value0, value1, t, edge0, edge1) {
-    if (edge0 == undefined) {
+    if (edge0 === undefined) {
         edge0 = 0.0;
     }
-    if (edge1 == undefined) {
+    if (edge1 === undefined) {
         edge1 = 1.0;
     }
     // Scale, bias and saturate x to 0..1 range

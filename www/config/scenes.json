@@ -162,7 +162,8 @@
                 "mobilesCollideLevel",
                 "handleInput",
                 "mobBehave",
-                "checkCollisions"
+                "checkCollisions",
+                "playerExit"
             ],
             "frameEnd": [
                 "updateAnimation",

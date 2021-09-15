@@ -31,7 +31,26 @@ const System_checkCollisions = {
     },
 };
 
+const System_playerExit = {
+    name: "playerExit",
+    resourceQuery: ["levelGrid"],
+    componentQueries: {
+        player: ["position", "speed", "tagPlayer"],
+    },
+    run: function playerExit(queryResults) {
+        let levelGrid = queryResults.resources.levelGrid;
+
+        for (let p of queryResults.components.player) {
+            if (levelGrid.isAtExit(p.position)) {
+                console.log("exit level");
+                queryResults.engine.loadNextScene();
+            }
+        }
+    },
+};
+
 export function init(engine) {
     initSubModules(engine);
     engine.registerSystem(System_checkCollisions);
+    engine.registerSystem(System_playerExit);
 }

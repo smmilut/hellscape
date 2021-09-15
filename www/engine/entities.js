@@ -129,6 +129,10 @@ export const Entities = (function build_Entities() {
         return result;
     };
 
+    obj_Entities.despawnAll = function Entities_despawnAll() {
+        obj_Entities.storage = [];
+    };
+
     return obj_Entities;
 })();
 
