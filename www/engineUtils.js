@@ -9,7 +9,7 @@ function getBrowserTime() {
 *   A Timer Resource or Component that can be derived with Object.create()
 */
 const Resource_Timer = {
-    prepareInit: function Physics_prepareInit(initOptions) {
+    prepareInit: function Time_prepareInit(initOptions) {
         this._isRunning = true;
         this._fpsThreshold = 40;  // minimum acceptable FPS, below that we panic
         this.initOptions = initOptions || {};

@@ -140,7 +140,7 @@ export const Systems = (function build_Systems() {
         obj_Systems.registry.register(system);
     };
 
-    obj_Systems.initQueues = function Systems_clearQueues() {
+    obj_Systems.clearQueues = function Systems_clearQueues() {
         /// a map of { systemStage: [system1, system2, ...] }
         obj_Systems.queues = new Map([
             [Engine.SYSTEM_STAGE.INIT, []],
@@ -154,7 +154,7 @@ export const Systems = (function build_Systems() {
     *   Load the System queues config into the current System queues
     */
     obj_Systems.loadQueues = function Systems_loadQueues(systemQueueConfig) {
-        obj_Systems.initQueues();
+        obj_Systems.clearQueues();
         for (const [stageName, systemQueue] of obj_Systems.queues) {
             const systemNames = systemQueueConfig[stageName];
             if (systemNames === undefined) {

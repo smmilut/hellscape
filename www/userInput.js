@@ -29,6 +29,9 @@ const Resource_Keyboard = (function build_Keyboard() {
         Keyboard_initOptions = initOptions || {};
     };
 
+    /*
+    *   Don't call multiple times, because it adds event listeners
+    */
     obj_Keyboard.init = function Keyboard_init() {
         window.addEventListener("keydown", function keyPressed(event) {
             KeysState.set(event.key, true);
@@ -140,6 +143,9 @@ const Resource_Gamepad = (function build_Gamepad() {
         Gamepad_initOptions = initOptions || {};
     };
 
+    /*
+    *   Don't call multiple times, because it adds event listeners
+    */
     obj_Gamepad.init = function Gamepad_init() {
         /// check browser capabilities
         Gamepad_haveEvents = 'ongamepadconnected' in window;
@@ -271,6 +277,9 @@ const Resource_Input = (function build_Input() {
         Input_Gamepad.prepareInit(Input_initOptions.gamepadInit);
     };
 
+    /*
+    *   Don't call multiple times, because it adds event listeners
+    */
     obj_Input.init = function Input_init() {
         Input_Keyboard.init();
         Input_Gamepad.init();

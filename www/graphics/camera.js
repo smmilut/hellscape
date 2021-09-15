@@ -71,7 +71,6 @@ const Resource_Camera = (function build_Camera() {
             obj_Camera.scale = pixelCanvas.scale;
             obj_Camera.gameWidth = (1.0 * obj_Camera.screenWidth) / obj_Camera.scale;
             obj_Camera.gameHeight = (1.0 * obj_Camera.screenHeight) / obj_Camera.scale;
-            /// If the level is not big enough to fill the Camera, then we still keep the larger Camera size
             
             [Camera_canvas, Camera_context] = pixelCanvas.new(obj_Camera.screenWidth, obj_Camera.screenHeight);
             let parentId = Camera_initOptions.parentId || "game";

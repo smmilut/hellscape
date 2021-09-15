@@ -90,27 +90,17 @@ const ResourceStore = {
     *   Initialize all Resources
     */
     initAll: async function ResourceStore_initAll() {
-        return new Promise(async function promiseInitializedResourceSystems(resolve, reject) {
-            let resourcePromises = [];
-            for (let resource of this.resources) {
-                // Resources may query for other resources during initialization
-                const queryResult = Resources.queryAll(resource.initQueryResources);
-                let queryResourcesResult =
-                {
-                    engine: Engine,
-                    resources: queryResult,
-                };
-                // initiate initialization
-                let initResult = resource.init(queryResourcesResult);
-                if (initResult && initResult.then != undefined) {
-                    // add to wait list
-                    resourcePromises.push(initResult);
-                }
-            }
-            // wait for completion of all resources of this priority level
-            await Promise.all(resourcePromises);
-            resolve();
-        }.bind(this));
+        for (let resource of this.resources) {
+            // Resources may query for other resources during initialization
+            const queryResult = Resources.queryAll(resource.initQueryResources);
+            let queryResourcesResult =
+            {
+                engine: Engine,
+                resources: queryResult,
+            };
+            // initiate initialization
+            await resource.init(queryResourcesResult);
+        }
     },
 
     /*
@@ -218,12 +208,10 @@ export const Resources = (function build_Resources() {
     };
 
     obj_Resources.initGlobal = async function Resources_initGlobal() {
-        console.log("going to obj_Resources.initGlobal", Resources_global)
         await Resources_global.initAll();
     };
 
     obj_Resources.initLevel = async function Resources_initLevel() {
-        console.log("going to obj_Resources.initLevel", Resources_currentLevel)
         await Resources_currentLevel.initAll();
     };
 

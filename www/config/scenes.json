@@ -217,7 +217,8 @@
                 "mobilesCollideLevel",
                 "handleInput",
                 "mobBehave",
-                "checkCollisions"
+                "checkCollisions",
+                "playerExit"
             ],
             "frameEnd": [
                 "updateAnimation",
@@ -227,6 +228,6 @@
                 "renderSprites"
             ]
         },
-        "next": "level3"
+        "next": "level1"
     }
 }
