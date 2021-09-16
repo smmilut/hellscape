@@ -125,7 +125,7 @@ export const newComponent_Sprite = async function newSprite(initOptions) {
         if (poseInfo.action && poseInfo.facing) {
             poseName = poseInfo.action + poseInfo.facing;
         }
-        if (poseName != undefined && Sprite_pose != poseName) {
+        if (poseName !== undefined && Sprite_pose != poseName) {
             // the pose changed
             Sprite_pose = poseName;
             // reset animation

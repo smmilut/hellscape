@@ -182,7 +182,7 @@ export const Systems = (function build_Systems() {
             //#region prepare requested Resources
             queryResults.resources = Engine.queryAllResources(system.resourceQuery);
             //#endregion
-            if (system.componentQueries != undefined) {
+            if (system.componentQueries !== undefined) {
                 //#region prepare requested Components
                 // the map of { queryName: queryResult }
                 queryResults.components = {};

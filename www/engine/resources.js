@@ -111,7 +111,7 @@ const ResourceStore = {
         for (let resource of this.resources) {
             if (resource.update) {
                 let updateResult = resource.update();
-                if (updateResult && updateResult.then != undefined) {
+                if (updateResult && updateResult.then !== undefined) {
                     // add to wait list
                     resourceUpdatePromises.push(updateResult);
                 }

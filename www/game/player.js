@@ -138,16 +138,14 @@ const System_handleInput = {
                     /// still doing the jump
                     actionName = Actions.ACTION_POSE.JUMP;
                 }
+            } else if (input.isKeyUp(input.USER_ACTION.JUMP)) {
+                e.jump.rearm();
             }
             if (input.isKeyDown(input.USER_ACTION.ATTACK)) {
                 actionName = Actions.ACTION_POSE.ATTACK;
                 e.attack.isAttacking = true;
-            }
-            if (input.isKeyUp(input.USER_ACTION.ATTACK)) {
+            } else if (input.isKeyUp(input.USER_ACTION.ATTACK)) {
                 e.attack.isAttacking = false;
-            }
-            if (input.isKeyUp(input.USER_ACTION.JUMP)) {
-                e.jump.rearm();
             }
             e.sprite.setPose({
                 action: actionName,

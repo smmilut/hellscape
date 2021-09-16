@@ -68,15 +68,27 @@ const System_moveMobiles = {
             mobile.position.xRatio += mobile.speed.x * time.dt;
             mobile.speed.x *= physics.speedDecay;
 
-            while (mobile.position.xRatio > 1) { mobile.position.xRatio--; mobile.position.gridX++; }
-            while (mobile.position.xRatio < 0) { mobile.position.xRatio++; mobile.position.gridX--; }
+            if (mobile.position.xRatio > 1) {
+                mobile.position.xRatio--;
+                mobile.position.gridX++;
+            }
+            if (mobile.position.xRatio < 0) {
+                mobile.position.xRatio++;
+                mobile.position.gridX--;
+            }
 
             mobile.position.yRatio += mobile.speed.y * time.dt;
             mobile.speed.y += physics.gravity * time.dt;
             mobile.speed.y *= physics.speedDecay;
 
-            while (mobile.position.yRatio > 1) { mobile.position.yRatio--; mobile.position.gridY++; }
-            while (mobile.position.yRatio < 0) { mobile.position.yRatio++; mobile.position.gridY--; }
+            if (mobile.position.yRatio > 1) {
+                mobile.position.yRatio--;
+                mobile.position.gridY++;
+            }
+            if (mobile.position.yRatio < 0) {
+                mobile.position.yRatio++;
+                mobile.position.gridY--;
+            }
         }
     },
 };
