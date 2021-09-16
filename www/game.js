@@ -21,7 +21,7 @@ const System_checkCollisions = {
             for (let mob of queryResults.components.mobs) {
                 if (
                     p.collider.hasCollisionWith(p.position, mob.collider, mob.position) &&
-                    p.attack.isAttacking
+                    p.attack.isAttacking()
                 ) {
                     /// attacking that victim
                     mob.mobState.state = Mobs.MOB_STATES.DYING;

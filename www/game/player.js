@@ -119,37 +119,39 @@ const System_handleInput = {
     },
     run: function handleInput(queryResults) {
         let input = queryResults.resources.input;
-        for (let e of queryResults.components.player) {
+        for (let p of queryResults.components.player) {
             let actionName = Actions.ACTION_POSE.NONE;
             if (input.isKeyDown(input.USER_ACTION.LEFT)) {
-                e.speed.incrementLeft();
+                p.speed.incrementLeft();
                 actionName = Actions.ACTION_POSE.WALK;
-                e.facing.direction = Actions.FACING.LEFT;
+                p.facing.direction = Actions.FACING.LEFT;
             } else if (input.isKeyDown(input.USER_ACTION.RIGHT)) {
-                e.speed.incrementRight();
+                p.speed.incrementRight();
                 actionName = Actions.ACTION_POSE.WALK;
-                e.facing.direction = Actions.FACING.RIGHT;
+                p.facing.direction = Actions.FACING.RIGHT;
             } else {
                 actionName = Actions.ACTION_POSE.STAND;
             }
             if (input.isKeyDown(input.USER_ACTION.JUMP)) {
-                e.jump.apply(e.speed);
-                if (e.jump.qtyLeft > 0.0) {
+                p.jump.apply(p.speed);
+                if (p.jump.qtyLeft > 0.0) {
                     /// still doing the jump
                     actionName = Actions.ACTION_POSE.JUMP;
                 }
             } else if (input.isKeyUp(input.USER_ACTION.JUMP)) {
-                e.jump.rearm();
+                p.jump.rearm();
             }
             if (input.isKeyDown(input.USER_ACTION.ATTACK)) {
-                actionName = Actions.ACTION_POSE.ATTACK;
-                e.attack.isAttacking = true;
+                p.attack.tryApply();
+                if (p.attack.isAttacking()) {
+                    actionName = Actions.ACTION_POSE.ATTACK;
+                }
             } else if (input.isKeyUp(input.USER_ACTION.ATTACK)) {
-                e.attack.isAttacking = false;
+                p.attack.rearm();
             }
-            e.sprite.setPose({
+            p.sprite.setPose({
                 action: actionName,
-                facing: e.facing.direction
+                facing: p.facing.direction
             });
         }
     },

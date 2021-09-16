@@ -71,11 +71,34 @@ export const newComponent_Jump = function newJump(initOptions) {
     return obj_Jump;
 };
 
+const Component_Attack = {
+    name: "attack",
+    init: function Attack_init() {
+        this.qtyLeft = 1.0;
+        this.qtyDecrement = 0.1;
+        this._isAttacking = false;
+    },
+    tryApply: function Attack_tryApply() {
+        if (this.qtyLeft > 0.0) {
+            this._isAttacking = true;
+            this.qtyLeft -= this.qtyDecrement;
+        } else {
+            this._isAttacking = false;
+        }
+    },
+    rearm: function Attack_rearm() {
+        this.qtyLeft = 1.0;
+        this._isAttacking = false;
+    },
+    isAttacking: function Attack_isAttacking() {
+        return this._isAttacking;
+    },
+};
+
 export const newComponent_Attack = function newAttack(_initOptions) {
-    return {
-        name: "attack",
-        isAttacking: false,
-    };
+    const attack = Object.create(Component_Attack);
+    attack.init();
+    return attack;
 };
 
 export const newComponent_Collider = function newCollider(initOptions) {
