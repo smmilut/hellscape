@@ -165,13 +165,11 @@ async function spawnNewPlayer(engine, gridX, gridY) {
             gridY: gridY,
         }))
         .addComponent(Physics.newComponent_Speed({
-            x: 0,
-            y: 0,
-            increment: 1.5,
+            increment: 1.0,
         }))
         .addComponent(Actions.newComponent_Facing())
         .addComponent(Actions.newComponent_Jump({
-            speedIncrement: 10.0,
+            speedIncrement: 8.0,
             maxCharges: 2,
         }))
         .addComponent(Actions.newComponent_Collider({

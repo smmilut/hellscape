@@ -7,7 +7,7 @@ const Resource_Physics = {
     },
     init: function Physics_init() {
         /// speed decay multiplicator < 1
-        this.friction = this.initOptions.friction || 1.0;
+        this.speedDecay = this.initOptions.speedDecay || 1.0;
         /// vertical speed increase
         this.gravity = this.initOptions.gravity || 1.0;
     },
@@ -62,21 +62,21 @@ const System_moveMobiles = {
         let levelGrid = queryResults.resources.levelGrid;
         let physics = queryResults.resources.physics;
 
-        for (let e of queryResults.components.mobiles) {
-            levelGrid.updatePixelPosition(e.position);
+        for (let mobile of queryResults.components.mobiles) {
+            levelGrid.updatePixelPosition(mobile.position);
 
-            e.position.xRatio += e.speed.x * time.dt;
-            e.speed.x *= physics.friction;
+            mobile.position.xRatio += mobile.speed.x * time.dt;
+            mobile.speed.x *= physics.speedDecay;
 
-            while (e.position.xRatio > 1) { e.position.xRatio--; e.position.gridX++; }
-            while (e.position.xRatio < 0) { e.position.xRatio++; e.position.gridX--; }
+            while (mobile.position.xRatio > 1) { mobile.position.xRatio--; mobile.position.gridX++; }
+            while (mobile.position.xRatio < 0) { mobile.position.xRatio++; mobile.position.gridX--; }
 
-            e.position.yRatio += e.speed.y * time.dt;
-            e.speed.y += physics.gravity * time.dt;
-            e.speed.y *= physics.friction;
+            mobile.position.yRatio += mobile.speed.y * time.dt;
+            mobile.speed.y += physics.gravity * time.dt;
+            mobile.speed.y *= physics.speedDecay;
 
-            while (e.position.yRatio > 1) { e.position.yRatio--; e.position.gridY++; }
-            while (e.position.yRatio < 0) { e.position.yRatio++; e.position.gridY--; }
+            while (mobile.position.yRatio > 1) { mobile.position.yRatio--; mobile.position.gridY++; }
+            while (mobile.position.yRatio < 0) { mobile.position.yRatio++; mobile.position.gridY--; }
         }
     },
 };
@@ -90,27 +90,27 @@ const System_mobilesCollideLevel = {
     run: function mobilesCollideLevel(queryResults) {
         let levelGrid = queryResults.resources.levelGrid;
 
-        for (let e of queryResults.components.mobiles) {
-            levelGrid.updatePixelPosition(e.position);
-            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.RIGHT)
-                && e.position.xRatio >= 0.7) {
-                e.position.xRatio = 0.7;
-                e.speed.x = 0;
+        for (let mobile of queryResults.components.mobiles) {
+            levelGrid.updatePixelPosition(mobile.position);
+            if (levelGrid.hasCollisionAtDirection(mobile.position, levelGrid.COLLISION_DIRECTION.RIGHT)
+                && mobile.position.xRatio >= 0.7) {
+                mobile.position.xRatio = 0.7;
+                mobile.speed.x = 0;
             };
-            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.LEFT)
-                && e.position.xRatio <= 0.3) {
-                e.position.xRatio = 0.3;
-                e.speed.x = 0;
+            if (levelGrid.hasCollisionAtDirection(mobile.position, levelGrid.COLLISION_DIRECTION.LEFT)
+                && mobile.position.xRatio <= 0.3) {
+                mobile.position.xRatio = 0.3;
+                mobile.speed.x = 0;
             };
-            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.UP)
-                && e.position.yRatio <= 0.3) {
-                e.position.yRatio = 0.3;
-                e.speed.y = Math.max(e.speed.y, 0);
+            if (levelGrid.hasCollisionAtDirection(mobile.position, levelGrid.COLLISION_DIRECTION.UP)
+                && mobile.position.yRatio <= 0.3) {
+                mobile.position.yRatio = 0.3;
+                mobile.speed.y = Math.max(mobile.speed.y, 0);
             };
-            if (levelGrid.hasCollisionAtDirection(e.position, levelGrid.COLLISION_DIRECTION.DOWN)
-                && e.position.yRatio >= 0.5) {
-                e.position.yRatio = 0.5;
-                e.speed.y = 0;
+            if (levelGrid.hasCollisionAtDirection(mobile.position, levelGrid.COLLISION_DIRECTION.DOWN)
+                && mobile.position.yRatio >= 0.5) {
+                mobile.position.yRatio = 0.5;
+                mobile.speed.y = 0;
             };
         }
     },

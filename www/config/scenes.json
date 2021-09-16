@@ -8,7 +8,7 @@
             {
                 "name": "pixelCanvas",
                 "initOptions": {
-                    "scale": 4.0
+                    "scale": 5.0
                 }
             },
             {
@@ -17,8 +17,8 @@
                     "initQueryResources": [
                         "pixelCanvas"
                     ],
-                    "screenWidth": 640,
-                    "screenHeight": 480,
+                    "screenWidth": 800,
+                    "screenHeight": 600,
                     "backgroundColor": "#595652",
                     "deadzoneSize": {
                         "width": 10,
@@ -146,8 +146,8 @@
             {
                 "name": "physics",
                 "initOptions": {
-                    "friction": 0.75,
-                    "gravity": 350
+                    "speedDecay": 0.75,
+                    "gravity": 230
                 }
             }
         ],
@@ -200,8 +200,8 @@
             {
                 "name": "physics",
                 "initOptions": {
-                    "friction": 0.75,
-                    "gravity": 350
+                    "speedDecay": 0.75,
+                    "gravity": 230
                 }
             }
         ],

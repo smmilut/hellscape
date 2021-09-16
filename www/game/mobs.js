@@ -269,15 +269,13 @@ async function spawnNewMob(engine, gridX, gridY) {
             gridY: gridY,
         }))
         .addComponent(Physics.newComponent_Speed({
-            x: 5,
-            y: 0,
-            increment: 1.5,
+            increment: 1.0,
         }))
         .addComponent(Actions.newComponent_Facing({
             direction: Actions.FACING.RIGHT,
         }))
         .addComponent(Actions.newComponent_Jump({
-            speedIncrement: 10.0,
+            speedIncrement: 8.0,
         }))
         .addComponent(Actions.newComponent_Collider({
             width: 10,
