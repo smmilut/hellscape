@@ -77,7 +77,7 @@ const System_mobBehave = {
                             value: MOB_STATES.JUMPING,
                             weight: 1,
                         },
-                    ])
+                    ]);
                     break;
                 case MOB_STATES.JUMPING:
                     e.jump.apply(e.speed)
@@ -111,6 +111,24 @@ const System_mobBehave = {
 };
 
 async function spawnNewMob(engine, gridX, gridY) {
+    const suitBoss_spriteInit = {
+        sheetSrc: "assets/suitBoss_sheet.png",
+        sheetConfigUrl: "assets/suitBoss_sheet.json"
+    };
+    const clippy_spriteInit = {
+        sheetSrc: "assets/clippy_sheet.png",
+        sheetConfigUrl: "assets/clippy_sheet.json"
+    };
+    const spriteInit = Utils.Rng.selectWeighted([
+        {
+            value: suitBoss_spriteInit,
+            weight: 1,
+        },
+        {
+            value: clippy_spriteInit,
+            weight: 2,
+        },
+    ])
     return engine.spawn()
         .addComponent(newComponent_TagMob())
         .addComponent(Physics.newComponent_Position({
@@ -133,11 +151,7 @@ async function spawnNewMob(engine, gridX, gridY) {
         .addComponent(newComponent_MobState({
             state: MOB_STATES.FLEEING,
         }))
-        .addComponent(await Sprites.newComponent_Sprite({
-            sheetSrc: "assets/suitBoss_sheet.png",
-            sheetConfigUrl: "assets/suitBoss_sheet.json"
-            }
-        ));
+        .addComponent(await Sprites.newComponent_Sprite(spriteInit));
 }
 
 const System_spawnMobs = {

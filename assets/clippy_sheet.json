@@ -1,0 +1,99 @@
+{
+    "cellWidth": 16,
+    "cellHeight": 16,
+    "defaultPose": "WalkPanicLeft",
+    "layout": [
+        {
+            "pose": {
+                "name": "StandRight",
+                "facing": "Right",
+                "action": "Stand"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "StandLeft",
+                "facing": "Left",
+                "action": "Stand"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "WalkPanicRight",
+                "facing": "Right",
+                "action": "WalkPanic"
+            },
+            "animation": {
+                "length": 3,
+                "type": "pingpong",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "WalkPanicLeft",
+                "facing": "Left",
+                "action": "WalkPanic"
+            },
+            "animation": {
+                "length": 3,
+                "type": "pingpong",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "JumpRight",
+                "facing": "Right",
+                "action": "Jump"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "JumpLeft",
+                "facing": "Left",
+                "action": "Jump"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "PinnnedRight",
+                "facing": "Right",
+                "action": "Pinned"
+            },
+            "animation": {
+                "length": 3,
+                "type": "forward",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "PinnnedLeft",
+                "facing": "Left",
+                "action": "Pinned"
+            },
+            "animation": {
+                "length": 3,
+                "type": "forward",
+                "frameDuration": 0.100
+            }
+        }
+    ]
+}
