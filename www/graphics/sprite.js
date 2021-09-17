@@ -7,10 +7,10 @@ const ANIMATION_DIRECTION = Object.freeze({
 });
 
 export const ANIMATION_TYPE = Object.freeze({
-    NONE: 0,
-    FORWARD: 1,  // animation happens in continuous forward order
-    REVERSE: 2,  // animation happens in continuous reverse order
-    PINGPONG: 3,  // animation happens in ping-pong mode, alternating forward and backward
+    NONE: "none",
+    FORWARD: "forward",  // animation happens in continuous forward order
+    REVERSE: "reverse",  // animation happens in continuous reverse order
+    PINGPONG: "pingpong",  // animation happens in ping-pong mode, alternating forward and backward
 });
 
 
@@ -42,23 +42,27 @@ export const newComponent_Sprite = async function newSprite(initOptions) {
     const Sprite_sheetLayout = {};
 
     obj_Sprite.init = async function Sprite_init(initOptions) {
-        //#region init animation
-        let sheetLayout = initOptions.sheetLayout;
-        //#endregion
+        obj_Sprite.sheetSrc = initOptions.sheetSrc;
+        obj_Sprite.sheetConfigUrl = initOptions.sheetConfigUrl;
+        const data = await Utils.Http.Request({
+            url: initOptions.sheetConfigUrl,
+        });
+        obj_Sprite.sheetConfig = JSON.parse(data.responseText);
         //#region init sprite sheet
-        obj_Sprite.sheetCellWidth = initOptions.sheetCellWidth;
-        obj_Sprite.sheetCellHeight = initOptions.sheetCellHeight;
-        Sprite_sheetImage = await Utils.File.ImageLoader.get(initOptions.src);
-        return await parseSpriteSheet(sheetLayout);
+        obj_Sprite.sheetCellWidth = obj_Sprite.sheetConfig.cellWidth;
+        obj_Sprite.sheetCellHeight = obj_Sprite.sheetConfig.cellHeight;
+        obj_Sprite.sheetLayout = obj_Sprite.sheetConfig.layout;
+        Sprite_sheetImage = await Utils.File.ImageLoader.get(obj_Sprite.sheetSrc);
+        return await parseSpriteSheet();
         //#endregion
     };
 
-    function parseSpriteSheet(sheetLayout) {
+    function parseSpriteSheet() {
         return new Promise(function parsingSpriteSheet(resolve, reject) {
             // Run through all cells in the sprite sheet to define separate animation frames
             for (let sourceY = 0, poseIndex = 0; sourceY < Sprite_sheetImage.height; sourceY += obj_Sprite.sheetCellHeight, poseIndex++) {
                 // Y position in the sprite sheet is the animation pose
-                let options = sheetLayout[poseIndex];
+                let options = obj_Sprite.sheetLayout[poseIndex];
                 let animationOptions = options.animation;
                 let poseOptions = options.pose;
                 poseOptions.name = poseOptions.action + poseOptions.facing; // should already be like this, but instead of checking, I force, because it's only a convenience for inputting the options

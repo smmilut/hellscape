@@ -1,0 +1,101 @@
+{
+    "cellWidth": 16,
+    "cellHeight": 16,
+    "defaultPose": "StandLeft",
+    "layout": [
+        {
+            "pose": {
+                "name": "WalkLeft",
+                "facing": "Left",
+                "action": "Walk"
+            },
+            "animation": {
+                "length": 3,
+                "type": "pingpong",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "WalkRight",
+                "facing": "Right",
+                "action": "Walk"
+            },
+            "animation": {
+                "length": 3,
+                "type": "pingpong",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "StandLeft",
+                "facing": "Left",
+                "action": "Stand"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "StandRight",
+                "facing": "Right",
+                "action": "Stand"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "JumpLeft",
+                "facing": "Left",
+                "action": "Jump"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "JumpRight",
+                "facing": "Right",
+                "action": "Jump"
+            },
+            "animation": {
+                "length": 1,
+                "type": "none"
+            }
+        },
+        {
+            "pose": {
+                "name": "AttackLeft",
+                "facing": "Left",
+                "action": "Attack"
+            },
+            "animation": {
+                "length": 2,
+                "type": "forward",
+                "frameDuration": 0.100
+            }
+        },
+        {
+            "pose": {
+                "name": "AttackRight",
+                "facing": "Right",
+                "action": "Attack"
+            },
+            "animation": {
+                "length": 2,
+                "type": "forward",
+                "frameDuration": 0.100
+            }
+        }
+    ]
+}

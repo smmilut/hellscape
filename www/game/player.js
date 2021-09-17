@@ -8,109 +8,6 @@ const newTagPlayer = function newTagPlayer(_initOptions) {
     };
 };
 
-const playerSpriteSheetOptions = {
-    src: "assets/player_sheet.png",
-    sheetCellWidth: 16,
-    sheetCellHeight: 16,
-    sheetLayout: [
-        {
-            pose: {
-                name: "WalkLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.WALK,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "WalkRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.WALK,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "StandLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.STAND,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "StandRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.STAND,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "JumpLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.JUMP,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-            },
-        },
-        {
-            pose: {
-                name: "JumpRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.JUMP,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-            },
-        },
-        {
-            pose: {
-                name: "AttackLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.ATTACK,
-            },
-            animation: {
-                length: 2,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "AttackRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.ATTACK,
-            },
-            animation: {
-                length: 2,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-    ],
-    defaultPose: "StandLeft",
-};
-
 const System_handleInput = {
     name: "handleInput",
     resourceQuery: ["input"],
@@ -177,7 +74,10 @@ async function spawnNewPlayer(engine, gridX, gridY) {
             height: 15,
         }))
         .addComponent(Actions.newComponent_Attack())
-        .addComponent(await Sprites.newComponent_Sprite(playerSpriteSheetOptions));
+        .addComponent(await Sprites.newComponent_Sprite({
+            sheetSrc: "assets/devil_sheet.png",
+            sheetConfigUrl: "assets/devil_sheet.json"
+        }));
 }
 
 const System_spawnPlayer = {

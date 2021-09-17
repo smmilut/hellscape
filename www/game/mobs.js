@@ -25,157 +25,6 @@ const newComponent_MobState = function newMobState(initOptions) {
     };
 };
 
-const enemySpriteSheetOptions = {
-    src: "assets/enemy_sheet.png",
-    sheetCellWidth: 16,
-    sheetCellHeight: 16,
-    sheetLayout: [
-        {
-            pose: {
-                name: "WalkRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.WALK,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "WalkLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.WALK,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "TalkRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.UNUSED,
-            },
-            animation: {
-                length: 2,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "TalkLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.UNUSED,
-            },
-            animation: {
-                length: 2,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "CloseFolderRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.UNUSED,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "CloseFolderWigRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.UNUSED,
-            },
-            animation: {
-                length: 4,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "WalkPanicRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.WALKPANIC,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "WalkPanicLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.WALKPANIC,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.PINGPONG,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "JumpRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.JUMP,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-            },
-        },
-        {
-            pose: {
-                name: "JumpLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.JUMP,
-            },
-            animation: {
-                length: 1,
-                type: Sprites.ANIMATION_TYPE.NONE,
-            },
-        },
-        {
-            pose: {
-                name: "PinnnedLeft",
-                facing: Actions.FACING.LEFT,
-                action: Actions.ACTION_POSE.PINNED,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-        {
-            pose: {
-                name: "PinnnedRight",
-                facing: Actions.FACING.RIGHT,
-                action: Actions.ACTION_POSE.PINNED,
-            },
-            animation: {
-                length: 3,
-                type: Sprites.ANIMATION_TYPE.FORWARD,
-                frameDuration: 0.100,
-            },
-        },
-    ],
-    defaultPose: "WalkPanicLeft",
-};
-
 const System_mobBehave = {
     name: "mobBehave",
     resourceQuery: ["levelGrid", "time"],
@@ -284,7 +133,11 @@ async function spawnNewMob(engine, gridX, gridY) {
         .addComponent(newComponent_MobState({
             state: MOB_STATES.FLEEING,
         }))
-        .addComponent(await Sprites.newComponent_Sprite(enemySpriteSheetOptions));
+        .addComponent(await Sprites.newComponent_Sprite({
+            sheetSrc: "assets/suitBoss_sheet.png",
+            sheetConfigUrl: "assets/suitBoss_sheet.json"
+            }
+        ));
 }
 
 const System_spawnMobs = {
