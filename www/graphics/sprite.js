@@ -1,6 +1,6 @@
 import * as Utils from "../utils.js";
 
-const ANIMATION_DIRECTION = Object.freeze({
+export const ANIMATION_DIRECTION = Object.freeze({
     FORWARD: 1,  // currently animate frames in order
     BACKWARD: -1,  // currently animate frames in reverse order
     STOPPED: 0,
@@ -41,6 +41,7 @@ export const newComponent_Sprite = async function newSprite(initOptions) {
     */
     const Sprite_sheetLayout = {};
 
+    /// TODO : BUG : initOptions never used, gotta simply this
     obj_Sprite.init = async function Sprite_init(initOptions) {
         obj_Sprite.sheetSrc = initOptions.sheetSrc;
         obj_Sprite.sheetConfigUrl = initOptions.sheetConfigUrl;
@@ -195,13 +196,13 @@ export const newComponent_Sprite = async function newSprite(initOptions) {
     return obj_Sprite;
 };
 
-const System_updateAnimation = {
-    name: "updateAnimation",
+const System_updateSpriteAnimation = {
+    name: "updateSpriteAnimation",
     resourceQuery: ["time"],
     componentQueries: {
         sprites: ["sprite"],
     },
-    run: function updateAnimation(queryResults) {
+    run: function updateSpriteAnimation(queryResults) {
         const time = queryResults.resources.time;
         for (let e of queryResults.components.sprites) {
             e.sprite.updateAnimation(time.dt);
@@ -210,5 +211,5 @@ const System_updateAnimation = {
 };
 
 export function init(engine) {
-    engine.registerSystem(System_updateAnimation);
+    engine.registerSystem(System_updateSpriteAnimation);
 }

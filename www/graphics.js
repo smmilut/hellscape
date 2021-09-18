@@ -24,14 +24,19 @@ const System_clearBackground = {
 
 const System_renderBackdrop = {
     name: "renderBackdrop",
-    resourceQuery: ["camera"],
+    resourceQuery: ["camera", "time"],
     componentQueries: {
         backdrops: ["backdrop", "position"],
     },
     run: function renderBackdrop(queryResults) {
         let camera = queryResults.resources.camera;
-        for (let e of queryResults.components.backdrops) {
-            camera.render(e.backdrop, e.position);
+        let time = queryResults.resources.time;
+        queryResults.components.backdrops.sort(function zCompare(b1, b2) {
+            return b2.position.z - b1.position.z;
+        });
+        for (let b of queryResults.components.backdrops) {
+            camera.render(b.backdrop, b.position);
+            b.backdrop.updateAnimation(time.dt);
         }
     }
 };
