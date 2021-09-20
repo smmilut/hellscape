@@ -1,0 +1,13 @@
+{
+    "cellWidth": 66,
+    "cellHeight": 48,
+    "theme": "hellplatform",
+    "pattern": {
+        "repetition": "repeat-x"
+    },
+    "animation": {
+        "length": 6,
+        "type": "forward",
+        "frameDuration": 0.450
+    }
+}

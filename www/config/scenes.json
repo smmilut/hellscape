@@ -263,45 +263,45 @@
                         "layers": [
                             {
                                 "sheetOptions": {
-                                    "sheetSrc": "assets/backgroundhell1top_sheet.png",
-                                    "sheetConfigUrl": "assets/backgroundhell1top_sheet.json"
+                                    "sheetSrc": "assets/backgroundhellmare1top_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhellmare1top_sheet.json"
                                 },
                                 "gamePosition": {
                                     "x": 0,
-                                    "y": -80,
+                                    "y": -50,
                                     "z": 1
                                 }
                             },
                             {
                                 "sheetOptions": {
-                                    "sheetSrc": "assets/backgroundhell2back_sheet.png",
-                                    "sheetConfigUrl": "assets/backgroundhell2back_sheet.json"
+                                    "sheetSrc": "assets/backgroundhellmare2back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhellmare2back_sheet.json"
                                 },
                                 "gamePosition": {
                                     "x": 0,
-                                    "y": 180,
+                                    "y": 150,
                                     "z": 5
                                 }
                             },
                             {
                                 "sheetOptions": {
-                                    "sheetSrc": "assets/backgroundhell3back_sheet.png",
-                                    "sheetConfigUrl": "assets/backgroundhell3back_sheet.json"
+                                    "sheetSrc": "assets/backgroundhellmare3back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhellmare3back_sheet.json"
                                 },
                                 "gamePosition": {
                                     "x": 0,
-                                    "y": 250,
+                                    "y": 210,
                                     "z": 2
                                 }
                             },
                             {
                                 "sheetOptions": {
-                                    "sheetSrc": "assets/backgroundhell4bot_sheet.png",
-                                    "sheetConfigUrl": "assets/backgroundhell4bot_sheet.json"
+                                    "sheetSrc": "assets/backgroundhellmare4bot_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhellmare4bot_sheet.json"
                                 },
                                 "gamePosition": {
                                     "x": 0,
-                                    "y": 250,
+                                    "y": 230,
                                     "z": 0.3
                                 }
                             }
