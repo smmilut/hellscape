@@ -147,53 +147,6 @@ const Backdrop = {
     },
 };
 
-const layersSheetOptions = [
-    {  // top
-        sheetOptions: {
-            sheetSrc: "assets/backgroundhell1top_sheet.png",
-            sheetConfigUrl: "assets/backgroundhell1top_sheet.json",
-        },
-        gamePosition: {
-            x: 0,
-            y: -80,
-            z: 1,
-        },
-    },
-    {  // back 1
-        sheetOptions: {
-            sheetSrc: "assets/backgroundhell2back_sheet.png",
-            sheetConfigUrl: "assets/backgroundhell2back_sheet.json",
-        },
-        gamePosition: {
-            x: 0,
-            y: 180,
-            z: 5,
-        },
-    },
-    {  // back 2
-        sheetOptions: {
-            sheetSrc: "assets/backgroundhell3back_sheet.png",
-            sheetConfigUrl: "assets/backgroundhell3back_sheet.json",
-        },
-        gamePosition: {
-            x: 0,
-            y: 250,
-            z: 2,
-        },
-    },
-    {  // bottom
-        sheetOptions: {
-            sheetSrc: "assets/backgroundhell4bot_sheet.png",
-            sheetConfigUrl: "assets/backgroundhell4bot_sheet.json",
-        },
-        gamePosition: {
-            x: 0,
-            y: 250,
-            z: 0.3,
-        },
-    },
-];
-
 async function newComponent_Backdrop(initOptions, levelGrid, pixelCanvas) {
     const backdrop = Object.create(Backdrop);
     await backdrop.init(initOptions, levelGrid, pixelCanvas);
@@ -215,6 +168,7 @@ const System_initBackdrops = {
         const engine = queryResults.engine;
         const levelGrid = queryResults.resources.levelGrid;
         const pixelCanvas = queryResults.resources.pixelCanvas;
+        const layersSheetOptions = this.initOptions.layers;
         for (const layerOptions of layersSheetOptions) {
             spawnNewBackdrop(engine, layerOptions, levelGrid, pixelCanvas);
         }

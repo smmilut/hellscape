@@ -153,7 +153,57 @@
         ],
         "systems": {
             "init": [
-                "initBackdrops",
+                {
+                    "name": "initBackdrops",
+                    "initOptions": {
+                        "layers": [
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell1top_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell1top_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": -80,
+                                    "z": 1
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell2back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell2back_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 180,
+                                    "z": 5
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell3back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell3back_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 250,
+                                    "z": 2
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell4bot_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell4bot_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 250,
+                                    "z": 0.3
+                                }
+                            }
+                        ]
+                    }
+                },
                 "spawnPlayer",
                 "spawnMobs"
             ],
@@ -207,7 +257,57 @@
         ],
         "systems": {
             "init": [
-                "initBackdrops",
+                {
+                    "name": "initBackdrops",
+                    "initOptions": {
+                        "layers": [
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell1top_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell1top_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": -80,
+                                    "z": 1
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell2back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell2back_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 180,
+                                    "z": 5
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell3back_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell3back_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 250,
+                                    "z": 2
+                                }
+                            },
+                            {
+                                "sheetOptions": {
+                                    "sheetSrc": "assets/backgroundhell4bot_sheet.png",
+                                    "sheetConfigUrl": "assets/backgroundhell4bot_sheet.json"
+                                },
+                                "gamePosition": {
+                                    "x": 0,
+                                    "y": 250,
+                                    "z": 0.3
+                                }
+                            }
+                        ]
+                    }
+                },
                 "spawnPlayer",
                 "spawnMobs"
             ],
