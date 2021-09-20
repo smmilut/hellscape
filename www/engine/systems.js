@@ -27,6 +27,7 @@ import * as Engine from "../engine.js";
     ```
     System_Something = {
         name: "systemName",
+        initOptions: { (get object from Scene if configured) },  // (optional) if Scene config has initOptions, copy it here
         resourceQuery: ["resource1", "resource2", ...],
         componentQueries: {
             queryName1: ["componentA", "componentB", ...],
@@ -156,13 +157,22 @@ export const Systems = (function build_Systems() {
     obj_Systems.loadQueues = function Systems_loadQueues(systemQueueConfig) {
         obj_Systems.clearQueues();
         for (const [stageName, systemQueue] of obj_Systems.queues) {
-            const systemNames = systemQueueConfig[stageName];
-            if (systemNames === undefined) {
+            const systemConfigs = systemQueueConfig[stageName];
+            if (systemConfigs === undefined) {
                 /// no configuration for this stage
                 continue;
             } else {
-                for (const systemName of systemNames) {
+                for (const systemConfig of systemConfigs) {
+                    let systemName, initOptions;
+                    if (systemConfig.name === undefined) {
+                        systemName = systemConfig;
+                        initOptions = undefined;
+                    } else {
+                        systemName = systemConfig.name;
+                        initOptions = systemConfig.initOptions;
+                    }
                     const system = obj_Systems.registry.get(systemName);
+                    system.initOptions = initOptions;
                     systemQueue.push(system);
                 }
             }

@@ -32,9 +32,16 @@ import * as Utils from "../utils.js";
                 }
             ],
             "systems" : {
-                "init": ["list of system names", ...],
-                "frameMain": ["list of system names", ...],
-                "frameEnd": ["list of system names", ...],
+                "init": ["list of system names or init objects",
+                    "systemName1",
+                    {
+                        "name" : "systemName2",
+                        "initOptions": {object passed to the system during Scene loading},
+                    }
+                    ...
+                ],
+                "frameMain": ["list of system names or init objects", ...],
+                "frameEnd": ["list of system names or init objects", ...],
             },
             "next": "levelY"
         },
