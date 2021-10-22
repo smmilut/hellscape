@@ -1,11 +1,17 @@
 import * as Utils from "../utils.js";
+/**
+ * Manage character sprites
+ * @module sprite
+ */
 
+/** Enum for animation playing direction */
 export const ANIMATION_DIRECTION = Object.freeze({
     FORWARD: 1,  // currently animate frames in order
     BACKWARD: -1,  // currently animate frames in reverse order
     STOPPED: 0,
 });
 
+/** Enum for animation play type */
 export const ANIMATION_TYPE = Object.freeze({
     NONE: "none",
     FORWARD: "forward",  // animation happens in continuous forward order
@@ -14,7 +20,7 @@ export const ANIMATION_TYPE = Object.freeze({
 });
 
 
-/*
+/**
 * a Sprite with animation from a sprite sheet
 */
 const Sprite = {
@@ -28,7 +34,7 @@ const Sprite = {
         this.sheetConfig = JSON.parse(data.responseText);
         this.sheetCellWidth = this.sheetConfig.cellWidth;
         this.sheetCellHeight = this.sheetConfig.cellHeight;
-        /*
+        /**
         * A map of :
         *   {
         *       poseName: {
@@ -73,7 +79,7 @@ const Sprite = {
             resolve();
         }.bind(this));
     },
-    /*
+    /**
     * From a requested drawing `position`, get where the sprite should be drawn.
     * Return the upper left corner of the sprite, when the `position` indicates the position of the bottom-middle.
     * */
@@ -97,7 +103,7 @@ const Sprite = {
             this.sheetCellHeight
         );
     },
-    /*
+    /**
     * set animation pose
     *
     *   poseInfo = {
@@ -140,7 +146,7 @@ const Sprite = {
             this.frameInfo = this.poseInfo.frames[this.frame];
         }
     },
-    /*
+    /**
     * update animation frame time, change frame, change animation direction if necessary
     */
     updateAnimation: function Sprite_updateAnimation(timePassed) {
@@ -152,7 +158,7 @@ const Sprite = {
             }
         }
     },
-    /*
+    /**
     * move animation to next frame, change animation direction if necessary
     */
     _nextFrame: function Sprite_nextFrame() {
@@ -197,6 +203,7 @@ const System_updateSpriteAnimation = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerSystem(System_updateSpriteAnimation);
 }

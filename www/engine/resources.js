@@ -1,5 +1,5 @@
 import * as Engine from "./engine.js";
-/*
+/**
     # Resources
 
     ## Purpose
@@ -34,9 +34,10 @@ import * as Engine from "./engine.js";
 
     This makes the Resource available by its name.
 
+    @module resources
 */
 
-/*
+/**
 *   Store the current Resources configuration for one level
 */
 const ResourceStore = {
@@ -55,9 +56,7 @@ const ResourceStore = {
         return this;
     },
 
-    /*
-    *   Get the first Resource that has the queried name
-    */
+    /** Get the first Resource that has the queried name */
     get: function ResourceStore_get(resourceName) {
         for (const resource of this.resources) {
             if (resource.name == resourceName) {
@@ -69,7 +68,7 @@ const ResourceStore = {
         return null;
     },
 
-    /*
+    /**
     *   Given a list of Resource names, get a dictionary with the corresponding Resources
     *   (or no key for Resources not found)
     */
@@ -86,7 +85,7 @@ const ResourceStore = {
         return queryResult;
     },
 
-    /*
+    /**
     *   Initialize all Resources
     */
     initAll: async function ResourceStore_initAll() {
@@ -103,7 +102,7 @@ const ResourceStore = {
         }
     },
 
-    /*
+    /**
     *   Update all Resources
     */
     updateAll: async function ResourceStore_updateAll() {
@@ -121,7 +120,7 @@ const ResourceStore = {
     },
 };
 
-/*
+/**
 *   Instantiate a ResourceStore
 */
 function newResourceStore() {
@@ -130,7 +129,7 @@ function newResourceStore() {
     return resourceStore;
 }
 
-/*
+/**
 *   template object to store all Resources centrally, to make them available for loading on-demand in levels
 */
 const ResourceRegistry = {
@@ -147,7 +146,7 @@ const ResourceRegistry = {
     },
 };
 
-/*
+/**
 * Instantiate a ResourceRegistry
 */
 function newResourceRegistry() {
@@ -156,7 +155,7 @@ function newResourceRegistry() {
     return resourceRegistry;
 }
 
-/*
+/**
 * Manage Resources
 */
 export const Resources = (function build_Resources() {
@@ -170,6 +169,7 @@ export const Resources = (function build_Resources() {
         Resources_currentLevel = newResourceStore();
     };
 
+    /** Register a Resource to make it available for Scenes to load */
     obj_Resources.register = function Resources_register(resource) {
         obj_Resources.registry.register(resource);
     };
@@ -183,7 +183,7 @@ export const Resources = (function build_Resources() {
         return queryResults;
     };
 
-    /*
+    /**
     *   Load the global Resources config into the global Resources
     */
     obj_Resources.loadGlobalConfigs = function Resources_loadGlobalConfigs(resourceConfigs) {
@@ -195,7 +195,7 @@ export const Resources = (function build_Resources() {
         }
     };
 
-    /*
+    /**
     *   Load the level Resources config into the current level Resources
     */
     obj_Resources.loadLevelConfigs = function Resources_loadLevelConfigs(resourceConfigs) {
@@ -223,9 +223,7 @@ export const Resources = (function build_Resources() {
     return obj_Resources;
 })();
 
-/*
-*   Initialize system : make user system Resources available
-*/
+/** Call when loading */
 export async function init() {
     await Resources.init();
 }

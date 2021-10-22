@@ -1,3 +1,8 @@
+/**
+ * Character actions : Components and constants for interaction
+ */
+
+/** Enum of action poses */
 export const ACTION_POSE = Object.freeze({
     UNUSED: "*unused*", // pose exists in the sprite sheet, but not in the game
     NONE: "",
@@ -9,12 +14,13 @@ export const ACTION_POSE = Object.freeze({
     ATTACK: "Attack",
 });
 
+/** Enum of facing directions */
 export const FACING = Object.freeze({
     LEFT: "Left",
     RIGHT: "Right",
 });
 
-export const newComponent_Facing = function newFacing(initOptions) {
+export function newComponent_Facing(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "facing",
@@ -22,7 +28,7 @@ export const newComponent_Facing = function newFacing(initOptions) {
     };
 };
 
-export const newComponent_Jump = function newJump(initOptions) {
+export function newComponent_Jump(initOptions) {
     initOptions = initOptions || {};
     let Jump_chargesLeft;
     let Jump_isready;
@@ -95,13 +101,13 @@ const Component_Attack = {
     },
 };
 
-export const newComponent_Attack = function newAttack(_initOptions) {
+export function newComponent_Attack(_initOptions) {
     const attack = Object.create(Component_Attack);
     attack.init();
     return attack;
 };
 
-export const newComponent_Collider = function newCollider(initOptions) {
+export function newComponent_Collider(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "collider",

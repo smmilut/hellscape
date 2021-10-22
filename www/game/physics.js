@@ -1,3 +1,9 @@
+/**
+ * Physics-related functions
+ * @module physics
+ */
+
+/** Resource of some constants */
 const Resource_Physics = {
     name: "physics",
     prepareInit: function Physics_prepareInit(initOptions) {
@@ -12,7 +18,7 @@ const Resource_Physics = {
 };
 
 
-export const newComponent_Position = function newPosition(initOptions) {
+export function newComponent_Position(initOptions) {
     initOptions = initOptions || {};
     const obj_Position = {
         name: "position",
@@ -28,7 +34,7 @@ export const newComponent_Position = function newPosition(initOptions) {
     return obj_Position;
 };
 
-export const newComponent_Speed = function newSpeed(initOptions) {
+export function newComponent_Speed(initOptions) {
     initOptions = initOptions || {};
     return {
         name: "speed",
@@ -126,7 +132,7 @@ const System_mobilesCollideLevel = {
     },
 };
 
-
+/** Call when loading */
 export function init(engine) {
     engine.registerResource(Resource_Physics);
     engine.registerSystem(System_moveMobiles);

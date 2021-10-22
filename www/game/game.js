@@ -3,6 +3,12 @@ import * as Physics from "./physics.js";
 import * as Player from "./player.js";
 import * as Mobs from "./mobs.js";
 
+/**
+ * Game-specific modules
+ * @module game
+ */
+
+
 function initSubModules(engine) {
     LevelGrid.init(engine);
     Physics.init(engine);
@@ -49,6 +55,7 @@ const System_playerExit = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     initSubModules(engine);
     engine.registerSystem(System_checkCollisions);

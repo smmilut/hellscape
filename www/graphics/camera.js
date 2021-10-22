@@ -1,4 +1,4 @@
-/*
+/**
 * a canvas correctly scaled for pixel art
 */
 const Resource_PixelCanvas = (function build_PixelCanvas() {
@@ -16,7 +16,7 @@ const Resource_PixelCanvas = (function build_PixelCanvas() {
         obj_PixelCanvas.scale = PixelCanvas_initOptions.scale;
     };
 
-    /*
+    /**
     * return a [canvas, context] correctly scaled for pixel art
     */
     obj_PixelCanvas.new = function createScaledCanvas(screenWidth, screenHeight) {
@@ -33,7 +33,7 @@ const Resource_PixelCanvas = (function build_PixelCanvas() {
         return [canvas, context];
     };
 
-    /*
+    /**
     * return a [canvas, context] correctly scaled for pixel art
     * call with a size in "small pixels"
     */
@@ -84,7 +84,7 @@ const Resource_Camera = (function build_Camera() {
         });
     };
 
-    /*
+    /**
     * Clear screen for drawing next
     */
     obj_Camera.clear = function Camera_clear() {
@@ -92,7 +92,7 @@ const Resource_Camera = (function build_Camera() {
         Camera_context.fillRect(0, 0, Camera_canvas.width, Camera_canvas.height);
     };
 
-    /*
+    /**
     * Render all this sprite now
     */
     obj_Camera.render = function Camera_render(sprite, gamePosition) {
@@ -105,7 +105,7 @@ const Resource_Camera = (function build_Camera() {
         Camera_target.y = gamePosition.y;
     };
 
-    /*
+    /**
     *   Snap Camera to the edges of the level, so that we don't see outside the level map
     */
     obj_Camera.snapTargetToEdges = function Camera_snapTargetToEdges(levelGrid) {
@@ -140,7 +140,7 @@ const Resource_Camera = (function build_Camera() {
         Camera_gameCenter.y = Camera_target.y;
     }
 
-    /*
+    /**
     * update animation for Camera movement
     */
     obj_Camera.updateAnimation = function Camera_updateAnimation(timePassed) {
@@ -163,7 +163,7 @@ const Resource_Camera = (function build_Camera() {
         }
     }
 
-    /*
+    /**
     *   Convert from pixels in the world coordinates `gamePosition` to pixels in the camera coordinates.
     *   Dealing with unscaled pixels (original pixel art pixels).
     */
@@ -207,6 +207,7 @@ const System_moveCamera = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerResource(Resource_PixelCanvas);
     engine.registerResource(Resource_Camera);

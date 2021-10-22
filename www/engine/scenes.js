@@ -1,6 +1,6 @@
 import * as Engine from "./engine.js";
 import * as Utils from "../utils.js";
-/*
+/**
     # Scene : Levels scene management
 
     `scenes.json` describes Scenes which contain the configuration of Resources and Systems for each game level
@@ -48,9 +48,10 @@ import * as Utils from "../utils.js";
         "levelY" : {}, // etc...
     }
 
+    @module scenes
 */
 
-/*
+/**
 *   Manage loading the configuration of all levels and screens (Systems, Resources)
 */
 export const Scene = (function build_Scene() {
@@ -66,11 +67,17 @@ export const Scene = (function build_Scene() {
         Scene_nextName = Scene_fullConfig["firstLevel"];
     };
 
+    /**
+     * Load the level whose name is the value of the "firstlevel" configuration
+     */
     obj_Scene.loadFirstLevel = function Scene_loadFirstLevel() {
         const levelName = Scene_fullConfig["firstLevel"];
         obj_Scene.load(levelName);
     };
 
+    /**
+     * Load the special scene stage called "_global"
+     */
     obj_Scene.loadGlobals = function Scene_loadGlobals() {
         const globalsConfig = Scene_fullConfig["_global"];
         if (globalsConfig === undefined) {
@@ -85,7 +92,7 @@ export const Scene = (function build_Scene() {
         Engine.loadGlobalResourceConfigs(resourceConfigs);
     };
 
-    /*
+    /**
     *   construct the Resources and Systems queue for the current scene
     */
     obj_Scene.load = function Scene_load(sceneName) {
@@ -114,9 +121,7 @@ export const Scene = (function build_Scene() {
     return obj_Scene;
 })();
 
-/*
-*   Initialize system : make user system Resources available
-*/
+/** Call when loading */
 export async function init() {
     await Scene.init();
 }

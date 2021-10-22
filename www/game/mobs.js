@@ -2,13 +2,19 @@ import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
 import * as Sprites from "../graphics/sprite.js";
 import * as Utils from "../utils.js";
+/**
+ * Manage enemies
+ * @module mobs
+ */
 
+/** Component to tag if an Entity is a "mob" (an enemy) */
 const newComponent_TagMob = function newTagMob(_initOptions) {
     return {
         name: "tagMob",
     };
 };
 
+/** Enum of mob states */
 export const MOB_STATES = Object.freeze({
     STANDING: 0,
     FLEEING: 1,
@@ -173,6 +179,7 @@ const System_spawnMobs = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerSystem(System_spawnMobs);
     engine.registerSystem(System_mobBehave);

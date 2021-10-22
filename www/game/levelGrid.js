@@ -1,5 +1,9 @@
 import * as Utils from "../utils.js";
+/** Level grid model for platformer
+ * @module levelGrid
+ */
 
+/** Enum of 2D vectors of directions for collision */
 export const COLLISION_DIRECTION = Object.freeze({
     LEFT: [-1, 0],
     RIGHT: [1, 0],
@@ -7,6 +11,7 @@ export const COLLISION_DIRECTION = Object.freeze({
     DOWN: [0, 1],
 });
 
+/** Enum of map tile types */
 export const TILE_TYPE = Object.freeze({
     NONE: "none",
     BLOCK: "block",
@@ -21,6 +26,7 @@ export const TILE_TYPE = Object.freeze({
     I Keep it for now, because It's easier to manually write maps in a text file with single numbers.
     But TODO replace this when we do procedural generation of maps (then we no longer care to have maps easy to edit as text)
 */
+/** Conversion from tile code number to tile type */
 export const MANUAL_TILE_CODE = new Map([
     [0, TILE_TYPE.NONE],
     [1, TILE_TYPE.BLOCK],
@@ -29,7 +35,7 @@ export const MANUAL_TILE_CODE = new Map([
     [9, TILE_TYPE.PLAYER],
 ]);
 
-/*
+/**
 * the Level grid data
 */
 const Resource_LevelGrid = (function build_LevelGrid() {
@@ -65,7 +71,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         obj_LevelGrid.width = obj_LevelGrid.gridWidth * obj_LevelGrid.cellWidth;
     };
 
-    /*
+    /**
     *   Check if coordinates xy are inside the Level Grid
     */
     obj_LevelGrid.isCellInside = function LevelGrid_isCellInside(x, y) {
@@ -76,7 +82,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         }
     };
 
-    /*
+    /**
     *   Check if coordinates xy are free and inside the Level Grid
     */
     obj_LevelGrid.isTileBusy = function LevelGrid_isTileBusy(x, y) {
@@ -109,7 +115,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         }
     };
 
-    /*
+    /**
     * update the pixel position of a `position` based on its grid position
     */
     obj_LevelGrid.updatePixelPosition = function LevelGrid_updatePixelPosition(position) {
@@ -117,7 +123,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
         position.y = (position.gridY + position.yRatio) * obj_LevelGrid.cellHeight;
     };
 
-    /*
+    /**
     * update the grid position of a `position` based on its pixel position
     */
     obj_LevelGrid.updateGridPosition = function LevelGrid_updateGridPosition(position) {
@@ -130,7 +136,7 @@ const Resource_LevelGrid = (function build_LevelGrid() {
     return obj_LevelGrid;
 })();
 
-
+/** Call when loading */
 export function init(engine) {
     engine.registerResource(Resource_LevelGrid);
 }

@@ -3,8 +3,8 @@ import * as Physics from "../game/physics.js";
 import * as Sprites from "../graphics/sprite.js";
 
 
-/*
-* A level background image
+/**
+* Component : A level background image
 */
 const Backdrop = {
     name: "backdrop",
@@ -55,7 +55,7 @@ const Backdrop = {
         await Promise.all(framePromises);
         this.frameImage = this.frames[this.frameIndex];
     },
-    /*
+    /**
     * Generate the background image from individual tile
     */
     _generatePatternImage: function Backdrop_generatePatternImage(pixelCanvas, sourceX, sourceY) {
@@ -111,7 +111,7 @@ const Backdrop = {
     draw: function Backdrop_draw(context, position) {
         context.drawImage(this.frameImage, position.x, position.y);
     },
-    /*
+    /**
     * update animation frame time, change frame, change animation direction if necessary
     */
     updateAnimation: function Backdrop_updateAnimation(timePassed) {
@@ -124,7 +124,7 @@ const Backdrop = {
             }
         }
     },
-    /*
+    /**
     * move animation to next frame, change animation direction if necessary
     */
     _nextFrame: function Backdrop_nextFrame() {
@@ -147,13 +147,14 @@ const Backdrop = {
     },
 };
 
+/** Instatiate a new Backdrop Component */
 async function newComponent_Backdrop(initOptions, levelGrid, pixelCanvas) {
     const backdrop = Object.create(Backdrop);
     await backdrop.init(initOptions, levelGrid, pixelCanvas);
     return backdrop;
 }
 
-
+/** Spawn a new Entity with all required Components for a Backdrop layer */
 async function spawnNewBackdrop(engine, layerOptions, levelGrid, pixelCanvas) {
     const backdrop = await newComponent_Backdrop(layerOptions.sheetOptions, levelGrid, pixelCanvas);
     return engine.spawn()
@@ -175,6 +176,7 @@ const System_initBackdrops = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerSystem(System_initBackdrops);
 }

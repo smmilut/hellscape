@@ -1,11 +1,14 @@
-/*
-*   Get the current time in seconds
-*/
+/**
+ * Some utilities for the Engine
+ * @module engineUtils
+ */
+
+/** Get the current time in seconds */
 function getBrowserTime() {
     return performance.now() / 1000.0;
 }
 
-/*
+/**
 *   A Timer Resource or Component that can be derived with Object.create()
 */
 const Resource_Timer = {
@@ -51,7 +54,7 @@ const Resource_Timer = {
     },
 };
 
-/*
+/**
 * The main Time Resource that tracks the frame duration
 */
 const Resource_Time = (function build_Time() {
@@ -61,9 +64,7 @@ const Resource_Time = (function build_Time() {
 })();
 
 
-/*
-*   Initialize system : make Resources available
-*/
+/** Call when loading */
 export async function init(engine) {
     engine.registerResource(Resource_Time);
 }

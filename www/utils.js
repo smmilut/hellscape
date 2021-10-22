@@ -1,30 +1,31 @@
-/*
- * Utilities module
+/**
+ * Miscellaneous utilities
+ * @module utils
  */
 
-/*
+/**
 *   Make Http requests
 */
-export const Http = (function build_HttpUtils() {
-    /* Http utils module */
-    const HttpRequest = function createHttpRequestPromise(options) {
-        /* promisified XMLHttpRequest
-         * 
-         * Parameters :
-         *  options = {
-         *              method,  // default: "GET"
-         *              url,
-         *              async,  // default: true
-         *              requestHeaders : [{name, value}],
-         *              data
-         *            }
-         * 
-         * Resolve returns :
-         *  {responseText}
-         *
-         * Reject returns :
-         *  {status, statusText}
-         * */
+export const Http = {
+    /** 
+     * promisified XMLHttpRequest
+     * 
+     * Parameters :
+     *  options = {
+     *              method,  // default: "GET"
+     *              url,
+     *              async,  // default: true
+     *              requestHeaders : [{name, value}],
+     *              data
+     *            }
+     * 
+     * Resolve returns :
+     *  {responseText}
+     *
+     * Reject returns :
+     *  {status, statusText}
+     */
+    Request: function createHttpRequestPromise(options) {
         return new Promise(function promiseHttpRequest(resolve, reject) {
             const xhr = new XMLHttpRequest();
             xhr.open(options.method || "GET", options.url, options.async || true);
@@ -55,15 +56,10 @@ export const Http = (function build_HttpUtils() {
             };
             xhr.send(options.data);
         });
-    };
+    },
+};
 
-    /* exposed module properties */
-    return {
-        Request: HttpRequest
-    };
-})();
-
-/*
+/**
 * Load and cache images
 */
 export const File = (function build_File() {
@@ -73,7 +69,7 @@ export const File = (function build_File() {
         const obj_ImageLoader = {};
         const ImageLoader_cache = new Map();
 
-        /*
+        /**
         * Get image from cache or load it if not found
         */
         obj_ImageLoader.get = async function ImageLoader_get(src) {
@@ -89,7 +85,7 @@ export const File = (function build_File() {
             }
         };
 
-        /*
+        /**
         * Actually load image file (not from cache)
         */
         function loadImage(src) {
@@ -112,18 +108,18 @@ export const File = (function build_File() {
     return obj_File;
 })();
 
-/*
+/**
 * Utilities for numbers
 */
 export const Number = (function build_Number() {
     return {
-        /*
+        /**
         * convert an Array of bits into a number
         */
         bitArrayToNum: function Number_bitArrayToNum(bitArray) {
             return parseInt(bitArray.join(""), 2);
         },
-        /*
+        /**
         * convert a number into an Array of bits
         */
         numToBitArray: function Number_numToBitArray(num, padLength) {
@@ -141,7 +137,7 @@ export const Number = (function build_Number() {
     }
 })();
 
-/*
+/**
 *   Utilities for random numbers
 */
 export const Rng = (function build_RngUtils() {
@@ -149,7 +145,7 @@ export const Rng = (function build_RngUtils() {
 
     obj_Rng.random = Math.random;
 
-    /*
+    /**
     * Return random number betwen min and max. If only 1 argument, then it's a max.
     */
     obj_Rng.range = function Rng_range(boundary1, boundary2) {
@@ -164,14 +160,14 @@ export const Rng = (function build_RngUtils() {
         return obj_Rng.random() * (max - min) + min;
     }
 
-    /*
+    /**
     * return a random element from array
     */
     obj_Rng.select = function Rng_select(array) {
         return array[Math.floor(obj_Rng.random() * array.length)];
     }
 
-    /* 
+    /**
     * return a random item.value from array
     *  selected randomly but weighted according to item.weight
     */
@@ -189,9 +185,10 @@ export const Rng = (function build_RngUtils() {
         return selectedItem;
     }
 
+    /** select n times a random element in the array, not necessarily uniques
+     * return the array of selected n elements
+     */
     function Rng_selectMany(array, n) {
-        // select n times a random element in the array, not necessarily uniques
-        // return the array of selected n elements
         let selected = [];
         n = n || 1;
         for (let i = 0; i < n; i++) {
@@ -200,11 +197,11 @@ export const Rng = (function build_RngUtils() {
         return selected;
     }
 
+    /** select n times a random element in the array
+     * selected randomly but weighted according to item.weight
+     * not necessarily uniques
+     * return the array of selected n elements */
     function Rng_selectWeightedMany(array, n) {
-        // select n times a random element in the array
-        // selected randomly but weighted according to item.weight
-        // not necessarily uniques
-        // return the array of selected n elements
         let selected = [];
         n = n || 1;
         for (let i = 0; i < n; i++) {
@@ -216,7 +213,7 @@ export const Rng = (function build_RngUtils() {
     return obj_Rng;
 })();
 
-/*
+/**
 *   Linear interpolation between value0 and value1, for parameter t between 0 and 1
 */
 export function lerp(value0, value1, t, edge0, edge1) {
@@ -231,7 +228,7 @@ export function lerp(value0, value1, t, edge0, edge1) {
     return (1 - t) * value0 + t * value1;
 }
 
-/*
+/**
 *   Smooth interpolation between value0 and value1, for parameter t between edge0 and edge1
 */
 export function smoothstep(value0, value1, t, edge0, edge1) {

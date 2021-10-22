@@ -3,8 +3,11 @@ import * as Entities from "./entities.js";
 import * as Resources from "./resources.js";
 import * as Scenes from "./scenes.js";
 import * as Systems from "./systems.js";
-/*
-    "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
+/**
+    Game engine like an "ECS" :
+     game data management inspired by ECS (ideally, let's get there at some point)
+    
+    This is mostly a wrapper module of functions that exist in sub-modules
 
     # Concepts :
 
@@ -12,11 +15,12 @@ import * as Systems from "./systems.js";
      - Component : a data that belongs to an Entity
      - System : a routine that performs actions on Components, using Resources
      - Resource : global data detached from Entities
-     - Scene : a level configuration composed of Systems and Resources
+     - Scene : a level configuration composed of Systems, Resources, and their initial configuration
 
+    @module engine
 */
 
-/*
+/**
 * System stages : priorities for running Systems each frame
 */
 export const SYSTEM_STAGE = Object.freeze({
@@ -26,17 +30,28 @@ export const SYSTEM_STAGE = Object.freeze({
     FRAME_END: "frameEnd",
 });
 
+/**
+ * Load and init globals
+ * 
+ * Call this first in the loading sequence.
+ */
 export async function prepare() {
     Scenes.Scene.loadGlobals();
     return await initGlobalResources();
 }
 
+/**
+ * Initialize the currently loaded Resources and Systems
+ * 
+ * Call this after loading a level.
+ */
 export async function initLevel() {
     await initLevelResources();
     return await runStage(SYSTEM_STAGE.INIT);
 }
 
 //#region Controller : flow control
+/** Start the main loop */
 export function start() {
     return Controller.Controller.start();
 }
@@ -88,6 +103,7 @@ export function queryAllResources(resourceQuery) {
 }
 //#endregion
 //#region Scene
+/** Find the first level configuration and load it */
 export function loadFirstLevel() {
     return Scenes.Scene.loadFirstLevel();
 }
@@ -110,6 +126,11 @@ export function loadSystemQueues(systemQueueConfig) {
 }
 //#endregion
 
+/**
+ * Init all sub modules
+ * 
+ * Call this first.
+ */
 async function initSubModules() {
     await Controller.init();
     await Entities.init();
@@ -118,6 +139,7 @@ async function initSubModules() {
     await Scenes.init();
 }
 
+/** Call when loading */
 export async function init() {
     await initSubModules();
 }

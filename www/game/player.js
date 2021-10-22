@@ -1,7 +1,12 @@
 import * as Physics from "./physics.js";
 import * as Actions from "./actions.js";
 import * as Sprites from "../graphics/sprite.js";
+/**
+ * Manage player
+ * @module player
+ */
 
+/** Component to tag if an Entity is a (the) player */
 const newTagPlayer = function newTagPlayer(_initOptions) {
     return {
         name: "tagPlayer",
@@ -99,6 +104,7 @@ const System_spawnPlayer = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerSystem(System_spawnPlayer);
     engine.registerSystem(System_handleInput);

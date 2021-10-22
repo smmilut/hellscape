@@ -1,8 +1,10 @@
-/*
+/**
     # Entities
 
     The global object `Entities` holds all Entities.
     It can spawn Entities with `Entities.spawn()`
+
+    Note : for now there is not actual cache-friendly storage or anything you could expect from an actual ECS.
 
     ## Entity
 
@@ -35,9 +37,11 @@
         .addComponent(someComponent2)
         .addComponent(someComponent3)
     ```
+
+    @module entities
 */
 
-/*
+/**
 *   Entity template object
 */
 const Entity = {
@@ -70,8 +74,9 @@ const Entity = {
     },
 };
 
-/*
+/**
 *   Instantiate an Entity
+*   @returns {entity} a new Entity
 */
 function newEntity() {
     const entity = Object.create(Entity);
@@ -79,7 +84,7 @@ function newEntity() {
     return entity;
 }
 
-/*
+/**
 *   Manage Entities
 */
 export const Entities = (function build_Entities() {
@@ -95,7 +100,7 @@ export const Entities = (function build_Entities() {
         return entity;
     };
 
-    /*
+    /**
     *   Query Entities with a list of Components names ["component1", "component2", ...]
     *   Get a list of "matches", only for Entities that match ALL queried Components :
     *   [
@@ -111,6 +116,8 @@ export const Entities = (function build_Entities() {
     *       },
     *       ...
     *   ]
+    * @param componentQuery a list of Components names ["component1", "component2", ...]
+    * @returns a list of "matches", only for Entities that match ALL queried Components
     */
     obj_Entities.queryComponents = function Entities_queryComponents(componentQuery) {
         let result = [];
@@ -136,9 +143,7 @@ export const Entities = (function build_Entities() {
     return obj_Entities;
 })();
 
-/*
-*   Initialize system : make user system Resources available
-*/
+/** Call when loading */
 export async function init() {
-    await Entities.init();
+    Entities.init();
 }

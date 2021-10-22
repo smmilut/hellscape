@@ -1,5 +1,10 @@
-/*
-* Game actions to which we can bind keys
+/**
+ * Manage user input
+ * @module userInput
+ */
+
+/**
+* Enum of game actions to which we can bind keys
 */
 export const USER_ACTION = Object.freeze({
     LEFT: "left",
@@ -11,7 +16,7 @@ export const USER_ACTION = Object.freeze({
     MENU: "menu",
 });
 
-/*
+/**
 * Keyboard management
 * Could be used as a Resource individually
 */
@@ -29,7 +34,7 @@ const Resource_Keyboard = (function build_Keyboard() {
         Keyboard_initOptions = initOptions || {};
     };
 
-    /*
+    /**
     *   Don't call multiple times, because it adds event listeners
     */
     obj_Keyboard.init = function Keyboard_init() {
@@ -50,7 +55,7 @@ const Resource_Keyboard = (function build_Keyboard() {
         }
     };
 
-    /*
+    /**
     * Map a keyboard key to a game action
     * Keyboard keys are just strings containing the "key" name from the browser event
     * (which is basically just the keyboard letter or something like "ArrowLeft")
@@ -81,17 +86,15 @@ const Resource_Keyboard = (function build_Keyboard() {
     return obj_Keyboard;
 })();
 
-/*
-* Type of input key
-*/
+/** Enum for the type of input key */
 const KEYTYPE = Object.freeze({
     KEY: "keyboardKey",  // keyboard key
     BUTTON: "gamepadButton",  // gamepad button
     AXIS: "gamepadAxis",  // gamepad axis
 });
 
-/*
-* Reference between gamepad button names and button index for the browser event
+/**
+* Reference mapping between gamepad button names and button index for the browser event
 */
 const GAMEPAD_BUTTON = new Map([
     ["xbox_A", 0],   // Bottom button in right cluster
@@ -114,9 +117,10 @@ const GAMEPAD_BUTTON = new Map([
 
 ]);
 
-/*
-* The gamepad axis index must also be its index for the browser event
-*/
+/**
+ * Enum of gamepad axes
+ * The gamepad axis index must also be its index for the browser event
+ */
 const GAMEPAD_AXIS = Object.freeze({
     LHORIZ: 0,  // Horizontal axis for left stick (negative left/positive right)
     LVERT: 1,  // Vertical axis for left stick (negative up/positive down)
@@ -124,7 +128,7 @@ const GAMEPAD_AXIS = Object.freeze({
     RVERT: 3,  // Vertical axis for right stick (negative up/positive down) 
 });
 
-/*
+/**
 * Gamepad management
 * Could be used as a Resource individually
 */
@@ -143,7 +147,7 @@ const Resource_Gamepad = (function build_Gamepad() {
         Gamepad_initOptions = initOptions || {};
     };
 
-    /*
+    /**
     *   Don't call multiple times, because it adds event listeners
     */
     obj_Gamepad.init = function Gamepad_init() {
@@ -173,7 +177,7 @@ const Resource_Gamepad = (function build_Gamepad() {
         delete Gamepad_controllers[gamepad.index];
     }
 
-    /*
+    /**
     * Need to manually call to refresh the cache of the gamepad state
     */
     obj_Gamepad.update = function Gamepad_update() {
@@ -207,7 +211,7 @@ const Resource_Gamepad = (function build_Gamepad() {
         }
     };
 
-    /*
+    /**
     * Add gamepad, depending on browser capabilities
     */
     function scangamepads() {
@@ -254,7 +258,7 @@ const Resource_Gamepad = (function build_Gamepad() {
     return obj_Gamepad;
 })();
 
-/*
+/**
 * User input of Keyboard and Gamepad combined
 */
 const Resource_Input = (function build_Input() {
@@ -277,7 +281,7 @@ const Resource_Input = (function build_Input() {
         Input_Gamepad.prepareInit(Input_initOptions.gamepadInit);
     };
 
-    /*
+    /**
     *   Don't call multiple times, because it adds event listeners
     */
     obj_Input.init = function Input_init() {
@@ -321,9 +325,7 @@ const Resource_Input = (function build_Input() {
     return obj_Input;
 })();
 
-/*
-*   Initialize user input : make user input Resource available
-*/
+/** Call when loading */
 export function init(engine) {
     engine.registerResource(Resource_Input);
 }

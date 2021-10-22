@@ -3,7 +3,16 @@ import * as LevelSprite from "./levelSprite.js";
 import * as Backdrop from "./backdrop.js";
 import * as Sprites from "./sprite.js";
 import * as Welcome from "./welcome.js";
+/**
+ * Graphics-related sub-modules
+ * @module graphics
+ */
 
+/**
+ * Init all sub modules
+ * 
+ * Call this first.
+ */
 function initSubModules(engine) {
     Camera.init(engine);
     LevelSprite.init(engine);
@@ -66,9 +75,7 @@ const System_renderSprites = {
 
 
 
-/*
-*   Initialize graphics : make graphic Resource available
-*/
+/** Call when loading */
 export function init(engine) {
     initSubModules(engine);
     engine.registerSystem(System_clearBackground);

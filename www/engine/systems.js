@@ -1,5 +1,5 @@
 import * as Engine from "./engine.js";
-/*
+/**
     # Systems
 
     ## Purpose
@@ -90,10 +90,12 @@ import * as Engine from "./engine.js";
 
     Automatically, when adding a new System, a `promiseRun()` function is created, turning the `run()` function into a Promise returned by the `promiseRun()` function.
     If the desired behavior of this Promise needs to be customized, you can provide the `promiseRun()` function yourself to the System (instead of the `run()` function).
+    However, I found some strange bugs when doing this.
 
+    @module systems
 */
 
-/*
+/**
 *   template object to Store Systems
 */
 const SystemRegistry = {
@@ -118,7 +120,7 @@ const SystemRegistry = {
     },
 };
 
-/*
+/**
 * Instantiate a SystemRegistry
 */
 function newSystemRegistry() {
@@ -127,7 +129,7 @@ function newSystemRegistry() {
     return systemRegistry;
 }
 
-/*
+/**
 *   Manage Systems
 */
 export const Systems = (function build_Systems() {
@@ -137,6 +139,7 @@ export const Systems = (function build_Systems() {
         obj_Systems.registry = newSystemRegistry();
     };
 
+    /** Register a System to make it available for Scenes to load */
     obj_Systems.register = function Systems_register(system) {
         obj_Systems.registry.register(system);
     };
@@ -211,9 +214,7 @@ export const Systems = (function build_Systems() {
     return obj_Systems;
 })();
 
-/*
-*   Initialize system : make user system Resources available
-*/
+/** Call when loading */
 export async function init() {
-    await Systems.init();
+    Systems.init();
 }

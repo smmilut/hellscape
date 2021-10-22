@@ -1,12 +1,11 @@
 import * as Utils from "../utils.js";
-/*
-*   Separate logic for parsing the configuration of a tilemap
-*   because it's a bit complicated, and clogs the Resource_LevelSprite where it was hard to read.
-*   It's more a "group of functions" than an actual object.
-*/
+/**
+ * The graphical sprite for representing the platformer level
+ * @module levelSprite
+ */
 
-/*
-* A level map background
+/**
+* A level map graphical representation
 */
 const Resource_LevelSprite = (function build_LevelSprite() {
     // the object we are building
@@ -39,7 +38,7 @@ const Resource_LevelSprite = (function build_LevelSprite() {
         await generateBackgroundImage(levelGrid, pixelCanvas);
     };
 
-    /*
+    /**
     * Generate the background image from the level map data
     */
     async function generateBackgroundImage(levelGrid, pixelCanvas) {
@@ -191,6 +190,7 @@ const Resource_LevelSprite = (function build_LevelSprite() {
     return obj_LevelSprite;
 })();
 
+/** Call when loading */
 export function init(engine) {
     engine.registerResource(Resource_LevelSprite);
 }

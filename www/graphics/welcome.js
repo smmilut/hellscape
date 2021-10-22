@@ -1,5 +1,10 @@
 import * as Utils from "../utils.js";
+/**
+ * Module for the welcome screen
+ * @module welcome
+ */
 
+/** Component to tag if an Entity is a welcome screen */
 const newComponent_TagWelcome = function newTagWelcome(_initOptions) {
     return {
         name: "tagWelcome",
@@ -7,7 +12,7 @@ const newComponent_TagWelcome = function newTagWelcome(_initOptions) {
 };
 
 
-/*
+/**
 * A Fullscreen Image
 */
 const newComponent_Fullscreen = async function newComponent_Fullscreen(initOptions) {
@@ -65,6 +70,7 @@ const System_welcomeHandleInput = {
     },
 };
 
+/** Call when loading */
 export function init(engine) {
     engine.registerSystem(System_spawnWelcome);
     engine.registerSystem(System_renderWelcome);
