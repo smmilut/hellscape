@@ -1,9 +1,8 @@
-import * as Utils from "./utils.js";
-import * as Camera from "./graphics/camera.js";
-import * as LevelSprite from "./graphics/levelSprite.js";
-import * as Backdrop from "./graphics/backdrop.js";
-import * as Sprites from "./graphics/sprite.js";
-import * as Welcome from "./graphics/welcome.js";
+import * as Camera from "./camera.js";
+import * as LevelSprite from "./levelSprite.js";
+import * as Backdrop from "./backdrop.js";
+import * as Sprites from "./sprite.js";
+import * as Welcome from "./welcome.js";
 
 function initSubModules(engine) {
     Camera.init(engine);

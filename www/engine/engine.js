@@ -1,8 +1,8 @@
-import * as Controller from "./engine/controller.js";
-import * as Entities from "./engine/entities.js";
-import * as Resources from "./engine/resources.js";
-import * as Scenes from "./engine/scenes.js";
-import * as Systems from "./engine/systems.js";
+import * as Controller from "./controller.js";
+import * as Entities from "./entities.js";
+import * as Resources from "./resources.js";
+import * as Scenes from "./scenes.js";
+import * as Systems from "./systems.js";
 /*
     "ECS" : game data management inspired by ECS (ideally, let's get there at some point)
 

@@ -1,5 +1,3 @@
-import * as Utils from "../utils.js";
-
 const Resource_Physics = {
     name: "physics",
     prepareInit: function Physics_prepareInit(initOptions) {

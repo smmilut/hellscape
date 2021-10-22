@@ -1,5 +1,3 @@
-import * as Utils from "../utils.js";
-
 /*
 * a canvas correctly scaled for pixel art
 */

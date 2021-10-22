@@ -1,7 +1,7 @@
-import * as LevelGrid from "./game/levelGrid.js";
-import * as Physics from "./game/physics.js";
-import * as Player from "./game/player.js";
-import * as Mobs from "./game/mobs.js";
+import * as LevelGrid from "./levelGrid.js";
+import * as Physics from "./physics.js";
+import * as Player from "./player.js";
+import * as Mobs from "./mobs.js";
 
 function initSubModules(engine) {
     LevelGrid.init(engine);

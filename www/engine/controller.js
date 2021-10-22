@@ -1,4 +1,4 @@
-import * as Engine from "../engine.js";
+import * as Engine from "./engine.js";
 /*
     # Controller
 

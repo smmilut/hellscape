@@ -1,8 +1,8 @@
-import * as Engine from "./engine.js";
+import * as Engine from "./engine/engine.js";
 import * as EngineUtils from "./engineUtils.js";
-import * as Graphics from "./graphics.js";
+import * as Graphics from "./graphics/graphics.js";
 import * as Input from "./userInput.js";
-import * as Game from "./game.js";
+import * as Game from "./game/game.js";
 
 async function initSubModules(engine) {
     /// Always init engine first
